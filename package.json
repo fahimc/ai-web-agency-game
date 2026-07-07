@@ -6,11 +6,16 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "netlify:status": "netlify status",
+    "netlify:link": "netlify link",
+    "deploy": "npm run build && netlify deploy --dir=dist",
+    "deploy:prod": "npm run build && netlify deploy --prod --dir=dist"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "jspdf": "^4.2.1",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

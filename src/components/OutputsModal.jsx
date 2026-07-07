@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { employees } from '../data/employees.js';
 import { outputNames, outputOrder, outputOwners } from '../data/outputs.js';
+import { MAX_REVISIONS } from '../utils/pricing.js';
 import { Modal } from './Modal.jsx';
 
 export function OutputsModal({ state, actions }) {
@@ -40,17 +41,50 @@ function TextOutput({ outputKey, state, actions }) {
 
 function Website({ state, actions }) {
   const html = state.outputs.WebsiteHTML || '';
+  const [showRevision, setShowRevision] = useState(false);
+  const [revision, setRevision] = useState('');
+  const revisionsRemaining = Math.max(0, MAX_REVISIONS - (state.revisionCount || 0));
+  function submitRevision(event) {
+    event.preventDefault();
+    const text = revision.trim();
+    if (!text) {
+      actions.notify('Describe the revision first.');
+      return;
+    }
+    actions.requestRevision(text);
+    setRevision('');
+    setShowRevision(false);
+  }
   return (
     <div className="split-preview">
       <aside className="approval-card">
         <strong>Website preview</strong>
-        <p className="muted">This is the real HTML output from Kai. Review it here, then approve or request changes when chat is open.</p>
+        <p className="muted">This is the real HTML output from Kai. Review it here, approve it, or request a revision.</p>
+        <p className="small"><b>{revisionsRemaining}</b> of {MAX_REVISIONS} revisions remaining.</p>
         <div className="stack">
           <button type="button" onClick={actions.copyCurrentOutput}>Copy HTML</button>
           <button type="button" className="secondary" onClick={actions.downloadCurrentOutput}>Download HTML</button>
           {state.phase === 'approval' && <button type="button" className="green" onClick={actions.approve}>Approve preview</button>}
+          {state.phase === 'approval' && <button type="button" className="secondary" disabled={revisionsRemaining <= 0} onClick={() => setShowRevision((value) => !value)}>Request revision</button>}
         </div>
-        {state.phase === 'approval' && <p className="small">Need changes? Close Outputs and type the change request in the chat box.</p>}
+        {showRevision && (
+          <form className="revision-form" onSubmit={submitRevision}>
+            <label>Revision request
+              <textarea value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="Tell Mira what should change in the design, layout, copy, or sections..." />
+            </label>
+            <button type="submit">Send to designer</button>
+          </form>
+        )}
+        <div className="deploy-panel">
+          <strong>Netlify</strong>
+          <p className="small muted">Deploy directly with Netlify settings, or download a zip for Netlify Drop.</p>
+          <div className="stack">
+            <button type="button" className="secondary" onClick={actions.downloadNetlifyPackage} disabled={!html}>Download Netlify zip</button>
+            <button type="button" onClick={actions.openNetlifyDrop}>Open Netlify Drop</button>
+            <button type="button" className="green" onClick={actions.deployNetlify} disabled={!html}>Deploy to Netlify</button>
+          </div>
+          {state.outputs.NetlifyURL && <p className="small"><a href={state.outputs.NetlifyURL} target="_blank" rel="noreferrer">{state.outputs.NetlifyURL}</a></p>}
+        </div>
       </aside>
       <div className="card">{html ? <iframe className="preview-frame" sandbox="allow-same-origin" title="Generated website preview" srcDoc={html} /> : <div className="empty">Website preview is not ready yet.</div>}</div>
     </div>

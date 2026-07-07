@@ -1,3 +1,63 @@
+const ALLOWED_MODELS = new Set([
+  'gpt-5.4-mini',
+  'gpt-5.4',
+  'gpt-5.5',
+  'gpt-4.1-mini',
+  'gpt-4.1',
+]);
+
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' });
+
+  const apiKey = process.env.OPENAI_API_KEY || '';
+  if (!apiKey) {
+    return json(500, { error: 'OpenAI is not configured. Add OPENAI_API_KEY in Netlify environment variables.' });
+  }
+
+  let body;
+  try {
+    body = JSON.parse(event.body || '{}');
+  } catch {
+    return json(400, { error: 'Invalid JSON body.' });
+  }
+
+  const model = String(body.model || '').trim();
+  const input = Array.isArray(body.input) ? body.input : null;
+  if (!ALLOWED_MODELS.has(model)) return json(400, { error: 'Model is not allowed for this project.' });
+  if (!input?.length) return json(400, { error: 'Missing model input.' });
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ model, input }),
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      return json(response.status, { error: `Model call failed (${response.status}): ${text.slice(0, 700)}` });
+    }
+
+    const data = JSON.parse(text);
+    return json(200, { output_text: parseResponseText(data), raw: data });
+  } catch (error) {
+    return json(500, { error: error?.message || 'OpenAI request failed.' });
+  }
+};
+
+function json(statusCode, body) {
+  return {
+    statusCode,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+    },
+    body: JSON.stringify(body),
+  };
+}
+
 function toOutputText(value) {
   if (value == null) return '';
   if (typeof value === 'string') return value;
@@ -27,6 +87,7 @@ function parseResponseText(data) {
   if (typeof data.text === 'string') return data.text;
   if (data.result) return toOutputText(data.result);
   if (data.message) return toOutputText(data.message);
+
   const pieces = [];
   const outputs = Array.isArray(data.output) ? data.output : [];
   outputs.forEach((item) => {
@@ -40,34 +101,6 @@ function parseResponseText(data) {
       if (text) pieces.push(text);
     }
   });
+
   return pieces.join('\n').trim() || toOutputText(data);
 }
-
-self.onmessage = async (event) => {
-  const { id, payload } = event.data;
-  try {
-    const { employee, task, context, settings, state, complex } = payload;
-    const model = state.projectModel || settings.selectedModel || (complex ? settings.complexModel : settings.fastModel);
-    const system = [
-      `You are ${employee.name}, the ${employee.role} inside MicroAgency AI, a playful autonomous web agency.`,
-      `Personality and working style: ${employee.voice}.`,
-      'Produce real, useful agency deliverables. Be specific, commercial and practical. Output only the requested deliverable.',
-    ].join(' ');
-    const user = [
-      `Autonomy mode: ${settings.autonomy}`,
-      `Client contact: ${state.userName || 'Unknown'}${state.email ? ` <${state.email}>` : ''}`,
-      `Project intake form / brief: ${state.clientDetails || state.brief || 'Not provided'}`,
-      context ? `Context from previous employees:\n${context}` : '',
-      `Task:\n${task}`,
-    ].filter(Boolean).join('\n\n');
-    const requestPayload = { model, input: [{ role: 'system', content: system }, { role: 'user', content: user }] };
-    const response = await fetch('/.netlify/functions/openai-response', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestPayload) });
-    if (!response.ok) {
-      const errText = await response.text().catch(() => response.statusText);
-      throw new Error(`Model call failed (${response.status}): ${errText.slice(0, 700)}`);
-    }
-    self.postMessage({ id, result: parseResponseText(await response.json()) || '' });
-  } catch (error) {
-    self.postMessage({ id, error: error?.message || String(error) });
-  }
-};

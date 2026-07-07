@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { employeeList, employees } from '../data/employees.js';
 import { outputOrder } from '../data/outputs.js';
 import { listProjects } from '../services/storage.js';
+import { canResumeProject } from '../utils/text.js';
+import { MODEL_OPTIONS } from '../utils/pricing.js';
 import { Modal } from './Modal.jsx';
 
 const tabs = [
@@ -82,6 +84,7 @@ function Projects({ state, actions }) {
 function Status({ state, actions, phaseLabel }) {
   const complete = outputOrder.filter((key) => state.outputs[key]).length;
   const activeEmployee = employees[state.activeEmployee] || employees.reception;
+  const canResume = canResumeProject(state);
   return (
     <div className="modal-grid">
       <div className="card">
@@ -92,7 +95,7 @@ function Status({ state, actions, phaseLabel }) {
         <p><b>Outputs ready:</b> {complete}/{outputOrder.length}</p>
         <div className="stack">
           <button type="button" onClick={() => actions.openOutputs(state.activeOutput || 'Plan')}>Open outputs</button>
-          {state.phase === 'error' && <button type="button" className="green" onClick={actions.resumeWork}>Resume work</button>}
+          {canResume && <button type="button" className="green" onClick={actions.resumeWork}>Resume work</button>}
           <button type="button" className="secondary" onClick={() => actions.notify('Saved locally.')}>Save now</button>
         </div>
       </div>
@@ -156,22 +159,31 @@ function Timeline({ items, empty }) {
 
 function Settings({ state, actions }) {
   const [settings, setSettings] = useState(state.settings);
-  const [apiKey, setApiKey] = useState(actions.getApiKey());
   const setField = (field, value) => setSettings((current) => ({ ...current, [field]: value }));
   return (
     <div className="modal-grid">
       <div className="card">
         <h3>Model routing</h3>
-        <p className="small muted">For production, use a backend proxy. Direct browser keys are for local testing only.</p>
-        <label>OpenAI API key<input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} /></label>
-        <label className="check"><input type="checkbox" checked={settings.rememberKey} onChange={(event) => setField('rememberKey', event.target.checked)} /> Remember key on this device</label>
-        <label>Optional proxy endpoint<input value={settings.proxyUrl} onChange={(event) => setField('proxyUrl', event.target.value)} /></label>
+        <p className="small muted">AI calls run through Netlify Functions. Add <b>OPENAI_API_KEY</b> in Netlify environment variables for production.</p>
+        <label>Default project model
+          <select value={settings.selectedModel || MODEL_OPTIONS[0].id} onChange={(event) => setField('selectedModel', event.target.value)}>
+            {MODEL_OPTIONS.map((model) => <option value={model.id} key={model.id}>{model.label}</option>)}
+          </select>
+        </label>
         <div className="row">
           <label>Fast web model<input value={settings.fastModel} onChange={(event) => setField('fastModel', event.target.value)} /></label>
           <label>Complex OpenAI model<input value={settings.complexModel} onChange={(event) => setField('complexModel', event.target.value)} /></label>
         </div>
         <label>Autonomy<select value={settings.autonomy} onChange={(event) => setField('autonomy', event.target.value)}><option>Balanced</option><option>Careful</option><option>Aggressive</option></select></label>
-        <button type="button" onClick={() => actions.saveSettingsFromForm(settings, apiKey)}>Save settings</button>
+        <label>USD to GBP rate<input type="number" min="0.01" step="0.01" value={settings.usdToGbp || 0.79} onChange={(event) => setField('usdToGbp', Number(event.target.value))} /></label>
+        <button type="button" onClick={() => actions.saveSettingsFromForm(settings)}>Save settings</button>
+      </div>
+      <div className="card">
+        <h3>Netlify deploy</h3>
+        <p className="small muted">For direct deploy, create a Netlify personal access token and paste the target site API ID here. Without these, use the Netlify zip and Drop buttons in Outputs.</p>
+        <label>Netlify site ID<input value={settings.netlifySiteId || ''} onChange={(event) => setField('netlifySiteId', event.target.value)} /></label>
+        <label>Netlify personal access token<input type="password" value={settings.netlifyToken || ''} onChange={(event) => setField('netlifyToken', event.target.value)} /></label>
+        <button type="button" onClick={() => actions.saveSettingsFromForm(settings)}>Save Netlify settings</button>
       </div>
       <div className="card">
         <h3>Run controls</h3>

@@ -1,7 +1,7 @@
 import { employeeList } from '../data/employees.js';
 
-const WORLD = { width: 1800, height: 1340 };
-const GRID = { marginX: 150, marginY: 130, cellX: 135, cellY: 145 };
+const WORLD = { width: 1900, height: 1400 };
+const GRID = { marginX: 150, marginY: 130, cellX: 135, cellY: 155 };
 const CHARACTER_SCALE = 5.2;
 const DESK_SCALE = 2.35;
 const DESK_SIZE = { width: 92 * DESK_SCALE, height: 101 * DESK_SCALE };
@@ -23,7 +23,7 @@ export const DESK_POSITIONS = {
   pm: gridToWorld(9, 2),
   design: gridToWorld(2, 5),
   dev: gridToWorld(5, 5, 8, 20),
-  qa: gridToWorld(5, 7, 8, -12),
+  qa: gridToWorld(8, 6, 18, 36),
 };
 
 const OUTPUT_OWNERS = {

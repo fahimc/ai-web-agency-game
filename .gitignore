@@ -4,3 +4,7 @@ dist/
 .env.*
 tmp-*.png
 *.log
+.codex-remote-attachments/
+
+# Local Netlify folder
+.netlify

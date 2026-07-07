@@ -103,8 +103,10 @@ function actionButtons(actionIds, actions) {
     returning: { label: 'Returning', onClick: actions.returningCustomer },
     new: { label: 'New customer', onClick: actions.newCustomer },
     openDetails: { label: 'Open form', onClick: actions.openDetails },
+    openPayment: { label: 'Pay now', onClick: actions.openPayment },
     openPreview: { label: 'Open preview', onClick: () => actions.openOutputs('WebsiteHTML') },
     approve: { label: 'Approve', onClick: actions.approve },
+    resume: { label: 'Resume work', onClick: actions.resumeWork },
     reset: { label: 'New project', onClick: actions.startFresh },
   };
   return actionIds.map((id) => config[id]).filter(Boolean).map((item) => (

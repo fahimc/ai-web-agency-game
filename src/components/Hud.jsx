@@ -1,8 +1,10 @@
 import React from 'react';
 import { Box, ClipboardList, Menu, RotateCcw } from 'lucide-react';
+import { canResumeProject } from '../utils/text.js';
 
 export function Hud({ state, phaseLabel, actions }) {
   const showProgress = state.progress > 0 || ['running', 'approval', 'complete', 'error'].includes(state.phase);
+  const canResume = canResumeProject(state);
   return (
     <header className="hud" aria-label="Office HUD">
       <div className="hud-row">
@@ -20,7 +22,7 @@ export function Hud({ state, phaseLabel, actions }) {
           <button className="secondary tiny keep-mobile" type="button" onClick={actions.startFresh}>
             <RotateCcw size={16} /> Reset
           </button>
-          {state.phase === 'error' && <button className="green tiny" type="button" onClick={actions.resumeWork}>Resume</button>}
+          {canResume && <button className="green tiny keep-mobile resume-button" type="button" onClick={actions.resumeWork}>Resume</button>}
           <button className="secondary tiny" type="button" onClick={() => actions.openOutputs(state.activeOutput || 'Plan')}>
             <Box size={16} /> Outputs
           </button>

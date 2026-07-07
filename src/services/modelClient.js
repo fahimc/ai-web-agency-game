@@ -1,4 +1,3 @@
-import { getApiKey } from './storage.js';
 import { callModel as callModelFallback } from './openai.js';
 
 let worker;
@@ -21,7 +20,6 @@ export function callModelInBackground(payload) {
   const id = ++callId;
   const message = {
     ...payload,
-    apiKey: getApiKey(),
     signal: undefined,
   };
   return new Promise((resolve, reject) => {

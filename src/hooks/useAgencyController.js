@@ -3,11 +3,11 @@ import { employees } from '../data/employees.js';
 import { outputNames, outputOrder } from '../data/outputs.js';
 import { completionSteps, previewSteps } from '../data/steps.js';
 import { callModelInBackground } from '../services/modelClient.js';
+import { createNetlifyZip, deployToNetlify } from '../services/netlify.js';
 import {
   clearDraft,
   createProjectId,
   defaultSettings,
-  getApiKey,
   listProjects,
   loadSession,
   restoreSettings,
@@ -16,11 +16,15 @@ import {
 } from '../services/storage.js';
 import { cleanHTML, downloadText, extractEmail, phaseLabel, safeFileName } from '../utils/text.js';
 import { createProjectPdf } from '../utils/pdf.js';
+import { MAX_REVISIONS, estimateAiCost } from '../utils/pricing.js';
 
 const emptyState = {
   phase: 'name',
   projectId: '',
   projectName: '',
+  projectModel: 'gpt-5.4-mini',
+  paid: false,
+  paymentEstimate: null,
   availableProjects: [],
   userName: '',
   email: '',
@@ -63,7 +67,15 @@ export function useAgencyController() {
     const next = typeof updater === 'function' ? updater(current) : { ...current, ...updater };
     if (persist) {
       const saved = saveDraft(next);
-      const nextWithSaveTime = { ...next, projectId: saved.projectId || next.projectId, projectName: saved.projectName || next.projectName, lastSaved: saved.lastSaved };
+      const nextWithSaveTime = {
+        ...next,
+        projectId: saved.projectId || next.projectId,
+        projectName: saved.projectName || next.projectName,
+        projectModel: saved.projectModel || next.projectModel,
+        paid: saved.paid ?? next.paid,
+        paymentEstimate: saved.paymentEstimate || next.paymentEstimate,
+        lastSaved: saved.lastSaved,
+      };
       stateRef.current = nextWithSaveTime;
       setState(nextWithSaveTime);
       return;
@@ -149,6 +161,9 @@ export function useAgencyController() {
       phase: 'new_email',
       projectId: createProjectId(),
       projectName: 'Static website project',
+      projectModel: current.settings.selectedModel || 'gpt-5.4-mini',
+      paid: false,
+      paymentEstimate: null,
       availableProjects: [],
       userName: current.userName,
       email: '',
@@ -227,20 +242,24 @@ export function useAgencyController() {
       email,
       projectId: loaded.projectId || projectId,
       projectName: loaded.projectName || 'Static website project',
+      projectModel: loaded.projectModel || loaded.settings?.selectedModel || 'gpt-5.4-mini',
+      paid: Boolean(loaded.paid),
+      paymentEstimate: loaded.paymentEstimate || null,
       availableProjects: listProjects(email),
       settings: { ...defaultSettings, ...(loaded.settings || {}) },
       running: false,
     };
     update(next);
     if (next.error) {
-      speak(next.activeEmployee || 'reception', 'Welcome back. This project was paused, so open Settings if needed and press Resume work.');
+      speak(next.activeEmployee || 'reception', 'Welcome back. This project was paused, so open Settings if needed and press Resume work.', ['resume']);
     } else if (next.phase === 'complete') {
       speak('reception', 'Welcome back. This project is complete. Open Outputs whenever you want to review it.', ['openPreview']);
     } else if (next.outputs.WebsiteHTML && !next.approved) {
       update((current) => ({ ...current, phase: 'approval' }));
       speak('dev', 'Welcome back. Your preview is ready for approval. Open Outputs when you want to review it.', ['openPreview', 'approve']);
     } else if (next.brief) {
-      speak('reception', 'Welcome back. I found the project in progress. Press Resume work to continue where it left off.');
+      update((current) => ({ ...current, phase: ['running', 'brief'].includes(current.phase) ? current.phase : 'running' }));
+      speak('reception', 'Welcome back. I found the project in progress. Press Resume work to continue where it left off.', ['resume']);
     } else {
       update((current) => ({ ...current, phase: 'new_details' }));
       speak('reception', 'Welcome back. This project still needs the project form before the team can work.', ['openDetails']);
@@ -258,6 +277,9 @@ export function useAgencyController() {
       email,
       projectId: createProjectId(),
       projectName: 'Static website project',
+      projectModel: current.settings.selectedModel || 'gpt-5.4-mini',
+      paid: false,
+      paymentEstimate: null,
       availableProjects: listProjects(email),
       phase: 'new_details',
       speech: {
@@ -289,22 +311,52 @@ export function useAgencyController() {
       speak('reception', 'That does not look like an email address. Try again.');
       return;
     }
-    update((current) => ({ ...current, email, projectId: current.projectId || createProjectId(), projectName: current.projectName || 'Static website project', availableProjects: listProjects(email), phase: 'new_details' }));
+    update((current) => ({ ...current, email, projectId: current.projectId || createProjectId(), projectName: current.projectName || 'Static website project', projectModel: current.projectModel || current.settings.selectedModel || 'gpt-5.4-mini', paid: false, paymentEstimate: null, availableProjects: listProjects(email), phase: 'new_details' }));
     speak('reception', `Thanks, ${stateRef.current.userName || 'there'}. Please fill in this form and the team will treat it as the full brief.`, ['openDetails']);
     addConvo('Nova', 'Email saved. Please complete the project form.');
     window.setTimeout(() => setModal('details'), 120);
   }, [addConvo, speak, update]);
 
-  const submitDetails = useCallback((details) => {
+  const submitDetails = useCallback((details, options = {}) => {
     if (details.length < 8) {
       speak('reception', 'Give me a little more detail so the team has enough context.', ['openDetails']);
       return;
     }
-    update((current) => ({ ...current, clientDetails: details, brief: details, phase: 'running', progress: 2, progressTask: 'Brief received' }));
-    setModal(null);
+    const projectModel = options.projectModel || stateRef.current.projectModel || stateRef.current.settings.selectedModel || 'gpt-5.4-mini';
+    const paymentEstimate = estimateAiCost(projectModel, stateRef.current.settings.usdToGbp, MAX_REVISIONS);
+    update((current) => ({
+      ...current,
+      clientDetails: details,
+      brief: details,
+      projectModel,
+      paid: false,
+      paymentEstimate,
+      phase: 'payment',
+      progress: 2,
+      progressTask: 'Payment required',
+    }));
+    setModal('payment');
     addConvo('You', 'Submitted client details form.');
-    addConvo('Nova', 'Project form saved. The team is starting now.');
-    speak('reception', `Perfect${stateRef.current.userName ? `, ${stateRef.current.userName}` : ''}. That form gives us the brief. I am handing it to the team now.`);
+    addConvo('Nova', 'Project form saved. Payment is required before the team starts.');
+    speak('reception', `Perfect${stateRef.current.userName ? `, ${stateRef.current.userName}` : ''}. I have the brief. Please complete PayPal payment and then the team will start.`);
+  }, [addConvo, speak, update]);
+
+  const confirmPayment = useCallback((details = {}) => {
+    update((current) => ({
+      ...current,
+      paid: true,
+      projectModel: details.modelId || current.projectModel,
+      paymentEstimate: details.modelId ? estimateAiCost(details.modelId, current.settings.usdToGbp, MAX_REVISIONS) : current.paymentEstimate,
+      paymentDetails: {
+        ...details,
+        amountGbp: details.amountGbp ?? (details.modelId ? estimateAiCost(details.modelId, current.settings.usdToGbp, MAX_REVISIONS).publicPriceGbp : current.paymentEstimate?.publicPriceGbp),
+      },
+      phase: 'running',
+      progressTask: 'Payment received',
+    }));
+    setModal(null);
+    addConvo('Nova', 'Payment received. The team is starting now.');
+    speak('reception', 'Payment received. I am handing the brief to the team now.');
     window.setTimeout(() => startAgency(), 50);
   }, [addConvo, speak, update]);
 
@@ -370,7 +422,7 @@ export function useAgencyController() {
       error: message,
       progressTask: 'Paused',
     }));
-    speak(stateRef.current.activeEmployee || 'reception', 'Something interrupted the run, but the session is saved. Fix it in Settings and press Resume work.');
+    speak(stateRef.current.activeEmployee || 'reception', 'Something interrupted the run, but the session is saved. Check the Netlify environment setup, then press Resume work.');
     log('Error', message);
     setModal('pause');
   }, [log, speak, update]);
@@ -407,6 +459,13 @@ export function useAgencyController() {
     if (!current.brief) {
       update((stateNow) => ({ ...stateNow, phase: 'brief' }));
       speak('reception', 'Please complete the project form first. That gives the team the brief.', ['openDetails']);
+      return;
+    }
+    if (!current.paid) {
+      const paymentEstimate = current.paymentEstimate || estimateAiCost(current.projectModel || current.settings.selectedModel, current.settings.usdToGbp, MAX_REVISIONS);
+      update((stateNow) => ({ ...stateNow, phase: 'payment', paymentEstimate, running: false, progressTask: 'Payment required' }));
+      speak('reception', 'Payment is required before the team starts. Please complete PayPal checkout.', ['openPayment']);
+      setModal('payment');
       return;
     }
     update((stateNow) => ({
@@ -454,11 +513,16 @@ export function useAgencyController() {
     } catch (error) {
       handleRunError(error);
     }
-  }, [addConvo, handleRunError, log, runStep, speak, update]);
+  }, [addConvo, handleRunError, log, notify, runStep, speak, update]);
 
   const requestRevision = useCallback(async (changeText) => {
     if (!stateRef.current.outputs.WebsiteHTML) {
       addConvo('Nova', 'There is no preview to revise yet.');
+      return;
+    }
+    if (stateRef.current.revisionCount >= MAX_REVISIONS) {
+      notify(`Maximum revisions reached (${MAX_REVISIONS}). Approve the preview or start a new project.`);
+      speak('reception', `You have used all ${MAX_REVISIONS} included revisions. Approve the preview or start a new project.`);
       return;
     }
     const revisionCount = stateRef.current.revisionCount + 1;
@@ -468,12 +532,22 @@ export function useAgencyController() {
       running: true,
       approved: false,
       revisionCount,
-      progressTask: 'Revising preview',
+      activeEmployee: 'design',
+      progressTask: 'Design revision',
     }));
     log('Client', `Requested preview changes: ${changeText}`);
-    speak('dev', 'Got it. I am revising the preview now. I will come back when it is ready again.');
+    speak('design', 'Got it. I am taking the revision back through design first, then Kai will rebuild the preview.');
     try {
       aborter.current = new AbortController();
+      await runStep({
+        key: 'DesignDirection',
+        employee: 'design',
+        progress: 56,
+        quest: `Design revision ${revisionCount}`,
+        replace: true,
+        contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'WebsiteHTML'],
+        task: `Revise the design direction using this client change request: "${changeText}". Return a concise updated design direction with layout, visual, content, and responsive instructions for the developer. Keep strong existing choices that still fit.`,
+      });
       await runStep({
         key: 'WebsiteHTML',
         employee: 'dev',
@@ -506,6 +580,10 @@ export function useAgencyController() {
   const resumeWork = useCallback(() => {
     setModal(null);
     const current = stateRef.current;
+    if (current.running) {
+      notify('The agency is already working.');
+      return;
+    }
     if (!current.brief) {
       update((stateNow) => ({ ...stateNow, phase: 'new_details', error: '', running: false }));
       speak('reception', 'Please fill in the project form and I will restart the team.', ['openDetails']);
@@ -514,12 +592,12 @@ export function useAgencyController() {
     update((stateNow) => ({ ...stateNow, error: '', running: false }));
     if (current.outputs.WebsiteHTML && !current.approved) {
       update((stateNow) => ({ ...stateNow, phase: 'approval' }));
-      speak('dev', 'Preview is ready. Approve it or request changes.', ['openPreview']);
+      speak('dev', 'Preview is ready. Approve it or request changes.', ['openPreview', 'approve']);
       return;
     }
     if (current.approved || current.outputs.QAReport || current.outputs.ProjectPDF) continueAfterApproval();
     else startAgency();
-  }, [continueAfterApproval, speak, startAgency, update]);
+  }, [continueAfterApproval, notify, speak, startAgency, update]);
 
   const submitChat = useCallback((text) => {
     const value = text.trim();
@@ -540,8 +618,8 @@ export function useAgencyController() {
     notify('Client info saved.');
   }, [notify, update]);
 
-  const saveSettingsFromForm = useCallback((settings, apiKey) => {
-    const saved = saveSettings(settings, apiKey);
+  const saveSettingsFromForm = useCallback((settings) => {
+    const saved = saveSettings(settings);
     update((current) => ({ ...current, settings: saved }));
     notify('Settings saved.');
   }, [notify, update]);
@@ -584,6 +662,53 @@ export function useAgencyController() {
     downloadText(`${safeFileName(current.email || key)}.${extension}`, current.outputs[key] || '');
   }, []);
 
+  const downloadNetlifyPackage = useCallback(async () => {
+    const current = stateRef.current;
+    try {
+      const blob = await createNetlifyZip(current.outputs.WebsiteHTML || '');
+      const anchor = document.createElement('a');
+      anchor.href = URL.createObjectURL(blob);
+      anchor.download = `${safeFileName(current.projectName || current.email || 'netlify-site')}-netlify.zip`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(anchor.href);
+        anchor.remove();
+      }, 100);
+      notify('Netlify package downloaded.');
+    } catch (error) {
+      notify(error?.message || 'Could not create Netlify package.');
+    }
+  }, [notify]);
+
+  const deployNetlify = useCallback(async () => {
+    const current = stateRef.current;
+    try {
+      notify('Deploying to Netlify...');
+      const result = await deployToNetlify({
+        html: current.outputs.WebsiteHTML,
+        siteId: current.settings.netlifySiteId,
+        token: current.settings.netlifyToken,
+      });
+      const url = result.ssl_url || result.deploy_ssl_url || result.url || result.deploy_url;
+      update((stateNow) => ({
+        ...stateNow,
+        outputs: { ...stateNow.outputs, NetlifyURL: url || JSON.stringify(result, null, 2) },
+        progressTask: 'Netlify deployed',
+      }));
+      notify(url ? `Deployed: ${url}` : 'Netlify deploy created.');
+      if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      notify(error?.message || 'Netlify deploy failed.');
+      setMenuTab('settings');
+      setModal('menu');
+    }
+  }, [notify, update]);
+
+  const openNetlifyDrop = useCallback(() => {
+    window.open('https://app.netlify.com/drop', '_blank', 'noopener,noreferrer');
+  }, []);
+
   const exportJSON = useCallback(() => {
     downloadText(`${safeFileName(stateRef.current.email || 'tiny-office-session')}.json`, JSON.stringify(stateRef.current, null, 2));
   }, []);
@@ -595,6 +720,7 @@ export function useAgencyController() {
     startFresh,
     submitChat,
     submitDetails,
+    confirmPayment,
     processCustomerChoice,
     processProjectChoice,
     loadProject,
@@ -609,8 +735,10 @@ export function useAgencyController() {
       setModal('worker');
     },
     processApproval,
+    requestRevision,
     openOutputs,
     openDetails: () => setModal('details'),
+    openPayment: () => setModal('payment'),
     openMenu: (tab = 'status') => {
       setMenuTab(tab);
       setModal('menu');
@@ -623,18 +751,24 @@ export function useAgencyController() {
     stopRun,
     copyCurrentOutput,
     downloadCurrentOutput,
+    downloadNetlifyPackage,
+    deployNetlify,
+    openNetlifyDrop,
     exportJSON,
-    getApiKey,
     approve: () => processApproval('approve'),
     notify,
   }), [
     copyCurrentOutput,
     downloadCurrentOutput,
+    downloadNetlifyPackage,
+    deployNetlify,
+    openNetlifyDrop,
     exportJSON,
     newCustomer,
     notify,
     openOutputs,
     processApproval,
+    requestRevision,
     resetToChoice,
     startFresh,
     resumeWork,
@@ -645,6 +779,7 @@ export function useAgencyController() {
     stopRun,
     submitChat,
     submitDetails,
+    confirmPayment,
     processCustomerChoice,
     processProjectChoice,
     loadProject,

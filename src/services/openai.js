@@ -1,13 +1,7 @@
-import { getApiKey } from './storage.js';
 import { toOutputText } from '../utils/text.js';
 
 export async function callModel({ employee, task, context, settings, state, signal, complex }) {
-  const apiKey = getApiKey();
-  const model = complex ? settings.complexModel : settings.fastModel;
-  if (!apiKey && !settings.proxyUrl) {
-    throw new Error('OpenAI API key or proxy URL missing. Open Menu > Settings, add your key, then press Resume work.');
-  }
-
+  const model = state.projectModel || settings.selectedModel || (complex ? settings.complexModel : settings.fastModel);
   const system = [
     `You are ${employee.name}, the ${employee.role} inside MicroAgency AI, a playful autonomous web agency.`,
     `Personality and working style: ${employee.voice}.`,
@@ -24,20 +18,10 @@ export async function callModel({ employee, task, context, settings, state, sign
   ].filter(Boolean).join('\n\n');
 
   const payload = { model, input: [{ role: 'system', content: system }, { role: 'user', content: user }] };
-  const headers = { 'Content-Type': 'application/json' };
-  let url = 'https://api.openai.com/v1/responses';
 
-  if (settings.proxyUrl) {
-    url = settings.proxyUrl.trim();
-    payload.apiKey = apiKey || undefined;
-    payload.openaiPayload = { model, input: payload.input };
-  } else {
-    headers.Authorization = `Bearer ${apiKey}`;
-  }
-
-  const response = await fetch(url, {
+  const response = await fetch('/.netlify/functions/openai-response', {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
     signal,
   });

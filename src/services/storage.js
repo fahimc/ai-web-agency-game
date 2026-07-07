@@ -1,7 +1,6 @@
 const LS = {
   draft: 'tiny_office_draft_v2',
   last: 'tiny_office_last_email_v2',
-  key: 'tiny_office_openai_key_v2',
   settings: 'tiny_office_settings_v2',
 };
 
@@ -9,8 +8,10 @@ export const defaultSettings = {
   fastModel: 'gpt-4.1-mini',
   complexModel: 'gpt-4.1',
   autonomy: 'Balanced',
-  proxyUrl: '',
-  rememberKey: true,
+  selectedModel: 'gpt-5.4-mini',
+  usdToGbp: 0.79,
+  netlifySiteId: '',
+  netlifyToken: '',
 };
 
 export function restoreDraft() {
@@ -25,22 +26,16 @@ export function restoreDraft() {
 export function restoreSettings() {
   try {
     const raw = localStorage.getItem(LS.settings);
-    return raw ? { ...defaultSettings, ...JSON.parse(raw) } : defaultSettings;
+    return raw ? normalizeSettings(JSON.parse(raw)) : defaultSettings;
   } catch {
     return defaultSettings;
   }
 }
 
-export function saveSettings(settings, apiKey = '') {
-  const next = { ...defaultSettings, ...settings };
+export function saveSettings(settings) {
+  const next = normalizeSettings(settings);
   localStorage.setItem(LS.settings, JSON.stringify(next));
-  if (next.rememberKey && apiKey) localStorage.setItem(LS.key, apiKey);
-  if (!next.rememberKey) localStorage.removeItem(LS.key);
   return next;
-}
-
-export function getApiKey() {
-  return localStorage.getItem(LS.key) || '';
 }
 
 export function sessionKey(email) {
@@ -61,6 +56,9 @@ export function saveDraft(state) {
   const snapshot = {
     projectId,
     projectName: state.projectName || deriveProjectName(state),
+    projectModel: state.projectModel,
+    paid: state.paid,
+    paymentEstimate: state.paymentEstimate,
     phase: state.phase,
     userName: state.userName,
     email: state.email,
@@ -164,6 +162,14 @@ function isPersistableProject(state) {
     || Object.keys(state.outputs || {}).length
     || ['running', 'approval', 'complete', 'error', 'brief'].includes(state.phase),
   );
+}
+
+function normalizeSettings(settings = {}) {
+  const allowed = Object.keys(defaultSettings);
+  return allowed.reduce((next, key) => {
+    next[key] = settings[key] ?? defaultSettings[key];
+    return next;
+  }, {});
 }
 
 function safeKey(value) {
