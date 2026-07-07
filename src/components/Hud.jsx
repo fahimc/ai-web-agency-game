@@ -1,0 +1,42 @@
+import React from 'react';
+import { Box, ClipboardList, Menu, RotateCcw } from 'lucide-react';
+
+export function Hud({ state, phaseLabel, actions }) {
+  const showProgress = state.progress > 0 || ['running', 'approval', 'complete', 'error'].includes(state.phase);
+  return (
+    <header className="hud" aria-label="Office HUD">
+      <div className="hud-row">
+        <div className="brand">
+          <div>
+            <h1><span>MicroAgency</span> <em>AI</em></h1>
+            <small>{state.email ? `Saved locally for ${state.email}` : 'Autonomous static-site studio'}</small>
+          </div>
+        </div>
+        <div className="phase-pill" title="Current office state">
+          <span className={`phase-dot ${state.running || state.phase === 'approval' ? 'live' : ''}`} />
+          <span>{phaseLabel}</span>
+        </div>
+        <div className="hud-actions">
+          <button className="secondary tiny keep-mobile" type="button" onClick={actions.startFresh}>
+            <RotateCcw size={16} /> Reset
+          </button>
+          {state.phase === 'error' && <button className="green tiny" type="button" onClick={actions.resumeWork}>Resume</button>}
+          <button className="secondary tiny" type="button" onClick={() => actions.openOutputs(state.activeOutput || 'Plan')}>
+            <Box size={16} /> Outputs
+          </button>
+          <button className="secondary tiny" type="button" onClick={() => actions.openMenu('quests')}>
+            <ClipboardList size={16} /> Tasks
+          </button>
+          <button className="secondary tiny keep-mobile menu-button" type="button" onClick={() => actions.openMenu('status')}>
+            <Menu size={16} /> Menu
+          </button>
+        </div>
+      </div>
+      <div className={`top-progress ${showProgress ? 'show' : ''}`}>
+        <span>{Math.round(state.progress || 0)}%</span>
+        <div className="meter"><span style={{ width: `${state.progress || 0}%` }} /></div>
+        <span>{state.progressTask || 'Waiting'}</span>
+      </div>
+    </header>
+  );
+}
