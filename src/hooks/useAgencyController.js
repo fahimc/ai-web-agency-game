@@ -6,6 +6,7 @@ import {
   buildDesignSelectionMarkdown,
   buildEngineCapabilityContext,
   buildExampleSite,
+  contrastRatio,
   designRecommendationsTask,
   fallbackDesignRecommendations,
   normalizePalette,
@@ -1465,20 +1466,38 @@ function applyPaletteToWebsiteOutput(output, palette) {
 
 function applyPaletteToHtml(html, palette) {
   const [ink, accent, bg, secondary, surface] = normalizePalette(palette);
+  const foreground = ensureReadableColor(ink, bg);
+  const cardForeground = ensureReadableColor(ink, surface);
+  const accentForeground = readableForeground(accent);
+  const secondaryForeground = readableForeground(secondary);
+  const muted = ensureReadableColor('#64748b', bg);
+  const cardMuted = ensureReadableColor('#64748b', surface);
   let value = String(html || '');
   const replacements = [
-    ['--ink', ink],
+    ['--ink', foreground],
     ['--accent', accent],
     ['--bg', bg],
     ['--secondary', secondary],
     ['--card', surface],
+    ['--accent-ink', accentForeground],
+    ['--secondary-ink', secondaryForeground],
+    ['--card-ink', cardForeground],
+    ['--muted', muted],
   ];
   replacements.forEach(([name, color]) => {
     value = value.replace(new RegExp(`${name}:\\s*#[0-9a-f]{3,6}`, 'ig'), `${name}:${color}`);
   });
-  const override = `:root{--ink:${ink};--accent:${accent};--bg:${bg};--secondary:${secondary};--card:${surface};--bs-body-color:${ink};--bs-body-bg:${bg};--bs-primary:${accent};--bs-secondary:${secondary};--muted:#5f6368;--line:rgba(10,10,10,.14)}html,body{background:var(--bg)!important;color:var(--ink)!important}.site-nav,.navbar{background:color-mix(in srgb,var(--bg) 92%,white)!important;color:var(--ink)!important}.navbar-brand,.nav-link,h1,h2,h3,h4,h5,h6,strong{color:var(--ink)!important}.nav-link.active,.nav-link:hover{background:var(--card)!important;border-color:var(--line)!important;color:var(--ink)!important}.button,.btn-primary,[class*="btn-primary"]{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important}.button.secondary,.btn-secondary{background:var(--ink)!important;border-color:var(--ink)!important;color:var(--bg)!important}.card,.panel,.tag,.input,.form-control,.accordion-item,.list-group-item{background:var(--card)!important;color:var(--ink)!important;border-color:var(--line)!important}.page-kicker,.eyebrow,a:not(.button):not(.btn){color:var(--accent)!important}.hero,.section,main,header,footer{background-color:transparent!important}`;
+  const override = `:root{--ink:${foreground};--accent:${accent};--accent-ink:${accentForeground};--bg:${bg};--secondary:${secondary};--secondary-ink:${secondaryForeground};--card:${surface};--card-ink:${cardForeground};--bs-body-color:${foreground};--bs-body-bg:${bg};--bs-primary:${accent};--bs-secondary:${secondary};--muted:${muted};--card-muted:${cardMuted};--line:rgba(10,10,10,.14)}html,body{background:var(--bg)!important;color:var(--ink)!important}.site-nav,.navbar{background:color-mix(in srgb,var(--bg) 92%,white)!important;color:var(--ink)!important}.navbar-brand,.nav-link,h1,h2,h3,h4,h5,h6,strong{color:var(--ink)!important}.nav-link.active,.nav-link:hover{background:var(--card)!important;border-color:var(--line)!important;color:var(--card-ink)!important}.button,.btn-primary,[class*="btn-primary"],.tag{background:var(--accent)!important;border-color:var(--accent)!important;color:var(--accent-ink)!important}.button.secondary,.btn-secondary{background:var(--secondary)!important;border-color:var(--secondary)!important;color:var(--secondary-ink)!important}.card,.panel,.input,.form-control,.accordion-item,.list-group-item{background:var(--card)!important;color:var(--card-ink)!important;border-color:var(--line)!important}.card span,.panel p,.accordion-body{color:var(--card-muted)!important}.page-kicker,.eyebrow,a:not(.button):not(.btn){color:var(--ink)!important}.hero,.section,main,header,footer{background-color:transparent!important}`;
   if (/<\/style>/i.test(value)) return value.replace(/<\/style>/i, `${override}</style>`);
   return value.replace(/<\/head>/i, `<style>${override}</style></head>`);
+}
+
+function readableForeground(background) {
+  return contrastRatio('#ffffff', background) >= contrastRatio('#0f172a', background) ? '#ffffff' : '#0f172a';
+}
+
+function ensureReadableColor(foreground, background) {
+  return contrastRatio(foreground, background) >= 4.5 ? foreground : readableForeground(background);
 }
 
 function updateWebsiteOutputFile(output, fileName, html) {

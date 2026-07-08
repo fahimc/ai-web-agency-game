@@ -21,8 +21,11 @@ const ONE_PAGE_SECTION_PRESETS = [
 ];
 
 export function DesignOptionsModal({ state, actions }) {
+  const hasModelRecommendations = Array.isArray(state.designRecommendations) && state.designRecommendations.length > 0;
+  const isLoadingRecommendations = state.designRecommendationStatus === 'loading' && !hasModelRecommendations;
   const designOptions = useMemo(() => {
     const savedRecommendations = Array.isArray(state.designRecommendations) ? state.designRecommendations : [];
+    if (state.designRecommendationStatus === 'loading' && !savedRecommendations.length) return [];
     const recommendations = savedRecommendations.length ? savedRecommendations : fallbackDesignRecommendations(state, 4);
     return recommendations
       .map((recommendation) => {
@@ -30,11 +33,12 @@ export function DesignOptionsModal({ state, actions }) {
         return { ...recommendation, layout };
       })
       .filter((option) => option.layout);
-  }, [state]);
+  }, [state, state.designRecommendationStatus, state.designRecommendations]);
   const initialIndex = Math.max(0, designOptions.findIndex((option) => option.layout.id === state.selectedDesignStyle));
   const [activeIndex, setActiveIndex] = useState(initialIndex);
-  const activeOption = designOptions[activeIndex] || designOptions[0];
+  const activeOption = designOptions[activeIndex] || designOptions[0] || null;
   const activeLayout = activeOption?.layout || siteLayouts[0];
+  const activeOptionKey = activeOption?.id || activeLayout.id;
   const paletteOptions = useMemo(() => {
     const modelPalette = {
       id: 'model',
@@ -57,7 +61,7 @@ export function DesignOptionsModal({ state, actions }) {
   const [selectedSections, setSelectedSections] = useState(() => isOnePagePackage ? initialSections() : (state.selectedSiteSections?.length ? state.selectedSiteSections : structureRecommendation.sections));
   const [fullScreen, setFullScreen] = useState(false);
   const designer = employees.design;
-  const optionNumber = activeIndex + 1;
+  const optionNumber = designOptions.length ? activeIndex + 1 : 0;
   const selectedPalette = paletteMode === 'custom'
     ? normalizePalette(customColors)
     : normalizePalette(paletteOptions[paletteIndex]?.colors || activeLayout.palette);
@@ -66,25 +70,35 @@ export function DesignOptionsModal({ state, actions }) {
     selectedSitePages: selectedPages,
     selectedSiteSections: selectedSections,
   }), [selectedPages, selectedSections, state]);
-  const activeHtml = useMemo(() => buildExampleSite(activeLayout, previewState, selectedPalette, { preview: true }), [activeLayout, selectedPalette, previewState]);
+  const activeHtml = useMemo(() => {
+    if (isLoadingRecommendations || !activeOption) return '';
+    return buildExampleSite(activeLayout, previewState, selectedPalette, { preview: true });
+  }, [activeLayout, activeOption, isLoadingRecommendations, selectedPalette, previewState]);
 
   useEffect(() => {
-    if (activeIndex > designOptions.length - 1) setActiveIndex(0);
+    if (designOptions.length && activeIndex > designOptions.length - 1) setActiveIndex(0);
   }, [activeIndex, designOptions.length]);
 
   useEffect(() => {
+    if (!activeOption) return;
     setPaletteMode('preset');
     setPaletteIndex(0);
     setCustomColors(normalizePalette(activeOption?.palette || activeLayout.palette));
     setSelectedPages(isOnePagePackage ? ['Home'] : (state.selectedSitePages?.length ? state.selectedSitePages : structureRecommendation.pages));
     setSelectedSections(isOnePagePackage ? onePageSections(structureRecommendation, state.selectedSiteSections) : (state.selectedSiteSections?.length ? state.selectedSiteSections : structureRecommendation.sections));
-  }, [activeLayout, activeOption, isOnePagePackage, state.selectedSitePages, state.selectedSiteSections, structureRecommendation]);
+  }, [activeOption, activeOptionKey, activeLayout, isOnePagePackage, state.selectedSitePages, state.selectedSiteSections, structureRecommendation]);
+
+  useEffect(() => {
+    if (paletteOptions.length && paletteIndex > paletteOptions.length - 1) setPaletteIndex(0);
+  }, [paletteIndex, paletteOptions.length]);
 
   function showPrevious() {
+    if (!designOptions.length) return;
     setActiveIndex((current) => (current === 0 ? designOptions.length - 1 : current - 1));
   }
 
   function showNext() {
+    if (!designOptions.length) return;
     setActiveIndex((current) => (current + 1) % designOptions.length);
   }
 
@@ -92,10 +106,8 @@ export function DesignOptionsModal({ state, actions }) {
     setCustomColors((current) => current.map((color, colorIndex) => colorIndex === index ? value : color));
   }
 
-  const isLoadingRecommendations = state.designRecommendationStatus === 'loading' && !state.designRecommendations?.length;
-
   function selectCurrent() {
-    if (isLoadingRecommendations) {
+    if (isLoadingRecommendations || !activeOption) {
       actions.notify('Mira is still preparing recommendations.');
       return;
     }
@@ -106,7 +118,7 @@ export function DesignOptionsModal({ state, actions }) {
     <Modal title="Choose Design Direction" onClose={actions.closeModal} className="design-options-modal">
       <div className="modal-tabs">
         <span className="modal-tab active">Design controls</span>
-        <span className="modal-tab preview-label">Example client site</span>
+        {!isLoadingRecommendations && <span className="modal-tab preview-label">Example client site</span>}
       </div>
       <div className="modal-body design-options-body">
         <aside className="design-side-panel">
@@ -125,71 +137,82 @@ export function DesignOptionsModal({ state, actions }) {
                 : `Mira selected ${designOptions.length} recommended directions from the brief. Compare them, choose a colour palette, then production can start.`}
             </p>
           </div>
-          {isLoadingRecommendations && <div className="empty">Preparing recommendations...</div>}
-          <div className="design-carousel-card">
-            <div className="design-count">Option {optionNumber} of {designOptions.length}</div>
-            <h3>{activeOption?.name || activeLayout.name}</h3>
-            <p className="muted">{activeOption?.rationale || directionSummary(activeLayout)}</p>
-            <PaletteSwatches colors={selectedPalette} compact />
-            <div className="design-carousel-actions">
-              <button type="button" className="secondary" onClick={showPrevious}>Previous</button>
-              <button type="button" className="secondary" onClick={showNext}>Next</button>
-            </div>
-          </div>
-          <PaletteChooser
-            paletteMode={paletteMode}
-            setPaletteMode={setPaletteMode}
-            paletteIndex={paletteIndex}
-            setPaletteIndex={setPaletteIndex}
-            paletteOptions={paletteOptions}
-            customColors={customColors}
-            updateCustomColor={updateCustomColor}
-          />
-          <StructureChooser
-            isOnePagePackage={isOnePagePackage}
-            selectedPages={selectedPages}
-            setSelectedPages={setSelectedPages}
-            selectedSections={selectedSections}
-            setSelectedSections={setSelectedSections}
-          />
-          <div className="design-dots" aria-label="Design options">
-            {designOptions.map((option, index) => (
-              <button type="button" className={index === activeIndex ? 'active' : ''} key={option.id || `${option.layoutId}-${index}`} onClick={() => setActiveIndex(index)} aria-label={`Show ${option.name}`} />
-            ))}
-          </div>
+          {isLoadingRecommendations || !activeOption ? (
+            <div className="empty">Preparing recommendations...</div>
+          ) : (
+            <>
+              <div className="design-carousel-card">
+                <div className="design-count">Option {optionNumber} of {designOptions.length}</div>
+                <h3>{activeOption.name || activeLayout.name}</h3>
+                <p className="muted">{activeOption.rationale || directionSummary(activeLayout)}</p>
+                <PaletteSwatches colors={selectedPalette} compact />
+                <div className="design-carousel-actions">
+                  <button type="button" className="secondary" onClick={showPrevious}>Previous</button>
+                  <button type="button" className="secondary" onClick={showNext}>Next</button>
+                </div>
+              </div>
+              <PaletteChooser
+                paletteMode={paletteMode}
+                setPaletteMode={setPaletteMode}
+                paletteIndex={paletteIndex}
+                setPaletteIndex={setPaletteIndex}
+                paletteOptions={paletteOptions}
+                customColors={customColors}
+                updateCustomColor={updateCustomColor}
+              />
+              <StructureChooser
+                isOnePagePackage={isOnePagePackage}
+                selectedPages={selectedPages}
+                setSelectedPages={setSelectedPages}
+                selectedSections={selectedSections}
+                setSelectedSections={setSelectedSections}
+              />
+              <div className="design-dots" aria-label="Design options">
+                {designOptions.map((option, index) => (
+                  <button type="button" className={index === activeIndex ? 'active' : ''} key={option.id || `${option.layoutId}-${index}`} onClick={() => setActiveIndex(index)} aria-label={`Show ${option.name}`} />
+                ))}
+              </div>
+            </>
+          )}
         </aside>
         <section className="design-preview-panel">
-          <div className="client-preview-label">
-            <span>Client site example</span>
-            <b>Not the MicroAgency app</b>
-          </div>
-          <div className="design-preview-head">
-            <div>
-              <h3>{activeOption?.name || activeLayout.name}</h3>
-              <p className="muted">{activeOption?.tone || activeLayout.tone}</p>
-            </div>
-            <div className="stack">
-              <button type="button" className="secondary" onClick={() => setFullScreen(true)}>Full screen</button>
-              <button type="button" className="green" disabled={isLoadingRecommendations} onClick={selectCurrent}>Select this direction</button>
-            </div>
-          </div>
-          <iframe className="design-preview-frame" title={`${activeOption?.name || activeLayout.name} preview`} srcDoc={activeHtml} />
+          {isLoadingRecommendations || !activeOption ? (
+            <div className="empty design-preview-empty">Previews and palettes will appear after Mira has prepared the recommendations.</div>
+          ) : (
+            <>
+              <div className="client-preview-label">
+                <span>Client site example</span>
+                <b>Not the MicroAgency app</b>
+              </div>
+              <div className="design-preview-head">
+                <div>
+                  <h3>{activeOption.name || activeLayout.name}</h3>
+                  <p className="muted">{activeOption.tone || activeLayout.tone}</p>
+                </div>
+                <div className="stack">
+                  <button type="button" className="secondary" onClick={() => setFullScreen(true)}>Full screen</button>
+                  <button type="button" className="green" onClick={selectCurrent}>Select this direction</button>
+                </div>
+              </div>
+              <iframe className="design-preview-frame" title={`${activeOption.name || activeLayout.name} preview`} srcDoc={activeHtml} />
+            </>
+          )}
         </section>
       </div>
-      {fullScreen && (
-        <div className="design-fullscreen" role="dialog" aria-label={`${activeOption?.name || activeLayout.name} full screen preview`}>
+      {fullScreen && activeOption && !isLoadingRecommendations && (
+        <div className="design-fullscreen" role="dialog" aria-label={`${activeOption.name || activeLayout.name} full screen preview`}>
           <div className="design-fullscreen-bar">
             <div>
-              <b>Client site direction: {activeOption?.name || activeLayout.name}</b>
+              <b>Client site direction: {activeOption.name || activeLayout.name}</b>
               <span>This is the proposed customer website direction, not the MicroAgency app.</span>
               <PaletteSwatches colors={selectedPalette} />
             </div>
             <div className="stack">
               <button type="button" className="secondary" onClick={() => setFullScreen(false)}>Close</button>
-              <button type="button" className="green" disabled={isLoadingRecommendations} onClick={selectCurrent}>Select this direction</button>
+              <button type="button" className="green" onClick={selectCurrent}>Select this direction</button>
             </div>
           </div>
-          <iframe className="design-fullscreen-frame" title={`${activeOption?.name || activeLayout.name} full screen`} srcDoc={activeHtml} />
+          <iframe className="design-fullscreen-frame" title={`${activeOption.name || activeLayout.name} full screen`} srcDoc={activeHtml} />
         </div>
       )}
     </Modal>
