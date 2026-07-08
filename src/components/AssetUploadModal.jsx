@@ -11,7 +11,10 @@ export function AssetUploadModal({ state, actions }) {
     if (!files.length) return;
     setBusy(true);
     try {
-      const assets = await Promise.all(files.map(readReviewFile));
+      const assets = [];
+      for (const file of files) {
+        assets.push(await readReviewFile(file));
+      }
       actions.addReviewAssets(assets);
     } catch (error) {
       actions.notify(`File upload failed: ${error?.message || error}`);

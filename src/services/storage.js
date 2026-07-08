@@ -32,6 +32,25 @@ export function restoreSettings() {
   }
 }
 
+export function repairStoredSessions() {
+  try {
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith('tiny_office_'))
+      .forEach((key) => {
+        const raw = localStorage.getItem(key);
+        if (!raw || !raw.includes('reviewAssets')) return;
+        const cleanedRaw = raw.length > 1000000
+          ? raw.replace(/"dataUrl":"data:[^"]+"/g, '"dataUrl":""')
+          : raw;
+        const parsed = JSON.parse(cleanedRaw);
+        const normalized = normalizeStoredSession(parsed);
+        safeSetItem(key, JSON.stringify(normalized));
+      });
+  } catch {
+    // Best-effort cleanup only. The app should still boot if storage repair fails.
+  }
+}
+
 export function saveSettings(settings) {
   const next = normalizeSettings(settings);
   localStorage.setItem(LS.settings, JSON.stringify(next));

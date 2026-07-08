@@ -20,6 +20,7 @@ import {
   exportProject,
   listProjects,
   loadSession,
+  repairStoredSessions,
   restoreSettings,
   saveDraft,
 } from '../services/storage.js';
@@ -72,6 +73,7 @@ const emptyState = {
 
 export function useAgencyController() {
   const [state, setState] = useState(() => {
+    repairStoredSessions();
     const settings = restoreSettings();
     return { ...emptyState, settings };
   });

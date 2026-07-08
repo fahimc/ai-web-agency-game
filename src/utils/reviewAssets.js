@@ -38,9 +38,10 @@ async function readImageDataUrl(file) {
   if (/svg/i.test(file.type || file.name)) {
     return file.size <= 350000 ? readAsDataUrl(file) : '';
   }
+  let objectUrl = '';
   try {
-    const original = await readAsDataUrl(file);
-    const image = await loadImage(original);
+    objectUrl = URL.createObjectURL(file);
+    const image = await loadImage(objectUrl);
     const max = 1400;
     const scale = Math.min(1, max / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
     const width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
@@ -52,11 +53,21 @@ async function readImageDataUrl(file) {
     context.fillStyle = '#ffffff';
     context.fillRect(0, 0, width, height);
     context.drawImage(image, 0, 0, width, height);
-    const compressed = canvas.toDataURL('image/jpeg', 0.78);
-    return compressed.length < original.length || original.length > 700000 ? compressed : original;
+    return compressedImageDataUrl(canvas);
   } catch {
     return file.size <= 700000 ? readAsDataUrl(file) : '';
+  } finally {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
   }
+}
+
+function compressedImageDataUrl(canvas) {
+  const qualities = [0.78, 0.66, 0.54, 0.42];
+  for (const quality of qualities) {
+    const value = canvas.toDataURL('image/jpeg', quality);
+    if (value.length <= 650000) return value;
+  }
+  return canvas.toDataURL('image/jpeg', 0.36);
 }
 
 function loadImage(src) {
