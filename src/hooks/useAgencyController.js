@@ -4,6 +4,7 @@ import { outputNames, outputOrder } from '../data/outputs.js';
 import {
   siteLayouts,
   buildDesignSelectionMarkdown,
+  buildEngineCapabilityContext,
   buildExampleSite,
   designRecommendationsTask,
   fallbackDesignRecommendations,
@@ -455,7 +456,13 @@ export function useAgencyController() {
 
   const buildContext = useCallback((keys) => {
     const current = stateRef.current;
-    return keys.map((key) => `## ${outputNames[key] || key}\n${current.outputs[key] || ''}`).filter(Boolean).join('\n\n---\n\n').slice(-30000);
+    const capabilityContext = `## Available MicroAgency Engine, Sections, Layouts, Components, Palettes And Extension Rules\n${buildEngineCapabilityContext()}`;
+    const employeeContext = keys
+      .map((key) => `## ${outputNames[key] || key}\n${current.outputs[key] || ''}`)
+      .filter(Boolean)
+      .join('\n\n---\n\n')
+      .slice(-22000);
+    return [employeeContext, capabilityContext].filter(Boolean).join('\n\n---\n\n').slice(-30000);
   }, []);
 
   const generateDesignRecommendations = useCallback(async (force = false) => {
@@ -843,7 +850,7 @@ export function useAgencyController() {
         quest: `Design revision ${revisionCount}`,
         replace: true,
         contextKeys: ['Plan', 'TaskBoard', 'SelectedDesign', 'DesignDirection', 'PageContent', 'WebsiteHTML'],
-        task: `Think like the visual designer reviewing an existing customer website. Use the original selected design, the previous design direction, the current page content, and the current website output as context. Client revision request: "${changeText}". ${revisionPalette ? `The client asked for a full colour-scheme change. Use this exact palette across the whole site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn an updated REVISION DESIGN PLAN for the developer. Include: 1. what changes, 2. what stays, 3. exact colour tokens for text, primary, background, accent, and surface, 4. content/copy changes required, 5. image changes required, 6. page-by-page developer instructions, 7. mobile/accessibility checks. Be specific enough that Kai can rebuild the website without guessing.`,
+        task: `Think like the visual designer reviewing an existing customer website. Use the original selected design, the previous design direction, the current page content, the current website output, and the supplied MicroAgency capability context as your source material. Client revision request: "${changeText}". ${revisionPalette ? `The client asked for a full colour-scheme change. Use this exact palette across the whole site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn an updated REVISION DESIGN PLAN for the developer. Include: 1. what changes, 2. what stays, 3. exact colour/theme tokens, palette choice, typography choice, section/library choices and any custom additions needed, 4. content/copy changes required, 5. image changes required, 6. page-by-page developer instructions, 7. mobile/accessibility checks. Be specific enough that Kai can rebuild the website without guessing.`,
       });
       const revisedOutput = await runStep({
         key: 'WebsiteHTML',
@@ -854,8 +861,8 @@ export function useAgencyController() {
         replace: true,
         contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'PageContent', 'WebsiteHTML'],
         task: stateRef.current.projectPackage === 'launch'
-          ? `Implement the revised DesignDirection exactly. The DesignDirection is Mira's revision plan and is the source of truth. Client revision request: "${changeText}". ${revisionPalette ? `Apply this exact palette across the whole site: ${revisionPalette.join(', ')}. Update CSS variables, Bootstrap overrides, buttons, links, cards, nav, backgrounds, borders, headings, and forms so no old scheme remains.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts that Mira kept, rebuild every requested part, and ensure responsive accessible markup. Use Bootstrap 5.3 CSS and bootstrap.bundle JS, and keep a Bootstrap responsive navbar with navbar-toggler/collapse so mobile shows a hamburger menu.`
-          : `Implement the revised DesignDirection exactly. The DesignDirection is Mira's revision plan and is the source of truth. Client revision request: "${changeText}". ${revisionPalette ? `Apply this exact palette across every file in the site: ${revisionPalette.join(', ')}. Update CSS variables, Bootstrap overrides, buttons, links, cards, nav, backgrounds, borders, headings, and forms so no old scheme remains.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes. Use Bootstrap 5.3 CSS and bootstrap.bundle JS in every file, and keep a Bootstrap responsive navbar with navbar-toggler/collapse so mobile shows a hamburger menu.`,
+          ? `Implement the revised DesignDirection exactly. The DesignDirection is Mira's revision plan and is the source of truth. Use the supplied MicroAgency capability context: section library, layouts, components, Bootstrap behaviours, palettes, typography, and extension rules. Client revision request: "${changeText}". ${revisionPalette ? `Apply this exact palette across the whole site: ${revisionPalette.join(', ')}. Update CSS variables, Bootstrap overrides, buttons, links, cards, nav, backgrounds, borders, headings, and forms so no old scheme remains.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts that Mira kept, rebuild every requested part, and ensure responsive accessible markup. Use Bootstrap 5.3 CSS and bootstrap.bundle JS, and keep a Bootstrap responsive navbar with navbar-toggler/collapse so mobile shows a hamburger menu.`
+          : `Implement the revised DesignDirection exactly. The DesignDirection is Mira's revision plan and is the source of truth. Use the supplied MicroAgency capability context: section library, layouts, components, Bootstrap behaviours, palettes, typography, and extension rules. Client revision request: "${changeText}". ${revisionPalette ? `Apply this exact palette across every file in the site: ${revisionPalette.join(', ')}. Update CSS variables, Bootstrap overrides, buttons, links, cards, nav, backgrounds, borders, headings, and forms so no old scheme remains.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes. Use Bootstrap 5.3 CSS and bootstrap.bundle JS in every file, and keep a Bootstrap responsive navbar with navbar-toggler/collapse so mobile shows a hamburger menu.`,
       });
       if (revisionPalette) {
         const paletteOutput = applyPaletteToWebsiteOutput(revisedOutput, revisionPalette);

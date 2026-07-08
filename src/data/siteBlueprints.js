@@ -30,6 +30,63 @@ export const componentLibrary = {
   ],
 };
 
+export function buildEngineCapabilityContext() {
+  return [
+  'MicroAgency AI build system capabilities:',
+  '',
+  'Architecture: Page -> Sections -> Layouts -> Components -> Content. Prefer complete reusable website sections over tiny atomic component assembly.',
+  'Engine: Bootstrap 5.3 + MicroAgency Layout Engine + MicroAgency section registry + validated theme generator. Use semantic HTML, responsive Bootstrap markup, CSS grid/flex, visible focus states, and local CSS variables.',
+  '',
+  'Core production section types available:',
+  [
+    'header-with-cta', 'footer-standard', 'hero-centered', 'hero-split', 'hero-with-form',
+    'intro-centered', 'intro-two-column', 'services-grid', 'services-tabs',
+    'features-grid', 'features-bento', 'features-tabs', 'process-numbered-cards',
+    'process-timeline', 'pricing-cards', 'pricing-comparison', 'testimonials-grid',
+    'testimonials-carousel', 'logo-strip', 'portfolio-grid', 'gallery-grid',
+    'cta-band', 'cta-split', 'contact-form-split', 'contact-details-cards',
+    'faq-accordion', 'team-grid', 'stats-bar', 'blog-card-grid', 'article-body',
+    'areas-served', 'opening-hours', 'multi-step-form', 'legal-page',
+    'thank-you-section', '404-section',
+  ].join(', '),
+  '',
+  'Registered section categories with placeholder support: navigation, hero, content, services, features, process, pricing, trust/social proof, portfolio, gallery/media, CTA, contact/lead capture, FAQ, team/people, about/story, stats, comparison, product, blog/article, location/local SEO, booking, menu/catalogue, event, forms, utility/system, legal/policy, search/filter.',
+  'Use placeholders only when a requested section type is not part of the core production set. If needed, add a custom section renderer or custom markup, but first try an existing type plus variant/layout/content.',
+  '',
+  'Layout primitives available:',
+  [
+    'single-column', 'wide-single-column', 'two-column ratios 1:1 2:1 1:2 3:2 2:3',
+    'asymmetric-two-column', 'sidebar', 'three-column', 'responsive card-grid',
+    'bento-grid', 'split-hero', 'centered-hero', 'full-width-media', 'masonry',
+    'horizontal-scroller', 'stack', 'cluster', 'cover', 'cta-band',
+  ].join(', '),
+  '',
+  'Reusable components available when a section needs internal items:',
+  [
+    'Bootstrap responsive header/navbar/offcanvas', 'footer', 'hero text block',
+    'button group', 'service card', 'feature card', 'pricing card',
+    'testimonial card', 'portfolio card', 'blog card', 'team card',
+    'FAQ accordion', 'contact form', 'newsletter form', 'gallery grid',
+    'stats block', 'process steps', 'logo strip', 'map/location block',
+    'alert/notice block',
+  ].join(', '),
+  '',
+  'Bootstrap behaviours available through the behaviour object/data attributes: collapse, accordion, dropdown, modal, offcanvas, tabs, carousel, toast, tooltip, popover, scrollspy.',
+  '',
+  'Base design directions and palettes available:',
+  siteLayouts.map((layout) => `${layout.id}: ${layout.name} (${layout.model}; ${layout.tone}; palette ${layout.palette.join(', ')})`).join('\n'),
+  '',
+  'Theme generator palette presets available: Mira recommended, modern mono (#0a0a0a #111111 #ffffff #6b7280 #f7f7f7), earthy vibrancy (#2f3a23 #b7791f #f4e7d3 #8b3a2b #ffffff), moody botanical (#123524 #2f6f5b #f7f3ea #c7a76c #ffffff), electric SaaS (#08111f #4f46e5 #f8fafc #22d3ee #ffffff), soft editorial (#111111 #efe9e1 #d8c3ad #8a6a4f #ffffff), wellness mist (#164e63 #2bb3a3 #f3fbf9 #f4a261 #ffffff), luxury neutral (#1f130f #6b3f2a #f7efe5 #b08d57 #ffffff), warm venue (#2f1b12 #c2410c #fff7ed #f59e0b #ffffff). The static engine also has 30 preset seed palettes across AI agency, SaaS, local business, trades, legal, finance, healthcare, beauty, restaurant, education, charity, portfolio, luxury, playful, and dark premium.',
+  'You may create a custom palette when the brief needs it, but use 3-5 real hex colours and map them to semantic roles: background, foreground, surface, card, primary, secondary, accent, muted, border, success, warning, danger and matching foreground tokens. Validate WCAG AA contrast.',
+  '',
+  'Typography presets available: Modern SaaS, Friendly Local, Professional, Editorial, Premium, Playful, Technical. You may choose a custom font pairing if it better fits the brand; keep body text at 16px or larger and line-height 1.5-1.75.',
+  '',
+  'Local placeholder imagery available: /placeholders/business-team.jpg, /placeholders/office-workspace.jpg, /placeholders/restaurant-table.jpg, /placeholders/wellness-studio.jpg, /placeholders/tech-product.jpg, /placeholders/premium-interior.jpg, /placeholders/event-audience.jpg, /placeholders/education-laptop.jpg, /placeholders/creative-studio.jpg, /placeholders/community-impact.jpg.',
+  '',
+  'Authoring rules: choose existing section types first; prefer variant/layout/settings over new types; use validated theme tokens rather than arbitrary colour pairs; use Bootstrap behaviours accessibly; include image alt text; for Growth/Signature output separate full HTML pages; avoid agency-facing words like example, sample, preview, customer website, visual direction, or design direction in the final customer site.',
+  ].join('\n');
+}
+
 export const placeholderImages = [
   { id: 'business', label: 'Business team', path: '/placeholders/business-team.jpg' },
   { id: 'office', label: 'Office workspace', path: '/placeholders/office-workspace.jpg' },
