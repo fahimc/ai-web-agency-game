@@ -24,6 +24,7 @@ const emptyState = {
   projectModel: 'gpt-5.4-mini',
   projectPackage: 'launch',
   selectedDesignStyle: '',
+  selectedDesignPalette: [],
   paid: false,
   paymentEstimate: null,
   availableProjects: [],
@@ -75,6 +76,7 @@ export function useAgencyController() {
         projectModel: saved.projectModel || next.projectModel,
       projectPackage: saved.projectPackage || next.projectPackage,
       selectedDesignStyle: saved.selectedDesignStyle || next.selectedDesignStyle,
+      selectedDesignPalette: saved.selectedDesignPalette || next.selectedDesignPalette,
         paid: saved.paid ?? next.paid,
         paymentEstimate: saved.paymentEstimate || next.paymentEstimate,
         lastSaved: saved.lastSaved,
@@ -167,6 +169,7 @@ export function useAgencyController() {
       projectModel: current.settings.selectedModel || 'gpt-5.4-mini',
       projectPackage: packageForModel(current.settings.selectedModel || 'gpt-5.4-mini').id,
       selectedDesignStyle: '',
+      selectedDesignPalette: [],
       paid: false,
       paymentEstimate: null,
       availableProjects: [],
@@ -250,6 +253,7 @@ export function useAgencyController() {
       projectModel: loaded.projectModel || loaded.settings?.selectedModel || 'gpt-5.4-mini',
       projectPackage: loaded.projectPackage || packageForModel(loaded.projectModel || loaded.settings?.selectedModel || 'gpt-5.4-mini').id,
       selectedDesignStyle: loaded.selectedDesignStyle || '',
+      selectedDesignPalette: loaded.selectedDesignPalette || [],
       paid: Boolean(loaded.paid),
       paymentEstimate: loaded.paymentEstimate || null,
       availableProjects: listProjects(email),
@@ -290,6 +294,7 @@ export function useAgencyController() {
       projectModel: current.settings.selectedModel || 'gpt-5.4-mini',
       projectPackage: packageForModel(current.settings.selectedModel || 'gpt-5.4-mini').id,
       selectedDesignStyle: '',
+      selectedDesignPalette: [],
       paid: false,
       paymentEstimate: null,
       availableProjects: listProjects(email),
@@ -389,7 +394,7 @@ export function useAgencyController() {
     }));
     setModal(null);
     addConvo('Nova', 'Payment received. Mira will show design directions before production starts.');
-    speak('design', 'Payment received. I have reviewed the brief and prepared common website directions using our boilerplate system. Click to see the options and choose the route you like.', ['openDesignOptions']);
+    speak('design', 'Payment received. I have reviewed the brief and prepared design directions with colour palettes. Click to see the options and choose the route you like.', ['openDesignOptions']);
   }, [addConvo, speak, update]);
 
   const openDesignOptions = useCallback(() => {
@@ -397,12 +402,13 @@ export function useAgencyController() {
     setModal('designOptions');
   }, [update]);
 
-  const selectDesignStyle = useCallback((layoutId) => {
+  const selectDesignStyle = useCallback((layoutId, palette = []) => {
     const layout = siteLayouts.find((item) => item.id === layoutId) || siteLayouts[0];
-    const selectedDesign = buildDesignSelectionMarkdown(layout);
+    const selectedDesign = buildDesignSelectionMarkdown(layout, palette);
     update((current) => ({
       ...current,
       selectedDesignStyle: layout.id,
+      selectedDesignPalette: palette,
       outputs: { ...current.outputs, SelectedDesign: selectedDesign },
       activeOutput: 'SelectedDesign',
       phase: 'running',

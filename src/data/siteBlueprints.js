@@ -31,6 +31,8 @@ export const siteLayouts = [
   { id: 'education-course', name: 'Education / Course', model: 'Course promise + curriculum + outcomes + enrolment', tone: 'Structured, motivating, clear', palette: ['#1e3a8a', '#06b6d4', '#eff6ff'] },
 ];
 
+export const MAX_PALETTE_COLORS = 5;
+
 const layoutKeywords = {
   'local-service': ['local', 'trade', 'plumber', 'electrician', 'cleaning', 'garden', 'repair', 'service', 'clinic', 'salon'],
   'saas-product': ['software', 'saas', 'app', 'platform', 'dashboard', 'automation', 'tool', 'product'],
@@ -59,12 +61,46 @@ export function recommendedDesignLayouts(state, count = 4) {
     .map((item) => item.layout);
 }
 
-export function buildDesignSelectionMarkdown(layout) {
+export function paletteOptionsForLayout(layout, state) {
+  const base = normalizePalette(layout.palette);
+  const brief = `${state?.brief || ''}\n${state?.clientDetails || ''}`.toLowerCase();
+  const calm = normalizePalette(['#12343b', '#2bb3a3', '#f3fbf9', '#f7c948', '#ffffff']);
+  const premium = normalizePalette(['#111827', '#b7791f', '#faf7f0', '#6b7280', '#ffffff']);
+  const energetic = normalizePalette(['#1e1b4b', '#ef4444', '#fff7ed', '#f59e0b', '#ffffff']);
+  const local = normalizePalette(['#173d35', '#18a058', '#fff7ed', '#eab308', '#ffffff']);
+  const clean = normalizePalette(['#08111f', '#0ea5e9', '#eef6ff', '#22c55e', '#ffffff']);
+  const soft = normalizePalette(['#164e63', '#14b8a6', '#f0fdfa', '#f4a261', '#ffffff']);
+  const recommended = brief.match(/health|wellness|therapy|care|calm|yoga/) ? soft
+    : brief.match(/event|launch|bold|energy|festival/) ? energetic
+    : brief.match(/local|service|trade|repair|salon/) ? local
+    : brief.match(/premium|luxury|boutique|brand/) ? premium
+    : brief.match(/software|saas|app|platform|tool/) ? clean
+    : base;
+  return uniquePalettes([
+    { id: 'recommended', name: 'Mira recommended', colors: recommended },
+    { id: 'clean', name: 'Clean trust', colors: clean },
+    { id: 'premium', name: 'Premium contrast', colors: premium },
+    { id: 'warm', name: 'Warm local', colors: local },
+    { id: 'calm', name: 'Calm support', colors: calm },
+  ]).slice(0, 4);
+}
+
+export function normalizePalette(colors = []) {
+  const fallback = ['#10213f', '#2563eb', '#f8fafc', '#64748b', '#ffffff'];
+  return [...colors, ...fallback]
+    .filter((color) => /^#[0-9a-f]{6}$/i.test(String(color || '').trim()))
+    .map((color) => color.trim())
+    .slice(0, MAX_PALETTE_COLORS);
+}
+
+export function buildDesignSelectionMarkdown(layout, palette = layout.palette) {
+  const colors = normalizePalette(palette);
   return [
     `Selected layout: ${layout.name}`,
     `Layout model: ${layout.model}`,
     `Tone: ${layout.tone}`,
-    `Palette: ${layout.palette.join(', ')}`,
+    `Palette: ${colors.join(', ')}`,
+    `Palette max: ${MAX_PALETTE_COLORS} colours. Use them as text, primary, background, accent, and surface colours.`,
     '',
     `Design system: ${componentLibrary.name}`,
     ...componentLibrary.principles.map((item) => `- ${item}`),
@@ -72,18 +108,18 @@ export function buildDesignSelectionMarkdown(layout) {
     'Component library:',
     ...componentLibrary.components.map((item) => `- ${item}`),
     '',
-    'Developer instruction: build the final site from this selected layout and component system. Preserve the client brief, but adapt section order, copy density, and CTAs to this direction.',
+    'Developer instruction: build the final site from this selected design direction and colour palette. Preserve the client brief, but adapt section order, copy density, and CTAs to this direction.',
   ].join('\n');
 }
 
-export function buildExampleSite(layout, state) {
+export function buildExampleSite(layout, state, palette = layout.palette) {
   const brief = parseBrief(state?.brief || state?.clientDetails || '');
   const business = brief.businessName || state?.projectName || 'Client Website';
   const industry = brief.industry || 'professional services';
   const audience = brief.audience || 'busy customers who want a clear answer fast';
   const goal = brief.goal || 'turn visitors into confident enquiries';
   const offer = brief.offer || industry;
-  const [ink, accent, bg] = layout.palette;
+  const [ink, accent, bg, secondary, surface] = normalizePalette(palette);
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -91,8 +127,8 @@ export function buildExampleSite(layout, state) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(business)} - ${escapeHtml(layout.name)}</title>
 <style>
-:root{--ink:${ink};--accent:${accent};--bg:${bg};--card:#ffffff;--muted:#64748b;--line:rgba(15,23,42,.12);--radius:20px;--space:clamp(18px,4vw,56px);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:var(--bg)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);line-height:1.5}a{color:inherit}.shell{width:min(1120px,calc(100% - 32px));margin:auto}.nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;font-weight:800}.nav span{color:var(--accent)}.hero{padding:var(--space) 0;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(20px,5vw,64px);align-items:center}.eyebrow{color:var(--accent);font-weight:900;text-transform:uppercase;font-size:12px;letter-spacing:0}.hero h1{font-size:clamp(34px,7vw,76px);line-height:.94;margin:10px 0 18px;letter-spacing:0}.hero p{font-size:clamp(16px,2vw,21px);color:var(--muted);max-width:62ch}.button{display:inline-flex;margin-top:14px;background:var(--accent);color:white;text-decoration:none;border-radius:999px;padding:13px 18px;font-weight:900}.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:0 24px 70px rgba(15,23,42,.12)}.metric{font-size:38px;font-weight:950;color:var(--accent)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.card b{display:block;margin-bottom:7px}.section{padding:42px 0}.section h2{font-size:clamp(26px,4vw,44px);line-height:1;margin:0 0 14px}.steps{counter-reset:step;display:grid;gap:12px}.step{counter-increment:step;display:flex;gap:14px;align-items:flex-start}.step:before{content:counter(step);background:var(--accent);color:#fff;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;font-weight:900}.contact{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.form{display:grid;gap:10px}.input{border:1px solid var(--line);border-radius:14px;padding:13px;background:white;color:var(--ink)}@media(max-width:760px){.hero,.contact,.grid{grid-template-columns:1fr}.hero h1{font-size:42px}}
+:root{--ink:${ink};--accent:${accent};--bg:${bg};--secondary:${secondary};--card:${surface};--muted:#64748b;--line:rgba(15,23,42,.12);--radius:20px;--space:clamp(18px,4vw,56px);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:var(--bg)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);line-height:1.5}a{color:inherit}.shell{width:min(1120px,calc(100% - 32px));margin:auto}.nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;font-weight:800}.nav span{color:var(--accent)}.hero{padding:var(--space) 0;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(20px,5vw,64px);align-items:center}.eyebrow{color:var(--accent);font-weight:900;text-transform:uppercase;font-size:12px;letter-spacing:0}.hero h1{font-size:clamp(34px,7vw,76px);line-height:.94;margin:10px 0 18px;letter-spacing:0}.hero p{font-size:clamp(16px,2vw,21px);color:var(--muted);max-width:62ch}.button{display:inline-flex;margin-top:14px;background:var(--accent);color:white;text-decoration:none;border-radius:999px;padding:13px 18px;font-weight:900}.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:0 24px 70px rgba(15,23,42,.12)}.metric{font-size:38px;font-weight:950;color:var(--secondary)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.card b{display:block;margin-bottom:7px}.section{padding:42px 0}.section h2{font-size:clamp(26px,4vw,44px);line-height:1;margin:0 0 14px}.steps{counter-reset:step;display:grid;gap:12px}.step{counter-increment:step;display:flex;gap:14px;align-items:flex-start}.step:before{content:counter(step);background:var(--accent);color:#fff;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;font-weight:900}.contact{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.form{display:grid;gap:10px}.input{border:1px solid var(--line);border-radius:14px;padding:13px;background:white;color:var(--ink)}@media(max-width:760px){.hero,.contact,.grid{grid-template-columns:1fr}.hero h1{font-size:42px}}
 </style>
 </head>
 <body>
@@ -152,6 +188,16 @@ function cardsFor(layout, offer) {
     { title: 'Offer clarity', text: `Turns ${offer} into easy-to-scan sections.` },
     { title: 'Components', text: 'Uses hero, proof, service cards, process, FAQ, and contact blocks.' },
   ];
+}
+
+function uniquePalettes(options) {
+  const seen = new Set();
+  return options.filter((option) => {
+    const key = option.colors.join('|').toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function escapeHtml(value) {

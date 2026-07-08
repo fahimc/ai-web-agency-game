@@ -59,6 +59,7 @@ export function saveDraft(state) {
     projectModel: state.projectModel,
     projectPackage: state.projectPackage,
     selectedDesignStyle: state.selectedDesignStyle,
+    selectedDesignPalette: state.selectedDesignPalette,
     paid: state.paid,
     paymentEstimate: state.paymentEstimate,
     phase: state.phase,
