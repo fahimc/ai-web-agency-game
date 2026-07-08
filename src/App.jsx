@@ -32,6 +32,7 @@ export function App() {
       {modal === 'details' && <DetailsModal state={state} actions={actions} />}
       {modal === 'packages' && <PackageModal state={state} actions={actions} />}
       {modal === 'outputs' && <OutputsModal state={state} actions={actions} />}
+      {modal === 'websitePreview' && <OutputsModal state={state} actions={actions} previewOnly />}
       {modal === 'payment' && <PaymentModal state={state} actions={actions} />}
       {modal === 'pause' && <PauseModal state={state} actions={actions} />}
       {modal === 'worker' && <WorkerModal state={state} actions={actions} />}

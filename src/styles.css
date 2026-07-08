@@ -873,6 +873,17 @@ label,
   color: var(--accent);
 }
 
+.quick-output-button {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.quick-output-button:hover {
+  border-color: rgba(17, 103, 241, .42);
+  box-shadow: 0 16px 38px rgba(6, 18, 47, .18);
+}
+
 .game-speech,
 .speech {
   background: rgba(255, 255, 255, .98);
@@ -1028,6 +1039,14 @@ label,
 .preview-frame {
   border: 1px solid var(--line);
   border-radius: 24px;
+}
+
+.website-preview-modal {
+  width: min(1320px, 100%);
+}
+
+.split-preview.preview-only {
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
 }
 
 .site-fullscreen {

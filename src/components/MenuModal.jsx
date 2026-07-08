@@ -87,8 +87,8 @@ function Status({ state, actions, phaseLabel }) {
         <p><b>Progress:</b> {Math.round(state.progress)}%</p>
         <p><b>Current stage:</b> {activeEmployee.role}</p>
         <p><b>Outputs ready:</b> {complete}/{outputOrder.length}</p>
+        <p className="muted small">Open detailed outputs from the outputs pill at the bottom of the office screen.</p>
         <div className="stack">
-          <button type="button" onClick={() => actions.openOutputs(state.activeOutput || 'Plan')}>Open outputs</button>
           {canContinue && <button type="button" className="green" onClick={actions.openCurrentStep}>Continue current step</button>}
           {canResume && <button type="button" className="green" onClick={actions.resumeWork}>Resume work</button>}
           <button type="button" className="secondary" onClick={() => actions.notify('Saved locally.')}>Save now</button>

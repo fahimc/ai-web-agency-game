@@ -278,11 +278,11 @@ export function useAgencyController() {
       window.setTimeout(() => setModal('pause'), 120);
     } else if (next.phase === 'complete') {
       speak('reception', 'Welcome back. This project is complete. Open Outputs whenever you want to review it.', ['openPreview']);
-      window.setTimeout(() => setModal('outputs'), 120);
+      window.setTimeout(() => setModal('websitePreview'), 120);
     } else if (next.outputs.WebsiteHTML && !next.approved) {
       update((current) => ({ ...current, phase: 'approval' }));
-      speak('dev', 'Welcome back. Your preview is ready for approval. Open Outputs when you want to review it.', ['openPreview', 'approve']);
-      window.setTimeout(() => setModal('outputs'), 120);
+      speak('dev', 'Welcome back. Your website preview is ready for approval.', ['openPreview', 'approve']);
+      window.setTimeout(() => setModal('websitePreview'), 120);
     } else if (next.paid && next.brief && !next.selectedDesignStyle) {
       update((current) => ({ ...current, phase: 'design_options', activeEmployee: 'design' }));
       speak('design', 'Welcome back. Payment is complete. Choose a design direction so the team can start production.', ['openDesignOptions']);
@@ -542,9 +542,9 @@ export function useAgencyController() {
       activeOutput: 'WebsiteHTML',
     }));
     log('Company', 'Preview ready. Paused for client approval.');
-    speak('dev', 'The first preview is ready. Open Outputs to review it, then type approve or tell me the changes.', ['openPreview', 'approve']);
+    speak('dev', 'The first website preview is ready. Review it, then approve or request changes.', ['openPreview', 'approve']);
     addConvo('Nova', 'Preview ready. Chat is open for approval or change requests only.');
-    setModal('outputs');
+    setModal('websitePreview');
   }, [addConvo, log, runStep, speak, update]);
 
   const startAgency = useCallback(async () => {
@@ -628,7 +628,7 @@ export function useAgencyController() {
       speak('reception', 'All done. Your preview, QA notes, and project handover PDF are in Outputs. You can start a fresh project whenever you are ready.', ['openPreview', 'reset']);
       addConvo('Nova', 'Project complete. Open Outputs to view or download the work.');
       log('Company', 'All deliverables completed.');
-      setModal('outputs');
+      setModal('websitePreview');
     } catch (error) {
       handleRunError(error);
     }
@@ -678,9 +678,9 @@ export function useAgencyController() {
         task: `Revise the existing website HTML using this client change request: "${changeText}". Return only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts, improve the requested parts, and ensure responsive accessible markup.`,
       });
       update((current) => ({ ...current, phase: 'approval', running: false, progress: 70, progressTask: 'Preview approval' }));
-      speak('dev', 'Updated preview is ready. Open Outputs to check it, then approve or request another change.', ['openPreview', 'approve']);
+      speak('dev', 'Updated preview is ready. Check it, then approve or request another change.', ['openPreview', 'approve']);
       addConvo('Nova', 'Updated preview ready for approval.');
-      setModal('outputs');
+      setModal('websitePreview');
     } catch (error) {
       handleRunError(error);
     }
@@ -718,6 +718,7 @@ export function useAgencyController() {
     if (current.outputs.WebsiteHTML && !current.approved) {
       update((stateNow) => ({ ...stateNow, phase: 'approval' }));
       speak('dev', 'Preview is ready. Approve it or request changes.', ['openPreview', 'approve']);
+      setModal('websitePreview');
       return;
     }
     if (current.approved || current.outputs.QAReport || current.outputs.ProjectPDF) continueAfterApproval();
@@ -752,6 +753,11 @@ export function useAgencyController() {
   const openOutputs = useCallback((key = stateRef.current.activeOutput || 'Plan') => {
     update((current) => ({ ...current, activeOutput: key }));
     setModal('outputs');
+  }, [update]);
+
+  const openWebsitePreview = useCallback(() => {
+    update((current) => ({ ...current, activeOutput: 'WebsiteHTML' }));
+    setModal('websitePreview');
   }, [update]);
 
   const copyCurrentOutput = useCallback(async () => {
@@ -845,11 +851,11 @@ export function useAgencyController() {
       return;
     }
     if (current.phase === 'approval') {
-      openOutputs('WebsiteHTML');
+      openWebsitePreview();
       return;
     }
     setModal('menu');
-  }, [openOutputs]);
+  }, [openWebsitePreview]);
 
   const actions = useMemo(() => ({
     returningCustomer,
@@ -878,6 +884,7 @@ export function useAgencyController() {
     processApproval,
     requestRevision,
     openOutputs,
+    openWebsitePreview,
     openDetails: () => setModal('details'),
     openPackages: () => setModal('packages'),
     openDesignOptions,
@@ -910,6 +917,7 @@ export function useAgencyController() {
     newCustomer,
     notify,
     openOutputs,
+    openWebsitePreview,
     processApproval,
     requestRevision,
     resetToChoice,
@@ -984,7 +992,7 @@ function fallbackDesignDirection(state) {
     '- Include visible navigation.',
     state.projectPackage === 'launch'
       ? '- Navigation should link to sections on the same page, not separate pages.'
-      : '- Navigation should link to each approved page section in the single-file site.',
+      : '- Navigation should link to separate page views using routes such as #/pricing, not same-page section anchors.',
     '- Use dummy production copy where the brief is missing specifics.',
     '- Include local placeholder imagery where useful.',
     '- Keep forms, buttons, headings, and section ids accessible.',
@@ -1008,16 +1016,20 @@ function isCompleteHtml(html) {
 function hasRequiredSiteStructure(html, state) {
   const value = String(html || '').toLowerCase();
   if (!/<nav[\s>]/i.test(html)) return false;
+  const selectedPages = Array.isArray(state.selectedSitePages) && state.selectedSitePages.length
+    ? state.selectedSitePages
+    : ['Services', 'About', 'FAQ', 'Contact'];
   const requiredItems = state.projectPackage === 'launch'
     ? ['Home', ...(state.selectedSiteSections || []).filter((item) => !/^hero$/i.test(String(item || '')))]
-    : ['Home', ...(state.selectedSitePages || [])];
+    : ['Home', ...selectedPages];
   const pages = requiredItems
     .map((page) => String(page || '').trim())
     .filter(Boolean);
   const uniquePages = [...new Set(pages)];
   return uniquePages.every((page) => {
     const slug = page.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
-    return hasHtmlId(value, slug) && value.includes(`href="#${slug}"`);
+    const expectedHref = state.projectPackage === 'launch' ? `href="#${slug}"` : `href="#/${slug}"`;
+    return hasHtmlId(value, slug) && value.includes(expectedHref);
   });
 }
 

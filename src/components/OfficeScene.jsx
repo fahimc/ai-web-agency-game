@@ -92,7 +92,9 @@ export function OfficeScene({ state, actions }) {
       <div className="quickbar" aria-label="Quick status">
         <div className="quick-chip">Mode: {getPhaseLabel(state.phase).toLowerCase()}</div>
         <div className="quick-chip">Client: {state.email || 'No client loaded'}</div>
-        <div className="quick-chip"><b>{outputCount}</b> outputs</div>
+        <button type="button" className="quick-chip quick-output-button" onClick={() => actions.openOutputs(state.activeOutput || 'Plan')}>
+          <b>{outputCount}</b> outputs
+        </button>
       </div>
     </section>
   );
@@ -106,7 +108,7 @@ function actionButtons(actionIds, actions) {
     openPackages: { label: 'View packages', onClick: actions.openPackages },
     openPayment: { label: 'Pay now', onClick: actions.openPayment },
     openDesignOptions: { label: 'See options', onClick: actions.openDesignOptions },
-    openPreview: { label: 'Open preview', onClick: () => actions.openOutputs('WebsiteHTML') },
+    openPreview: { label: 'Open preview', onClick: actions.openWebsitePreview },
     approve: { label: 'Approve', onClick: actions.approve },
     resume: { label: 'Resume work', onClick: actions.resumeWork },
     reset: { label: 'New project', onClick: actions.startFresh },

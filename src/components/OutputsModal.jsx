@@ -4,8 +4,17 @@ import { outputNames, outputOrder, outputOwners } from '../data/outputs.js';
 import { MAX_REVISIONS } from '../utils/pricing.js';
 import { Modal } from './Modal.jsx';
 
-export function OutputsModal({ state, actions }) {
+export function OutputsModal({ state, actions, previewOnly = false }) {
   const key = state.activeOutput || 'Plan';
+  if (previewOnly) {
+    return (
+      <Modal title="Website Preview" onClose={actions.closeModal} className="website-preview-modal">
+        <div className="modal-body">
+          <Website state={state} actions={actions} previewOnly />
+        </div>
+      </Modal>
+    );
+  }
   return (
     <Modal title="Output Workbench" onClose={actions.closeModal}>
       <nav className="modal-tabs">
@@ -40,7 +49,7 @@ function TextOutput({ outputKey, state, actions }) {
   );
 }
 
-function Website({ state, actions }) {
+function Website({ state, actions, previewOnly = false }) {
   const html = state.outputs.WebsiteHTML || '';
   const [showRevision, setShowRevision] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
@@ -58,15 +67,15 @@ function Website({ state, actions }) {
     setShowRevision(false);
   }
   return (
-    <div className="split-preview">
+    <div className={`split-preview ${previewOnly ? 'preview-only' : ''}`}>
       <aside className="approval-card">
         <strong>Website preview</strong>
-        <p className="muted">This is the real HTML output from Kai. Review it here, approve it, or request a revision.</p>
+        <p className="muted">Review the customer site, approve it, or request a revision.</p>
         <p className="small"><b>{revisionsRemaining}</b> of {MAX_REVISIONS} revisions remaining.</p>
         <div className="stack">
           <button type="button" className="green" disabled={!html} onClick={() => setFullScreen(true)}>View full screen</button>
-          <button type="button" onClick={actions.copyCurrentOutput}>Copy HTML</button>
-          <button type="button" className="secondary" onClick={actions.downloadCurrentOutput}>Download HTML</button>
+          {!previewOnly && <button type="button" onClick={actions.copyCurrentOutput}>Copy HTML</button>}
+          {!previewOnly && <button type="button" className="secondary" onClick={actions.downloadCurrentOutput}>Download HTML</button>}
           {state.phase === 'approval' && <button type="button" className="green" onClick={actions.approve}>Approve preview</button>}
           {state.phase === 'approval' && <button type="button" className="secondary" disabled={revisionsRemaining <= 0} onClick={() => setShowRevision((value) => !value)}>Request revision</button>}
         </div>
