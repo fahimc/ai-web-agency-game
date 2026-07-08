@@ -94,5 +94,5 @@ export function needsChat(state) {
 export function canResumeProject(state) {
   if (!state || state.running || state.phase === 'approval' || state.phase === 'complete') return false;
   if (state.phase === 'error') return true;
-  return Boolean(state.brief && ['running', 'brief', 'design_options'].includes(state.phase));
+  return Boolean(state.brief && ['running', 'brief'].includes(state.phase));
 }

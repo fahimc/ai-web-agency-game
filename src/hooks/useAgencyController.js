@@ -733,6 +733,31 @@ export function useAgencyController() {
     downloadText(`${safeFileName(stateRef.current.email || 'tiny-office-session')}.json`, JSON.stringify(stateRef.current, null, 2));
   }, []);
 
+  const openCurrentStep = useCallback(() => {
+    const current = stateRef.current;
+    if (['new_details', 'brief'].includes(current.phase)) {
+      setModal('details');
+      return;
+    }
+    if (current.phase === 'packages') {
+      setModal('packages');
+      return;
+    }
+    if (current.phase === 'payment') {
+      setModal('payment');
+      return;
+    }
+    if (current.phase === 'design_options') {
+      setModal('designOptions');
+      return;
+    }
+    if (current.phase === 'approval') {
+      openOutputs('WebsiteHTML');
+      return;
+    }
+    setModal('menu');
+  }, [openOutputs]);
+
   const actions = useMemo(() => ({
     returningCustomer,
     newCustomer,
@@ -776,12 +801,14 @@ export function useAgencyController() {
     copyCurrentOutput,
     downloadCurrentOutput,
     exportJSON,
+    openCurrentStep,
     approve: () => processApproval('approve'),
     notify,
   }), [
     copyCurrentOutput,
     downloadCurrentOutput,
     exportJSON,
+    openCurrentStep,
     newCustomer,
     notify,
     openOutputs,

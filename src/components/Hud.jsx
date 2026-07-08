@@ -5,6 +5,7 @@ import { canResumeProject } from '../utils/text.js';
 export function Hud({ state, phaseLabel, actions }) {
   const showProgress = state.progress > 0 || ['running', 'approval', 'complete', 'error'].includes(state.phase);
   const canResume = canResumeProject(state);
+  const canContinue = ['new_details', 'brief', 'packages', 'payment', 'design_options', 'approval'].includes(state.phase) && !state.running;
   return (
     <header className="hud" aria-label="Office HUD">
       <div className="hud-row">
@@ -23,6 +24,7 @@ export function Hud({ state, phaseLabel, actions }) {
             <RotateCcw size={16} /> Reset
           </button>
           {canResume && <button className="green tiny keep-mobile resume-button" type="button" onClick={actions.resumeWork}>Resume</button>}
+          {canContinue && <button className="green tiny keep-mobile" type="button" onClick={actions.openCurrentStep}>Continue</button>}
           <button className="secondary tiny" type="button" onClick={() => actions.openOutputs(state.activeOutput || 'Plan')}>
             <Box size={16} /> Outputs
           </button>

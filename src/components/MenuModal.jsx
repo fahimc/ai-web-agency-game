@@ -76,6 +76,7 @@ function Status({ state, actions, phaseLabel }) {
   const complete = outputOrder.filter((key) => state.outputs[key]).length;
   const activeEmployee = employees[state.activeEmployee] || employees.reception;
   const canResume = canResumeProject(state);
+  const canContinue = ['new_details', 'brief', 'packages', 'payment', 'design_options', 'approval'].includes(state.phase) && !state.running;
   return (
     <div className="modal-grid">
       <div className="card">
@@ -86,6 +87,7 @@ function Status({ state, actions, phaseLabel }) {
         <p><b>Outputs ready:</b> {complete}/{outputOrder.length}</p>
         <div className="stack">
           <button type="button" onClick={() => actions.openOutputs(state.activeOutput || 'Plan')}>Open outputs</button>
+          {canContinue && <button type="button" className="green" onClick={actions.openCurrentStep}>Continue current step</button>}
           {canResume && <button type="button" className="green" onClick={actions.resumeWork}>Resume work</button>}
           <button type="button" className="secondary" onClick={() => actions.notify('Saved locally.')}>Save now</button>
         </div>
