@@ -62,6 +62,8 @@ export function saveDraft(state) {
     selectedDesignPalette: state.selectedDesignPalette,
     selectedSitePages: state.selectedSitePages,
     selectedSiteSections: state.selectedSiteSections,
+    designRecommendations: state.designRecommendations || [],
+    designRecommendationStatus: state.designRecommendationStatus || 'idle',
     paid: state.paid,
     paymentEstimate: state.paymentEstimate,
     phase: state.phase,

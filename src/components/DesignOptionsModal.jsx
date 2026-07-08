@@ -7,11 +7,11 @@ import {
   SECTION_PRESETS,
   buildExampleSite,
   directionSummary,
+  fallbackDesignRecommendations,
   normalizePalette,
   paletteLabel,
   paletteOptionsForLayout,
-  recommendedStructure,
-  recommendedDesignLayouts,
+  siteLayouts,
 } from '../data/siteBlueprints.js';
 import { Modal } from './Modal.jsx';
 
@@ -21,15 +21,35 @@ const ONE_PAGE_SECTION_PRESETS = [
 ];
 
 export function DesignOptionsModal({ state, actions }) {
-  const designOptions = useMemo(() => recommendedDesignLayouts(state, 4), [state]);
-  const initialIndex = Math.max(0, designOptions.findIndex((layout) => layout.id === state.selectedDesignStyle));
+  const designOptions = useMemo(() => {
+    const recommendations = state.designRecommendations?.length ? state.designRecommendations : fallbackDesignRecommendations(state, 4);
+    return recommendations
+      .map((recommendation) => {
+        const layout = siteLayouts.find((item) => item.id === recommendation.layoutId) || siteLayouts[0];
+        return { ...recommendation, layout };
+      })
+      .filter((option) => option.layout);
+  }, [state]);
+  const initialIndex = Math.max(0, designOptions.findIndex((option) => option.layout.id === state.selectedDesignStyle));
   const [activeIndex, setActiveIndex] = useState(initialIndex);
-  const activeLayout = designOptions[activeIndex] || designOptions[0];
-  const paletteOptions = useMemo(() => paletteOptionsForLayout(activeLayout, state), [activeLayout, state]);
-  const structureRecommendation = useMemo(() => recommendedStructure(activeLayout, state), [activeLayout, state]);
+  const activeOption = designOptions[activeIndex] || designOptions[0];
+  const activeLayout = activeOption?.layout || siteLayouts[0];
+  const paletteOptions = useMemo(() => {
+    const modelPalette = {
+      id: 'model',
+      name: activeOption?.paletteName || 'Mira recommended',
+      colors: normalizePalette(activeOption?.palette || activeLayout.palette),
+    };
+    const presets = paletteOptionsForLayout(activeLayout, state);
+    return [modelPalette, ...presets.filter((option) => normalizePalette(option.colors).join('|') !== modelPalette.colors.join('|'))].slice(0, 4);
+  }, [activeLayout, activeOption, state]);
+  const structureRecommendation = useMemo(() => ({
+    pages: activeOption?.pages?.length ? activeOption.pages : ['Home', 'Services', 'About', 'FAQ', 'Contact'],
+    sections: activeOption?.sections?.length ? activeOption.sections : ['Hero', 'Services', 'Benefits', 'Process', 'Testimonials', 'FAQ', 'Lead capture form'],
+  }), [activeOption]);
   const [paletteMode, setPaletteMode] = useState('preset');
   const [paletteIndex, setPaletteIndex] = useState(0);
-  const [customColors, setCustomColors] = useState(() => normalizePalette(state.selectedDesignPalette || activeLayout.palette));
+  const [customColors, setCustomColors] = useState(() => normalizePalette(state.selectedDesignPalette || activeOption?.palette || activeLayout.palette));
   const isOnePagePackage = state.projectPackage === 'launch';
   const initialSections = () => onePageSections(structureRecommendation, state.selectedSiteSections);
   const [selectedPages, setSelectedPages] = useState(() => isOnePagePackage ? ['Home'] : (state.selectedSitePages?.length ? state.selectedSitePages : structureRecommendation.pages));
@@ -48,12 +68,16 @@ export function DesignOptionsModal({ state, actions }) {
   const activeHtml = useMemo(() => buildExampleSite(activeLayout, previewState, selectedPalette, { preview: true }), [activeLayout, selectedPalette, previewState]);
 
   useEffect(() => {
+    if (activeIndex > designOptions.length - 1) setActiveIndex(0);
+  }, [activeIndex, designOptions.length]);
+
+  useEffect(() => {
     setPaletteMode('preset');
     setPaletteIndex(0);
-    setCustomColors(normalizePalette(activeLayout.palette));
+    setCustomColors(normalizePalette(activeOption?.palette || activeLayout.palette));
     setSelectedPages(isOnePagePackage ? ['Home'] : (state.selectedSitePages?.length ? state.selectedSitePages : structureRecommendation.pages));
     setSelectedSections(isOnePagePackage ? onePageSections(structureRecommendation, state.selectedSiteSections) : (state.selectedSiteSections?.length ? state.selectedSiteSections : structureRecommendation.sections));
-  }, [activeLayout, isOnePagePackage, state.selectedSitePages, state.selectedSiteSections, structureRecommendation]);
+  }, [activeLayout, activeOption, isOnePagePackage, state.selectedSitePages, state.selectedSiteSections, structureRecommendation]);
 
   function showPrevious() {
     setActiveIndex((current) => (current === 0 ? designOptions.length - 1 : current - 1));
@@ -67,8 +91,14 @@ export function DesignOptionsModal({ state, actions }) {
     setCustomColors((current) => current.map((color, colorIndex) => colorIndex === index ? value : color));
   }
 
+  const isLoadingRecommendations = state.designRecommendationStatus === 'loading' && !state.designRecommendations?.length;
+
   function selectCurrent() {
-    actions.selectDesignStyle(activeLayout.id, selectedPalette, { pages: selectedPages, sections: selectedSections });
+    if (isLoadingRecommendations) {
+      actions.notify('Mira is still preparing recommendations.');
+      return;
+    }
+    actions.selectDesignStyle(activeLayout.id, selectedPalette, { pages: selectedPages, sections: selectedSections, recommendation: activeOption });
   }
 
   return (
@@ -88,12 +118,17 @@ export function DesignOptionsModal({ state, actions }) {
           </div>
           <div className="card design-intro">
             <h3>Pick a visual route</h3>
-            <p className="muted">Mira selected {designOptions.length} design directions that fit the brief. Compare them, choose a colour palette, then production can start.</p>
+            <p className="muted">
+              {isLoadingRecommendations
+                ? 'Mira is asking the model to recommend directions from the brief.'
+                : `Mira selected ${designOptions.length} recommended directions from the brief. Compare them, choose a colour palette, then production can start.`}
+            </p>
           </div>
+          {isLoadingRecommendations && <div className="empty">Preparing recommendations...</div>}
           <div className="design-carousel-card">
             <div className="design-count">Option {optionNumber} of {designOptions.length}</div>
-            <h3>{activeLayout.name}</h3>
-            <p className="muted">{directionSummary(activeLayout)}</p>
+            <h3>{activeOption?.name || activeLayout.name}</h3>
+            <p className="muted">{activeOption?.rationale || directionSummary(activeLayout)}</p>
             <PaletteSwatches colors={selectedPalette} compact />
             <div className="design-carousel-actions">
               <button type="button" className="secondary" onClick={showPrevious}>Previous</button>
@@ -117,8 +152,8 @@ export function DesignOptionsModal({ state, actions }) {
             setSelectedSections={setSelectedSections}
           />
           <div className="design-dots" aria-label="Design options">
-            {designOptions.map((layout, index) => (
-              <button type="button" className={index === activeIndex ? 'active' : ''} key={layout.id} onClick={() => setActiveIndex(index)} aria-label={`Show ${layout.name}`} />
+            {designOptions.map((option, index) => (
+              <button type="button" className={index === activeIndex ? 'active' : ''} key={option.id || `${option.layoutId}-${index}`} onClick={() => setActiveIndex(index)} aria-label={`Show ${option.name}`} />
             ))}
           </div>
         </aside>
@@ -129,31 +164,31 @@ export function DesignOptionsModal({ state, actions }) {
           </div>
           <div className="design-preview-head">
             <div>
-              <h3>{activeLayout.name} direction</h3>
-              <p className="muted">{activeLayout.tone}</p>
+              <h3>{activeOption?.name || activeLayout.name}</h3>
+              <p className="muted">{activeOption?.tone || activeLayout.tone}</p>
             </div>
             <div className="stack">
               <button type="button" className="secondary" onClick={() => setFullScreen(true)}>Full screen</button>
-              <button type="button" className="green" onClick={selectCurrent}>Select this direction</button>
+              <button type="button" className="green" disabled={isLoadingRecommendations} onClick={selectCurrent}>Select this direction</button>
             </div>
           </div>
-          <iframe className="design-preview-frame" title={`${activeLayout.name} preview`} srcDoc={activeHtml} />
+          <iframe className="design-preview-frame" title={`${activeOption?.name || activeLayout.name} preview`} srcDoc={activeHtml} />
         </section>
       </div>
       {fullScreen && (
-        <div className="design-fullscreen" role="dialog" aria-label={`${activeLayout.name} full screen preview`}>
+        <div className="design-fullscreen" role="dialog" aria-label={`${activeOption?.name || activeLayout.name} full screen preview`}>
           <div className="design-fullscreen-bar">
             <div>
-              <b>Client site example: {activeLayout.name}</b>
+              <b>Client site direction: {activeOption?.name || activeLayout.name}</b>
               <span>This is the proposed customer website direction, not the MicroAgency app.</span>
               <PaletteSwatches colors={selectedPalette} />
             </div>
             <div className="stack">
               <button type="button" className="secondary" onClick={() => setFullScreen(false)}>Close</button>
-              <button type="button" className="green" onClick={selectCurrent}>Select this direction</button>
+              <button type="button" className="green" disabled={isLoadingRecommendations} onClick={selectCurrent}>Select this direction</button>
             </div>
           </div>
-          <iframe className="design-fullscreen-frame" title={`${activeLayout.name} full screen`} srcDoc={activeHtml} />
+          <iframe className="design-fullscreen-frame" title={`${activeOption?.name || activeLayout.name} full screen`} srcDoc={activeHtml} />
         </div>
       )}
     </Modal>

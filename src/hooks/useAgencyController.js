@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { employees } from '../data/employees.js';
 import { outputNames, outputOrder } from '../data/outputs.js';
-import { siteLayouts, buildDesignSelectionMarkdown, buildExampleSite } from '../data/siteBlueprints.js';
+import {
+  siteLayouts,
+  buildDesignSelectionMarkdown,
+  buildExampleSite,
+  designRecommendationsTask,
+  fallbackDesignRecommendations,
+  normalizeDesignRecommendations,
+} from '../data/siteBlueprints.js';
 import { completionSteps, previewSteps } from '../data/steps.js';
 import { callModelInBackground } from '../services/modelClient.js';
 import {
@@ -29,6 +36,8 @@ const emptyState = {
   selectedDesignPalette: [],
   selectedSitePages: [],
   selectedSiteSections: [],
+  designRecommendations: [],
+  designRecommendationStatus: 'idle',
   paid: false,
   paymentEstimate: null,
   availableProjects: [],
@@ -84,6 +93,8 @@ export function useAgencyController() {
       selectedDesignPalette: saved.selectedDesignPalette || next.selectedDesignPalette,
       selectedSitePages: saved.selectedSitePages || next.selectedSitePages,
       selectedSiteSections: saved.selectedSiteSections || next.selectedSiteSections,
+      designRecommendations: saved.designRecommendations || next.designRecommendations,
+      designRecommendationStatus: saved.designRecommendationStatus || next.designRecommendationStatus,
         paid: saved.paid ?? next.paid,
         paymentEstimate: saved.paymentEstimate || next.paymentEstimate,
         lastSaved: saved.lastSaved,
@@ -179,6 +190,8 @@ export function useAgencyController() {
       selectedDesignPalette: [],
       selectedSitePages: [],
       selectedSiteSections: [],
+      designRecommendations: [],
+      designRecommendationStatus: 'idle',
       paid: false,
       paymentEstimate: null,
       availableProjects: [],
@@ -265,6 +278,8 @@ export function useAgencyController() {
       selectedDesignPalette: loaded.selectedDesignPalette || [],
       selectedSitePages: loaded.selectedSitePages || [],
       selectedSiteSections: loaded.selectedSiteSections || [],
+      designRecommendations: loaded.designRecommendations || [],
+      designRecommendationStatus: loaded.designRecommendationStatus || 'idle',
       paid: Boolean(loaded.paid),
       paymentEstimate: loaded.paymentEstimate || null,
       availableProjects: listProjects(email),
@@ -313,6 +328,8 @@ export function useAgencyController() {
       selectedDesignPalette: [],
       selectedSitePages: [],
       selectedSiteSections: [],
+      designRecommendations: [],
+      designRecommendationStatus: 'idle',
       paid: false,
       paymentEstimate: null,
       availableProjects: listProjects(email),
@@ -363,6 +380,8 @@ export function useAgencyController() {
       brief: details,
       paid: false,
       paymentEstimate: null,
+      designRecommendations: [],
+      designRecommendationStatus: 'idle',
       phase: 'packages',
       progress: 2,
       progressTask: 'Package selection',
@@ -388,6 +407,8 @@ export function useAgencyController() {
       paid: false,
       phase: 'payment',
       progressTask: 'Payment required',
+      designRecommendations: [],
+      designRecommendationStatus: 'idle',
     }));
     addConvo('Nova', `${selectedPackage.name} selected. Payment is required before the team starts.`);
     speak('reception', `${selectedPackage.name} selected. I will take you to secure checkout now.`);
@@ -409,43 +430,113 @@ export function useAgencyController() {
       activeEmployee: 'design',
       progress: Math.max(current.progress || 0, 6),
       progressTask: 'Choose design direction',
+      designRecommendationStatus: current.designRecommendations?.length ? 'ready' : 'idle',
     }));
     setModal(null);
     addConvo('Nova', 'Payment received. Mira will show design directions before production starts.');
     speak('design', 'Payment received. I have reviewed the brief and prepared design directions with colour palettes. Click to see the options and choose the route you like.', ['openDesignOptions']);
   }, [addConvo, speak, update]);
 
+  const buildContext = useCallback((keys) => {
+    const current = stateRef.current;
+    return keys.map((key) => `## ${outputNames[key] || key}\n${current.outputs[key] || ''}`).filter(Boolean).join('\n\n---\n\n').slice(-30000);
+  }, []);
+
+  const generateDesignRecommendations = useCallback(async (force = false) => {
+    const current = stateRef.current;
+    if (!force && current.designRecommendations?.length) return current.designRecommendations;
+    update((stateNow) => ({
+      ...stateNow,
+      phase: 'design_options',
+      activeEmployee: 'design',
+      designRecommendationStatus: 'loading',
+      progressTask: 'Preparing design recommendations',
+    }));
+    speak('design', 'I am reviewing the brief and asking the model to recommend the strongest design routes.');
+    try {
+      const raw = await callModelInBackground({
+        employee: employees.design,
+        task: designRecommendationsTask(current),
+        context: buildContext(['Plan', 'TaskBoard']),
+        settings: current.settings,
+        state: current,
+        complex: true,
+      });
+      const recommendations = normalizeDesignRecommendations(raw, current, 4);
+      update((stateNow) => ({
+        ...stateNow,
+        designRecommendations: recommendations,
+        designRecommendationStatus: 'ready',
+        progressTask: 'Choose design direction',
+      }));
+      log('Mira Sol', recommendations[0]?.source === 'llm'
+        ? 'LLM design recommendations prepared from the client brief.'
+        : 'Fallback design recommendations used because the LLM response could not be used.');
+      speak('design', 'I have prepared recommended directions from the brief. Compare them and choose the route you like.');
+      return recommendations;
+    } catch (error) {
+      const recommendations = fallbackDesignRecommendations(current, 4);
+      update((stateNow) => ({
+        ...stateNow,
+        designRecommendations: recommendations,
+        designRecommendationStatus: 'fallback',
+        progressTask: 'Choose design direction',
+      }));
+      log('Mira Sol', `Fallback design recommendations used after model error: ${error?.message || error}`);
+      speak('design', 'I could not get model recommendations this time, so I prepared safe design routes from the brief.');
+      return recommendations;
+    }
+  }, [buildContext, log, speak, update]);
+
   const openDesignOptions = useCallback(() => {
-    update((current) => ({ ...current, phase: 'design_options', activeEmployee: 'design', progressTask: 'Choose design direction' }));
+    update((current) => ({ ...current, phase: 'design_options', activeEmployee: 'design', progressTask: current.designRecommendations?.length ? 'Choose design direction' : 'Preparing design recommendations' }));
     setModal('designOptions');
-  }, [update]);
+    window.setTimeout(() => {
+      const current = stateRef.current;
+      if (!current.designRecommendations?.length && current.designRecommendationStatus !== 'loading') {
+        generateDesignRecommendations();
+      }
+    }, 50);
+  }, [generateDesignRecommendations, update]);
+
+  useEffect(() => {
+    const current = stateRef.current;
+    if (modal !== 'designOptions') return;
+    if (current.designRecommendations?.length || current.designRecommendationStatus === 'loading') return;
+    generateDesignRecommendations();
+  }, [generateDesignRecommendations, modal]);
 
   const selectDesignStyle = useCallback((layoutId, palette = [], structure = {}) => {
     const layout = siteLayouts.find((item) => item.id === layoutId) || siteLayouts[0];
     const selectedDesign = buildDesignSelectionMarkdown(layout, palette, structure);
+    const recommendationNote = structure.recommendation
+      ? [
+        '',
+        'LLM recommendation:',
+        `Name: ${structure.recommendation.name}`,
+        `Rationale: ${structure.recommendation.rationale}`,
+        `Source: ${structure.recommendation.source === 'llm' ? 'Mira model recommendation' : 'Mira fallback recommendation'}`,
+      ].join('\n')
+      : '';
     update((current) => ({
       ...current,
       selectedDesignStyle: layout.id,
       selectedDesignPalette: palette,
       selectedSitePages: structure.pages || [],
       selectedSiteSections: structure.sections || [],
-      outputs: { ...current.outputs, SelectedDesign: selectedDesign },
+      outputs: { ...current.outputs, SelectedDesign: `${selectedDesign}${recommendationNote}` },
       activeOutput: 'SelectedDesign',
       phase: 'running',
       progress: Math.max(current.progress || 0, 8),
       progressTask: 'Design direction selected',
     }));
-    addConvo('Nova', `${layout.name} selected as the design direction.`);
-    log('Client', `Selected design direction: ${layout.name}`);
-    speak('design', `${layout.name} selected. I will now turn that direction into the final design plan before Kai builds the site.`);
+    const selectedName = structure.recommendation?.name || layout.name;
+    addConvo('Nova', `${selectedName} selected as the design direction.`);
+    log('Client', `Selected design direction: ${selectedName}`);
+    speak('design', `${selectedName} selected. I will now turn that direction into the final design plan before Kai builds the site.`);
     setModal(null);
     window.setTimeout(() => startAgency(), 50);
   }, [addConvo, log, speak, update]);
-
-  const buildContext = useCallback((keys) => {
-    const current = stateRef.current;
-    return keys.map((key) => `## ${outputNames[key] || key}\n${current.outputs[key] || ''}`).filter(Boolean).join('\n\n---\n\n').slice(-30000);
-  }, []);
 
   const runStep = useCallback(async (step) => {
     let current = stateRef.current;

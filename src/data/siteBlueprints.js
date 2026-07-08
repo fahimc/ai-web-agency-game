@@ -108,6 +108,60 @@ export function recommendedDesignLayouts(state, count = 4) {
     .map((item) => item.layout);
 }
 
+export function fallbackDesignRecommendations(state, count = 4) {
+  return recommendedDesignLayouts(state, count).map((layout, index) => {
+    const structure = recommendedStructure(layout, state);
+    const palette = normalizePalette(layout.palette);
+    return {
+      id: `fallback-${layout.id}`,
+      layoutId: layout.id,
+      name: layout.name,
+      tone: layout.tone,
+      rationale: directionSummary(layout),
+      palette,
+      paletteName: index === 0 ? 'Recommended palette' : `${layout.name} palette`,
+      pages: state?.projectPackage === 'launch' ? ['Home'] : structure.pages,
+      sections: state?.projectPackage === 'launch' ? normalizeOnePageSections(structure.sections, structure.pages) : structure.sections,
+      source: 'fallback',
+    };
+  });
+}
+
+export function normalizeDesignRecommendations(raw, state, count = 4) {
+  const parsed = parseRecommendationJson(raw);
+  const candidates = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.recommendations) ? parsed.recommendations : [];
+  const normalized = candidates
+    .map((item, index) => normalizeRecommendation(item, state, index))
+    .filter(Boolean);
+  return normalized.length >= 3 ? normalized.slice(0, Math.max(3, Math.min(count, 4))) : fallbackDesignRecommendations(state, count);
+}
+
+export function designRecommendationsTask(state) {
+  const packageName = state?.projectPackage === 'launch' ? 'Launch Site one-page package'
+    : state?.projectPackage === 'signature' ? 'Signature Site multi-page package'
+    : 'Growth Site multi-page package';
+  const layoutList = siteLayouts.map((layout) => `${layout.id}: ${layout.name} - ${layout.model} - ${layout.tone}`).join('\n');
+  const pageInstruction = state?.projectPackage === 'launch'
+    ? 'Launch Site must recommend Home only for pages and put About, Services, Contact, FAQ, Pricing, etc. into sections.'
+    : 'Growth Site and Signature Site should recommend multiple pages where useful, normally 4 to 6 pages.';
+
+  return [
+    'You are deciding the client-facing design directions before production.',
+    'Return JSON only. Do not include markdown fences.',
+    `Package: ${packageName}. ${pageInstruction}`,
+    'Choose 3 or 4 recommendations. They should be meaningfully different directions, not duplicates.',
+    'Each recommendation must use one of the available base layout ids so the builder can render the direction.',
+    '',
+    'Available base layouts:',
+    layoutList,
+    '',
+    'JSON shape:',
+    '{"recommendations":[{"layoutId":"local-service","name":"Trust-led Local Booking","tone":"Friendly, reassuring, polished","rationale":"Why this direction fits the brief.","paletteName":"Fresh trust","palette":["#173d35","#18a058","#fff7ed","#eab308","#ffffff"],"pages":["Home","Services","About","FAQ","Contact"],"sections":["Hero","Trust / proof bar","Services","Benefits","Process","Testimonials","FAQ","Lead capture form"]}]}',
+    '',
+    'Rules: palette must contain 3 to 5 real hex colours; pages and sections must be concrete customer-site structure; avoid agency words like example, sample, preview, customer website, visual direction, design direction in names/rationale.',
+  ].join('\n');
+}
+
 export function paletteOptionsForLayout(layout, state) {
   const base = normalizePalette(layout.palette);
   const brief = `${state?.brief || ''}\n${state?.clientDetails || ''}`.toLowerCase();
@@ -166,6 +220,65 @@ export function normalizePalette(colors = []) {
     .filter((color) => /^#[0-9a-f]{6}$/i.test(String(color || '').trim()))
     .map((color) => color.trim())
     .slice(0, MAX_PALETTE_COLORS);
+}
+
+function parseRecommendationJson(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  const direct = tryParseJson(text);
+  if (direct) return direct;
+  const match = text.match(/\{[\s\S]*\}/);
+  return match ? tryParseJson(match[0]) : null;
+}
+
+function tryParseJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeRecommendation(item, state, index) {
+  if (!item || typeof item !== 'object') return null;
+  const layout = layoutFromRecommendation(item);
+  if (!layout) return null;
+  const structure = recommendedStructure(layout, state);
+  const palette = normalizePalette(Array.isArray(item.palette) ? item.palette : layout.palette);
+  const isOnePagePackage = state?.projectPackage === 'launch';
+  const rawPages = uniqueItems(Array.isArray(item.pages) ? item.pages : structure.pages);
+  const pages = isOnePagePackage ? ['Home'] : normalizePages(rawPages);
+  const rawSections = uniqueItems(Array.isArray(item.sections) ? item.sections : structure.sections);
+  const sections = isOnePagePackage ? normalizeOnePageSections(rawSections, rawPages.length ? rawPages : structure.pages) : rawSections.slice(0, 10);
+  const name = cleanRecommendationText(item.name || layout.name, layout.name);
+  const rationale = cleanRecommendationText(item.rationale || directionSummary(layout), directionSummary(layout));
+  const tone = cleanRecommendationText(item.tone || layout.tone, layout.tone);
+  return {
+    id: `llm-${layout.id}-${index}`,
+    layoutId: layout.id,
+    name,
+    tone,
+    rationale,
+    palette,
+    paletteName: cleanRecommendationText(item.paletteName || 'Recommended palette', 'Recommended palette'),
+    pages,
+    sections,
+    source: 'llm',
+  };
+}
+
+function layoutFromRecommendation(item) {
+  const requested = String(item.layoutId || item.baseLayoutId || item.id || '').trim().toLowerCase();
+  const byId = siteLayouts.find((layout) => layout.id === requested);
+  if (byId) return byId;
+  const name = String(item.layout || item.layoutName || item.name || '').toLowerCase();
+  return siteLayouts.find((layout) => name.includes(layout.name.toLowerCase())) || null;
+}
+
+function cleanRecommendationText(value, fallback) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  if (!text || /example|sample|preview|customer website|visual direction|design direction/i.test(text)) return fallback;
+  return text.slice(0, 180);
 }
 
 export function paletteLabel(color) {
