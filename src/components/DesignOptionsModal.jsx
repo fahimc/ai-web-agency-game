@@ -15,6 +15,11 @@ import {
 } from '../data/siteBlueprints.js';
 import { Modal } from './Modal.jsx';
 
+const ONE_PAGE_SECTION_PRESETS = [
+  ...SECTION_PRESETS,
+  ...PAGE_PRESETS.filter((item) => item !== 'Home'),
+];
+
 export function DesignOptionsModal({ state, actions }) {
   const designOptions = useMemo(() => recommendedDesignLayouts(state, 4), [state]);
   const initialIndex = Math.max(0, designOptions.findIndex((layout) => layout.id === state.selectedDesignStyle));
@@ -25,23 +30,30 @@ export function DesignOptionsModal({ state, actions }) {
   const [paletteMode, setPaletteMode] = useState('preset');
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [customColors, setCustomColors] = useState(() => normalizePalette(state.selectedDesignPalette || activeLayout.palette));
-  const [selectedPages, setSelectedPages] = useState(() => state.selectedSitePages?.length ? state.selectedSitePages : structureRecommendation.pages);
-  const [selectedSections, setSelectedSections] = useState(() => state.selectedSiteSections?.length ? state.selectedSiteSections : structureRecommendation.sections);
+  const isOnePagePackage = state.projectPackage === 'launch';
+  const initialSections = () => onePageSections(structureRecommendation, state.selectedSiteSections);
+  const [selectedPages, setSelectedPages] = useState(() => isOnePagePackage ? ['Home'] : (state.selectedSitePages?.length ? state.selectedSitePages : structureRecommendation.pages));
+  const [selectedSections, setSelectedSections] = useState(() => isOnePagePackage ? initialSections() : (state.selectedSiteSections?.length ? state.selectedSiteSections : structureRecommendation.sections));
   const [fullScreen, setFullScreen] = useState(false);
   const designer = employees.design;
   const optionNumber = activeIndex + 1;
   const selectedPalette = paletteMode === 'custom'
     ? normalizePalette(customColors)
     : normalizePalette(paletteOptions[paletteIndex]?.colors || activeLayout.palette);
-  const activeHtml = useMemo(() => buildExampleSite(activeLayout, state, selectedPalette, { preview: true }), [activeLayout, selectedPalette, state]);
+  const previewState = useMemo(() => ({
+    ...state,
+    selectedSitePages: selectedPages,
+    selectedSiteSections: selectedSections,
+  }), [selectedPages, selectedSections, state]);
+  const activeHtml = useMemo(() => buildExampleSite(activeLayout, previewState, selectedPalette, { preview: true }), [activeLayout, selectedPalette, previewState]);
 
   useEffect(() => {
     setPaletteMode('preset');
     setPaletteIndex(0);
     setCustomColors(normalizePalette(activeLayout.palette));
-    setSelectedPages(state.selectedSitePages?.length ? state.selectedSitePages : structureRecommendation.pages);
-    setSelectedSections(state.selectedSiteSections?.length ? state.selectedSiteSections : structureRecommendation.sections);
-  }, [activeLayout, state.selectedSitePages, state.selectedSiteSections, structureRecommendation]);
+    setSelectedPages(isOnePagePackage ? ['Home'] : (state.selectedSitePages?.length ? state.selectedSitePages : structureRecommendation.pages));
+    setSelectedSections(isOnePagePackage ? onePageSections(structureRecommendation, state.selectedSiteSections) : (state.selectedSiteSections?.length ? state.selectedSiteSections : structureRecommendation.sections));
+  }, [activeLayout, isOnePagePackage, state.selectedSitePages, state.selectedSiteSections, structureRecommendation]);
 
   function showPrevious() {
     setActiveIndex((current) => (current === 0 ? designOptions.length - 1 : current - 1));
@@ -98,6 +110,7 @@ export function DesignOptionsModal({ state, actions }) {
             updateCustomColor={updateCustomColor}
           />
           <StructureChooser
+            isOnePagePackage={isOnePagePackage}
             selectedPages={selectedPages}
             setSelectedPages={setSelectedPages}
             selectedSections={selectedSections}
@@ -162,7 +175,14 @@ function PaletteSwatches({ colors, compact = false }) {
   );
 }
 
-function StructureChooser({ selectedPages, setSelectedPages, selectedSections, setSelectedSections }) {
+function onePageSections(recommendation, savedSections = []) {
+  const fromPages = (recommendation.pages || [])
+    .filter((item) => item !== 'Home')
+    .map((item) => item === 'Contact' ? 'Contact details' : item);
+  return uniqueItems([...(savedSections || []), ...(recommendation.sections || []), ...fromPages, 'Final CTA']);
+}
+
+function StructureChooser({ isOnePagePackage, selectedPages, setSelectedPages, selectedSections, setSelectedSections }) {
   const [customPage, setCustomPage] = useState('');
   const [customSection, setCustomSection] = useState('');
 
@@ -181,21 +201,33 @@ function StructureChooser({ selectedPages, setSelectedPages, selectedSections, s
   return (
     <div className="structure-panel">
       <div>
-        <h3>Pages and sections</h3>
-        <p className="small muted">Mira recommends this structure. Remove anything unnecessary or add from presets.</p>
+        <h3>{isOnePagePackage ? 'One-page sections' : 'Pages and sections'}</h3>
+        <p className="small muted">
+          {isOnePagePackage
+            ? 'Launch Site is a one-page package. Add About, Contact, FAQ, Pricing, or other content as sections on the same page.'
+            : 'Mira recommends this structure. Remove anything unnecessary or add from presets.'}
+        </p>
       </div>
-      <ChipGroup title="Pages" items={PAGE_PRESETS} selected={selectedPages} onToggle={(item) => toggle(selectedPages, setSelectedPages, item)} />
-      <form className="inline-add" onSubmit={(event) => addCustom(event, customPage, setCustomPage, setSelectedPages)}>
-        <input value={customPage} onChange={(event) => setCustomPage(event.target.value)} placeholder="Add page" />
-        <button type="submit" className="secondary">Add</button>
-      </form>
-      <ChipGroup title="Sections" items={SECTION_PRESETS} selected={selectedSections} onToggle={(item) => toggle(selectedSections, setSelectedSections, item)} />
+      {!isOnePagePackage && (
+        <>
+          <ChipGroup title="Pages" items={PAGE_PRESETS} selected={selectedPages} onToggle={(item) => toggle(selectedPages, setSelectedPages, item)} />
+          <form className="inline-add" onSubmit={(event) => addCustom(event, customPage, setCustomPage, setSelectedPages)}>
+            <input value={customPage} onChange={(event) => setCustomPage(event.target.value)} placeholder="Add page" />
+            <button type="submit" className="secondary">Add</button>
+          </form>
+        </>
+      )}
+      <ChipGroup title={isOnePagePackage ? 'Sections' : 'Sections'} items={isOnePagePackage ? uniqueItems(ONE_PAGE_SECTION_PRESETS) : SECTION_PRESETS} selected={selectedSections} onToggle={(item) => toggle(selectedSections, setSelectedSections, item)} />
       <form className="inline-add" onSubmit={(event) => addCustom(event, customSection, setCustomSection, setSelectedSections)}>
         <input value={customSection} onChange={(event) => setCustomSection(event.target.value)} placeholder="Add section" />
         <button type="submit" className="secondary">Add</button>
       </form>
     </div>
   );
+}
+
+function uniqueItems(items) {
+  return [...new Set((items || []).map((item) => String(item || '').trim()).filter(Boolean))];
 }
 
 function ChipGroup({ title, items, selected, onToggle }) {

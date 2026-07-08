@@ -955,7 +955,10 @@ function isCompleteHtml(html) {
 function hasRequiredSiteStructure(html, state) {
   const value = String(html || '').toLowerCase();
   if (!/<nav[\s>]/i.test(html)) return false;
-  const pages = ['Home', ...(state.selectedSitePages || [])]
+  const requiredItems = state.projectPackage === 'launch'
+    ? ['Home', ...(state.selectedSiteSections || []).filter((item) => !/^hero$/i.test(String(item || '')))]
+    : ['Home', ...(state.selectedSitePages || [])];
+  const pages = requiredItems
     .map((page) => String(page || '').trim())
     .filter(Boolean);
   const uniquePages = [...new Set(pages)];

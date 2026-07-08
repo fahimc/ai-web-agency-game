@@ -274,14 +274,17 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
   const image = placeholderForLayout(layout, state);
   const examples = exampleContentFor(layout, { business, industry, audience, goal, offer });
   const structure = recommendedStructure(layout, state);
-  const pages = normalizePages(state?.selectedSitePages?.length ? state.selectedSitePages : structure.pages);
+  const isOnePagePackage = state?.projectPackage === 'launch';
   const sections = uniqueItems(state?.selectedSiteSections?.length ? state.selectedSiteSections : structure.sections).slice(0, 10);
+  const pages = isOnePagePackage ? ['Home'] : normalizePages(state?.selectedSitePages?.length ? state.selectedSitePages : structure.pages);
+  const onePageSections = isOnePagePackage ? normalizeOnePageSections(sections, structure.pages) : [];
   const isPreview = Boolean(options.preview);
   const navLabel = isPreview ? 'Preview client site' : 'Customer website';
   const eyebrow = isPreview ? `${layout.name} design direction` : `${business} website`;
-  const pageSections = pages
-    .filter((page) => page.toLowerCase() !== 'home')
-    .map((page) => pageSectionFor(page, { business, industry, audience, goal, offer, layout, examples, image }))
+  const navItems = isOnePagePackage ? ['Home', ...onePageSections] : pages;
+  const ctaTarget = slugify(navItems.find((item) => /contact|book/i.test(item)) || 'Contact');
+  const pageSections = (isOnePagePackage ? onePageSections : pages.filter((page) => page.toLowerCase() !== 'home'))
+    .map((page) => pageSectionFor(page, { business, industry, audience, goal, offer, layout, examples, image, ctaTarget }))
     .join('\n');
   return `<!doctype html>
 <html lang="en">
@@ -295,10 +298,10 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
 </head>
 <body>
 <div class="shell">
-<nav class="nav"><strong>${escapeHtml(business)}</strong><div class="nav-links">${pages.map((page) => `<a href="#${escapeHtml(slugify(page))}">${escapeHtml(page)}</a>`).join('')}</div><span>${escapeHtml(navLabel)}</span></nav>
+<nav class="nav"><strong>${escapeHtml(business)}</strong><div class="nav-links">${navItems.map((page) => `<a href="#${escapeHtml(slugify(page))}">${escapeHtml(page)}</a>`).join('')}</div><span>${escapeHtml(navLabel)}</span></nav>
 <main>
 <section class="hero" id="home">
-<div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sections.slice(0, 5).map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="#contact">Start an enquiry</a></div>
+<div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sections.slice(0, 5).map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="#${escapeHtml(ctaTarget)}">Start an enquiry</a></div>
 <aside class="panel image-card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(business)} visual direction</div></aside>
 </section>
 ${pageSections}
@@ -350,6 +353,16 @@ function normalizePages(pages) {
   return withHome.some((page) => page.toLowerCase() === 'contact') ? withHome.slice(0, 8) : [...withHome, 'Contact'].slice(0, 8);
 }
 
+function normalizeOnePageSections(sections, recommendedPages = []) {
+  const pageSections = uniqueItems(recommendedPages)
+    .filter((page) => page.toLowerCase() !== 'home')
+    .map((page) => page === 'Contact' ? 'Contact details' : page);
+  const values = uniqueItems([...sections, ...pageSections, 'Final CTA'])
+    .filter((section) => !/^hero$/i.test(section));
+  const hasContact = values.some((section) => /contact|book/i.test(section));
+  return (hasContact ? values : [...values, 'Contact details']).slice(0, 9);
+}
+
 function pageSectionFor(page, context) {
   const id = slugify(page);
   const lower = page.toLowerCase();
@@ -375,9 +388,9 @@ function aboutSection(id, { business, industry, audience, offer, image }) {
   return `<section class="section media-strip" id="${escapeHtml(id)}"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="panel"><span class="page-kicker">About</span><h2>Built around what ${escapeHtml(audience)} need to know</h2><p>${escapeHtml(business)} works in ${escapeHtml(industry)} with a clear focus on ${escapeHtml(offer)}. This section gives visitors the context, credibility, and reassurance they need before taking action.</p></div></section>`;
 }
 
-function pricingSection(id, { business, offer }) {
+function pricingSection(id, { business, offer, ctaTarget }) {
   const tiers = ['Starter', 'Standard', 'Complete'];
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Pricing</span><h2>Simple ways to start with ${escapeHtml(business)}</h2><p>Use these placeholder packages as a clear pricing structure until final prices are confirmed.</p><div class="grid">${tiers.map((tier, index) => `<div class="card"><b>${tier}</b><span>${escapeHtml(index === 0 ? `A focused introduction to ${offer}.` : index === 1 ? `A fuller option for customers ready to compare ${offer}.` : `The most complete route with extra support and priority response.`)}</span><a class="button" href="#contact">Enquire</a></div>`).join('')}</div></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Pricing</span><h2>Simple ways to start with ${escapeHtml(business)}</h2><p>Use these placeholder packages as a clear pricing structure until final prices are confirmed.</p><div class="grid">${tiers.map((tier, index) => `<div class="card"><b>${tier}</b><span>${escapeHtml(index === 0 ? `A focused introduction to ${offer}.` : index === 1 ? `A fuller option for customers ready to compare ${offer}.` : `The most complete route with extra support and priority response.`)}</span><a class="button" href="#${escapeHtml(ctaTarget)}">Enquire</a></div>`).join('')}</div></section>`;
 }
 
 function caseStudiesSection(id, { business, goal }) {
@@ -413,8 +426,8 @@ function contactSection(id, context) {
   return `<section class="section contact" id="${escapeHtml(id)}"><div><span class="page-kicker">Contact</span><h2>${escapeHtml(examples.contactTitle)}</h2><p>${escapeHtml(examples.contactText)}</p></div>${contactForm(context)}</section>`;
 }
 
-function genericPageSection(id, page, { business, offer }) {
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(page)} for ${escapeHtml(business)}</h2><p>This page section is ready for final content. It should explain how ${escapeHtml(offer)} helps visitors and give them a clear next step.</p><a class="button secondary" href="#contact">Contact us</a></section>`;
+function genericPageSection(id, page, { business, offer, ctaTarget }) {
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(page)} for ${escapeHtml(business)}</h2><p>This page section is ready for final content. It should explain how ${escapeHtml(offer)} helps visitors and give them a clear next step.</p><a class="button secondary" href="#${escapeHtml(ctaTarget)}">Contact us</a></section>`;
 }
 
 function contactForm({ business }) {
