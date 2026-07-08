@@ -133,10 +133,10 @@ export function buildExampleSite(layout, state, palette = layout.palette) {
 </head>
 <body>
 <div class="shell">
-<nav class="nav"><strong>${escapeHtml(business)}</strong><span>${escapeHtml(layout.name)}</span></nav>
+<nav class="nav"><strong>${escapeHtml(business)}</strong><span>Example client site</span></nav>
 <main>
 <section class="hero">
-<div><div class="eyebrow">${escapeHtml(industry)} website direction</div><h1>${escapeHtml(headlineFor(layout, business, goal))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><a class="button" href="#contact">Start an enquiry</a></div>
+<div><div class="eyebrow">${escapeHtml(layout.name)} design direction sample</div><h1>${escapeHtml(headlineFor(layout, business, goal))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><a class="button" href="#contact">Start an enquiry</a></div>
 <aside class="panel"><div class="metric">${escapeHtml(metricFor(layout))}</div><b>${escapeHtml(layout.model)}</b><p>${escapeHtml(layout.tone)} layout built from the MicroAgency component system.</p></aside>
 </section>
 <section class="section"><h2>What this layout emphasises</h2><div class="grid">${cardsFor(layout, offer).map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>
@@ -168,7 +168,7 @@ function headlineFor(layout, business, goal) {
   if (layout.id.includes('event')) return `${business} built for attention and action`;
   if (layout.id.includes('premium')) return `${business}, presented with clarity and confidence`;
   if (layout.id.includes('marketplace')) return `Find the right answer with ${business}`;
-  return `${business} website direction focused on ${goal}`;
+  return `${business} site concept focused on ${goal}`;
 }
 
 function copyFor(layout, audience, offer, goal) {

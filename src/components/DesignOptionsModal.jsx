@@ -50,7 +50,10 @@ export function DesignOptionsModal({ state, actions }) {
 
   return (
     <Modal title="Choose Design Direction" onClose={actions.closeModal} className="design-options-modal">
-      <div className="modal-tabs"><span className="modal-tab active">Design directions</span></div>
+      <div className="modal-tabs">
+        <span className="modal-tab active">MicroAgency design controls</span>
+        <span className="modal-tab preview-label">Client site example</span>
+      </div>
       <div className="modal-body design-options-body">
         <aside className="design-side-panel">
           <div className="designer-badge">
@@ -90,9 +93,13 @@ export function DesignOptionsModal({ state, actions }) {
           </div>
         </aside>
         <section className="design-preview-panel">
+          <div className="client-preview-label">
+            <span>Client site example</span>
+            <b>Not the MicroAgency app</b>
+          </div>
           <div className="design-preview-head">
             <div>
-              <h3>{activeLayout.name}</h3>
+              <h3>{activeLayout.name} direction</h3>
               <p className="muted">{activeLayout.tone}</p>
             </div>
             <div className="stack">
@@ -107,8 +114,8 @@ export function DesignOptionsModal({ state, actions }) {
         <div className="design-fullscreen" role="dialog" aria-label={`${activeLayout.name} full screen preview`}>
           <div className="design-fullscreen-bar">
             <div>
-              <b>{activeLayout.name}</b>
-              <span>{selectedPalette.join(' / ')}</span>
+              <b>Client site example: {activeLayout.name}</b>
+              <span>This preview is the proposed customer website, not the MicroAgency app. Palette: {selectedPalette.join(' / ')}</span>
             </div>
             <div className="stack">
               <button type="button" className="secondary" onClick={() => setFullScreen(false)}>Close</button>
