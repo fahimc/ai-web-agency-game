@@ -78,10 +78,10 @@ export function saveDraft(state) {
     projectModel: state.projectModel,
     projectPackage: state.projectPackage,
     selectedDesignStyle: state.selectedDesignStyle,
-    selectedDesignPalette: state.selectedDesignPalette,
-    selectedSitePages: state.selectedSitePages,
-    selectedSiteSections: state.selectedSiteSections,
-    designRecommendations: state.designRecommendations || [],
+    selectedDesignPalette: ensureArray(state.selectedDesignPalette),
+    selectedSitePages: ensureArray(state.selectedSitePages),
+    selectedSiteSections: ensureArray(state.selectedSiteSections),
+    designRecommendations: ensureArray(state.designRecommendations),
     designRecommendationStatus: state.designRecommendationStatus || 'idle',
     reviewAssets: compactReviewAssets(state.reviewAssets || []),
     paid: state.paid,
@@ -197,7 +197,7 @@ function safeSetItem(key, value) {
 }
 
 function compactReviewAssets(assets = []) {
-  return assets.slice(-12).map((asset) => {
+  return ensureArray(assets).slice(-12).map((asset) => {
     const dataUrl = String(asset.dataUrl || '');
     return {
       id: asset.id,
@@ -215,8 +215,24 @@ function normalizeStoredSession(snapshot) {
   if (!snapshot || typeof snapshot !== 'object') return snapshot;
   return {
     ...snapshot,
+    selectedDesignPalette: ensureArray(snapshot.selectedDesignPalette),
+    selectedSitePages: ensureArray(snapshot.selectedSitePages),
+    selectedSiteSections: ensureArray(snapshot.selectedSiteSections),
+    designRecommendations: ensureArray(snapshot.designRecommendations),
     reviewAssets: compactReviewAssets(snapshot.reviewAssets || []),
+    outputs: isPlainObject(snapshot.outputs) ? snapshot.outputs : {},
+    quests: ensureArray(snapshot.quests),
+    logs: ensureArray(snapshot.logs),
+    convos: ensureArray(snapshot.convos),
   };
+}
+
+function ensureArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function isPlainObject(value) {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
 function projectSummary(snapshot) {

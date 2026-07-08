@@ -22,7 +22,8 @@ const ONE_PAGE_SECTION_PRESETS = [
 
 export function DesignOptionsModal({ state, actions }) {
   const designOptions = useMemo(() => {
-    const recommendations = state.designRecommendations?.length ? state.designRecommendations : fallbackDesignRecommendations(state, 4);
+    const savedRecommendations = Array.isArray(state.designRecommendations) ? state.designRecommendations : [];
+    const recommendations = savedRecommendations.length ? savedRecommendations : fallbackDesignRecommendations(state, 4);
     return recommendations
       .map((recommendation) => {
         const layout = siteLayouts.find((item) => item.id === recommendation.layoutId) || siteLayouts[0];
