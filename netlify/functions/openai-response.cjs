@@ -11,7 +11,7 @@ exports.handler = async (event) => {
 
   const apiKey = process.env.OPENAI_API_KEY || '';
   if (!apiKey) {
-    return json(500, { error: 'OpenAI is not configured. Add OPENAI_API_KEY in Netlify environment variables.' });
+    return json(500, { error: 'Studio service is not configured yet.' });
   }
 
   let body;
@@ -43,7 +43,7 @@ exports.handler = async (event) => {
     const data = JSON.parse(text);
     return json(200, { output_text: parseResponseText(data), raw: data });
   } catch (error) {
-    return json(500, { error: error?.message || 'OpenAI request failed.' });
+    return json(500, { error: error?.message || 'Studio request failed.' });
   }
 };
 

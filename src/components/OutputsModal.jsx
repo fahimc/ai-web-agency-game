@@ -75,16 +75,6 @@ function Website({ state, actions }) {
             <button type="submit">Send to designer</button>
           </form>
         )}
-        <div className="deploy-panel">
-          <strong>Netlify</strong>
-          <p className="small muted">Deploy directly with Netlify settings, or download a zip for Netlify Drop.</p>
-          <div className="stack">
-            <button type="button" className="secondary" onClick={actions.downloadNetlifyPackage} disabled={!html}>Download Netlify zip</button>
-            <button type="button" onClick={actions.openNetlifyDrop}>Open Netlify Drop</button>
-            <button type="button" className="green" onClick={actions.deployNetlify} disabled={!html}>Deploy to Netlify</button>
-          </div>
-          {state.outputs.NetlifyURL && <p className="small"><a href={state.outputs.NetlifyURL} target="_blank" rel="noreferrer">{state.outputs.NetlifyURL}</a></p>}
-        </div>
       </aside>
       <div className="card">{html ? <iframe className="preview-frame" sandbox="allow-same-origin" title="Generated website preview" srcDoc={html} /> : <div className="empty">Website preview is not ready yet.</div>}</div>
     </div>
@@ -99,7 +89,7 @@ function ProjectPdf({ state, actions }) {
         <button type="button" className="secondary" onClick={actions.downloadCurrentOutput} disabled={!value}>Download PDF</button>
       </div>
       <div className="card">
-        <h3>Project details and invoice</h3>
+        <h3>Project handover pack</h3>
         {value ? <iframe className="preview-frame" title="Project PDF preview" src={value} /> : <div className="empty">The PDF will appear after preview approval and QA.</div>}
       </div>
     </>

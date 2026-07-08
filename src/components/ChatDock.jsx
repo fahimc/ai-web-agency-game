@@ -14,7 +14,7 @@ export function ChatDock({ state, onSubmit }) {
     email: 'Enter your email',
     new_email: 'Enter your email',
     approval: 'Type approve or describe changes',
-    error: 'Press Resume or fix Settings',
+    error: 'Press Resume to try again',
   }[state.phase] || 'Reply to continue';
 
   useEffect(() => {

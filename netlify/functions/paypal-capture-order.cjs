@@ -1,4 +1,4 @@
-const { json, modelPrice, paypalAccessToken, paypalBaseUrl } = require('./_paypal.cjs');
+const { json, packagePrice, paypalAccessToken, paypalBaseUrl } = require('./_paypal.cjs');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' });
@@ -16,12 +16,13 @@ exports.handler = async (event) => {
     const data = await response.json();
     if (!response.ok) return json(response.status, { error: data.message || 'PayPal capture failed.', details: data });
     const purchase = data.purchase_units?.[0];
-    const modelId = purchase?.payments?.captures?.[0]?.custom_id || body.modelId || purchase?.custom_id || 'gpt-5.4-mini';
-    const price = modelPrice(modelId);
+    const packageId = purchase?.payments?.captures?.[0]?.custom_id || body.packageId || purchase?.custom_id || body.modelId || 'launch';
+    const price = packagePrice(packageId);
     return json(200, {
       id: data.id,
       status: data.status,
-      modelId,
+      packageId: price.id,
+      modelId: price.modelId,
       amountGbp: price.priceGbp,
       details: data,
     });

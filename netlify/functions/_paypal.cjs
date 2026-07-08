@@ -1,8 +1,13 @@
-const MODEL_PRICES = {
-  'gpt-5.4-mini': { label: 'GPT-5.4 mini', priceGbp: 1 },
-  'gpt-5.4': { label: 'GPT-5.4', priceGbp: 3 },
-  'gpt-5.5': { label: 'GPT-5.5', priceGbp: 5 },
+const PACKAGE_PRICES = {
+  launch: { id: 'launch', label: 'Launch Site', modelId: 'gpt-5.4-mini', priceGbp: 1 },
+  growth: { id: 'growth', label: 'Growth Site', modelId: 'gpt-5.4', priceGbp: 3 },
+  signature: { id: 'signature', label: 'Signature Site', modelId: 'gpt-5.5', priceGbp: 5 },
 };
+
+const MODEL_TO_PACKAGE = Object.values(PACKAGE_PRICES).reduce((next, item) => {
+  next[item.modelId] = item.id;
+  return next;
+}, {});
 
 function paypalBaseUrl() {
   return process.env.PAYPAL_ENV === 'live'
@@ -26,8 +31,13 @@ function json(statusCode, body) {
   };
 }
 
+function packagePrice(packageIdOrModelId) {
+  const packageId = PACKAGE_PRICES[packageIdOrModelId] ? packageIdOrModelId : MODEL_TO_PACKAGE[packageIdOrModelId];
+  return PACKAGE_PRICES[packageId] || PACKAGE_PRICES.launch;
+}
+
 function modelPrice(modelId) {
-  return MODEL_PRICES[modelId] || MODEL_PRICES['gpt-5.4-mini'];
+  return packagePrice(modelId);
 }
 
 async function paypalAccessToken() {
@@ -51,6 +61,7 @@ async function paypalAccessToken() {
 module.exports = {
   json,
   modelPrice,
+  packagePrice,
   paypalAccessToken,
   paypalBaseUrl,
   paypalClientId,

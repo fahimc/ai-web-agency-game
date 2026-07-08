@@ -60,9 +60,9 @@ export function downloadText(filename, text) {
 
 export function friendlyPauseText(reason) {
   const value = String(reason || '');
-  if (/openai api key|api key|proxy url missing|not configured/i.test(value)) return 'OpenAI is not configured on Netlify yet. Add OPENAI_API_KEY in Netlify environment variables, redeploy, then press Resume work.';
+  if (/openai api key|api key|proxy url missing|not configured/i.test(value)) return 'Checkout or production setup is still being finalised. Please try again shortly.';
   if (/network|failed to fetch|offline|connection/i.test(value)) return 'The connection dropped. Your session is saved locally. Reconnect, then press Resume work.';
-  if (/model call failed|401|403|429|500|502|503/i.test(value)) return 'The AI request failed. Check the Netlify function logs or wait a moment, then press Resume work.';
+  if (/model call failed|401|403|429|500|502|503/i.test(value)) return 'The studio had trouble preparing the next step. Please wait a moment, then press Resume work.';
   return 'Something interrupted the run. Your session is saved locally. Fix the issue if needed, then press Resume work.';
 }
 
@@ -76,6 +76,7 @@ export function phaseLabel(phase) {
     new_email: 'Contact details',
     new_details: 'Project form',
     brief: 'Project form',
+    packages: 'Package selection',
     payment: 'Payment',
     running: 'Agency working',
     approval: 'Preview approval',

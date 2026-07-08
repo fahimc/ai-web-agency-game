@@ -116,7 +116,7 @@ export function createProjectPdf(state) {
   doc.setFontSize(22);
   doc.text('MicroAgency AI', margin, 42);
   doc.setFontSize(12);
-  doc.text('Project details and invoice', margin, 64);
+  doc.text('Project handover pack', margin, 64);
 
   doc.setTextColor(33, 22, 15);
   y = 126;
@@ -131,15 +131,8 @@ export function createProjectPdf(state) {
     writeMarkdown(state.outputs[key].slice(0, 4500), { size: 9.5 });
   });
 
-  write('Invoice', { size: 16, bold: true, after: 4 });
-  const rows = [
-    ['Discovery, strategy and project planning', 'Included'],
-    ['Responsive website preview build', 'Included'],
-    ['QA, handover notes and packaged PDF', 'Included'],
-  ];
-  rows.forEach(([item, price]) => write(`${item} - ${price}`, { size: 10, after: 1 }));
-  write('Total due: To be confirmed', { size: 12, bold: true });
-  write('This invoice is a generated draft. Review pricing, tax, payment terms, and company details before sending to a client.', { size: 9 });
+  write('Handover Summary', { size: 16, bold: true, after: 4 });
+  write('Your project pack includes the approved website preview, QA notes, and the core planning details used by the studio.', { size: 10 });
 
   return doc.output('datauristring');
 }

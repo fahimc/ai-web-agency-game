@@ -8,7 +8,6 @@ export function PauseModal({ state, actions }) {
         <h2>Agency paused</h2>
         <p>{friendlyPauseText(state.error)}</p>
         <div className="stack">
-          <button type="button" onClick={() => actions.openMenu('settings')}>Open settings</button>
           <button type="button" className="green" onClick={actions.resumeWork}>Resume work</button>
           <button type="button" className="secondary" onClick={actions.closeModal}>Not now</button>
         </div>

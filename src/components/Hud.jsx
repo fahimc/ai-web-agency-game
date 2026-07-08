@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, ClipboardList, Menu, RotateCcw } from 'lucide-react';
+import { Box, Menu, RotateCcw } from 'lucide-react';
 import { canResumeProject } from '../utils/text.js';
 
 export function Hud({ state, phaseLabel, actions }) {
@@ -25,9 +25,6 @@ export function Hud({ state, phaseLabel, actions }) {
           {canResume && <button className="green tiny keep-mobile resume-button" type="button" onClick={actions.resumeWork}>Resume</button>}
           <button className="secondary tiny" type="button" onClick={() => actions.openOutputs(state.activeOutput || 'Plan')}>
             <Box size={16} /> Outputs
-          </button>
-          <button className="secondary tiny" type="button" onClick={() => actions.openMenu('quests')}>
-            <ClipboardList size={16} /> Tasks
           </button>
           <button className="secondary tiny keep-mobile menu-button" type="button" onClick={() => actions.openMenu('status')}>
             <Menu size={16} /> Menu

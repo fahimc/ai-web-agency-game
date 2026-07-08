@@ -103,6 +103,7 @@ function actionButtons(actionIds, actions) {
     returning: { label: 'Returning', onClick: actions.returningCustomer },
     new: { label: 'New customer', onClick: actions.newCustomer },
     openDetails: { label: 'Open form', onClick: actions.openDetails },
+    openPackages: { label: 'View packages', onClick: actions.openPackages },
     openPayment: { label: 'Pay now', onClick: actions.openPayment },
     openPreview: { label: 'Open preview', onClick: () => actions.openOutputs('WebsiteHTML') },
     approve: { label: 'Approve', onClick: actions.approve },

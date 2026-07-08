@@ -1,19 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { employeeList, employees } from '../data/employees.js';
 import { outputOrder } from '../data/outputs.js';
 import { listProjects } from '../services/storage.js';
 import { canResumeProject } from '../utils/text.js';
-import { MODEL_OPTIONS } from '../utils/pricing.js';
 import { Modal } from './Modal.jsx';
 
 const tabs = [
   ['status', 'Status'],
   ['projects', 'Projects'],
-  ['client', 'Client'],
-  ['quests', 'Task Log'],
   ['convos', 'Convos'],
-  ['activity', 'Activity'],
-  ['settings', 'Settings'],
   ['help', 'Help'],
 ];
 
@@ -26,11 +21,7 @@ export function MenuModal({ state, actions, menuTab, phaseLabel }) {
       <div className="modal-body">
         {menuTab === 'status' && <Status state={state} actions={actions} phaseLabel={phaseLabel} />}
         {menuTab === 'projects' && <Projects state={state} actions={actions} />}
-        {menuTab === 'client' && <Client state={state} actions={actions} />}
-        {menuTab === 'quests' && <Quests state={state} />}
         {menuTab === 'convos' && <Timeline empty="No conversation yet." items={state.convos.slice().reverse()} />}
-        {menuTab === 'activity' && <Timeline empty="No activity logs yet." items={state.logs} />}
-        {menuTab === 'settings' && <Settings state={state} actions={actions} />}
         {menuTab === 'help' && <Help />}
       </div>
     </Modal>
@@ -91,7 +82,7 @@ function Status({ state, actions, phaseLabel }) {
         <h3>Current run</h3>
         <p><b>Phase:</b> {phaseLabel}</p>
         <p><b>Progress:</b> {Math.round(state.progress)}%</p>
-        <p><b>Active employee:</b> {activeEmployee.name}</p>
+        <p><b>Current stage:</b> {activeEmployee.role}</p>
         <p><b>Outputs ready:</b> {complete}/{outputOrder.length}</p>
         <div className="stack">
           <button type="button" onClick={() => actions.openOutputs(state.activeOutput || 'Plan')}>Open outputs</button>
@@ -113,41 +104,8 @@ function Status({ state, actions, phaseLabel }) {
         <p><b>Last saved:</b> {state.lastSaved || 'Not saved yet'}</p>
         <div className="stack">
           <button type="button" className="red" onClick={() => actions.resetToChoice(true)}>New office run</button>
-          <button type="button" className="secondary" onClick={actions.exportJSON}>Export JSON</button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Client({ state, actions }) {
-  const [client, setClient] = useState({ userName: state.userName, email: state.email, clientDetails: state.clientDetails, brief: state.brief });
-  const setField = (field, value) => setClient((current) => ({ ...current, [field]: value }));
-  return (
-    <div className="modal-grid">
-      <div className="card">
-        <h3>Client details</h3>
-        <label>Name<input value={client.userName} onChange={(event) => setField('userName', event.target.value)} /></label>
-        <label>Email<input value={client.email} onChange={(event) => setField('email', event.target.value)} /></label>
-        <label>Project form / brief<textarea value={client.clientDetails} onChange={(event) => setField('clientDetails', event.target.value)} /></label>
-        <button type="button" onClick={() => actions.saveClientEdits(client)}>Save client info</button>
-      </div>
-      <div className="card">
-        <h3>Saved sessions</h3>
-        <p className="muted">Returning customers load by email from browser storage on this device.</p>
-      </div>
-    </div>
-  );
-}
-
-function Quests({ state }) {
-  if (!state.quests.length) return <div className="empty">No tasks yet. Send a brief and the employees will create the task log as they work.</div>;
-  return (
-    <div className="quest-list">
-      {state.quests.map((quest) => {
-        const employee = employees[quest.employeeId] || employees.reception;
-        return <div className="quest-item" key={quest.title}><div className="quest-icon">{quest.status === 'done' ? 'OK' : '...'}</div><div><b>{quest.title}</b><span className="muted">{employee.name} - {employee.role}</span></div><span className="muted small">{quest.status}</span></div>;
-      })}
     </div>
   );
 }
@@ -157,51 +115,11 @@ function Timeline({ items, empty }) {
   return <div className="log-list">{items.map((item, index) => <div className="log-item" key={`${item.time}-${index}`}><b>{item.who} <span className="muted small">{item.time}</span></b>{item.text}</div>)}</div>;
 }
 
-function Settings({ state, actions }) {
-  const [settings, setSettings] = useState(state.settings);
-  const setField = (field, value) => setSettings((current) => ({ ...current, [field]: value }));
-  return (
-    <div className="modal-grid">
-      <div className="card">
-        <h3>Model routing</h3>
-        <p className="small muted">AI calls run through Netlify Functions. Add <b>OPENAI_API_KEY</b> in Netlify environment variables for production.</p>
-        <label>Default project model
-          <select value={settings.selectedModel || MODEL_OPTIONS[0].id} onChange={(event) => setField('selectedModel', event.target.value)}>
-            {MODEL_OPTIONS.map((model) => <option value={model.id} key={model.id}>{model.label}</option>)}
-          </select>
-        </label>
-        <div className="row">
-          <label>Fast web model<input value={settings.fastModel} onChange={(event) => setField('fastModel', event.target.value)} /></label>
-          <label>Complex OpenAI model<input value={settings.complexModel} onChange={(event) => setField('complexModel', event.target.value)} /></label>
-        </div>
-        <label>Autonomy<select value={settings.autonomy} onChange={(event) => setField('autonomy', event.target.value)}><option>Balanced</option><option>Careful</option><option>Aggressive</option></select></label>
-        <label>USD to GBP rate<input type="number" min="0.01" step="0.01" value={settings.usdToGbp || 0.79} onChange={(event) => setField('usdToGbp', Number(event.target.value))} /></label>
-        <button type="button" onClick={() => actions.saveSettingsFromForm(settings)}>Save settings</button>
-      </div>
-      <div className="card">
-        <h3>Netlify deploy</h3>
-        <p className="small muted">For direct deploy, create a Netlify personal access token and paste the target site API ID here. Without these, use the Netlify zip and Drop buttons in Outputs.</p>
-        <label>Netlify site ID<input value={settings.netlifySiteId || ''} onChange={(event) => setField('netlifySiteId', event.target.value)} /></label>
-        <label>Netlify personal access token<input type="password" value={settings.netlifyToken || ''} onChange={(event) => setField('netlifyToken', event.target.value)} /></label>
-        <button type="button" onClick={() => actions.saveSettingsFromForm(settings)}>Save Netlify settings</button>
-      </div>
-      <div className="card">
-        <h3>Run controls</h3>
-        <div className="stack">
-          <button type="button" className="green" onClick={actions.resumeWork}>Resume work</button>
-          <button type="button" className="secondary" onClick={actions.stopRun}>Stop current run</button>
-          <button type="button" className="red" onClick={() => actions.resetToChoice(true)}>Reset office</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Help() {
   return (
     <div className="modal-grid">
       <div className="card"><h3>Flow</h3><p>Enter your name, save your email, complete the project form, then review the website preview.</p></div>
-      <div className="card"><h3>Real outputs</h3><p>The agency creates strategy, task board, design direction, website HTML, QA notes, and a project PDF with invoice draft.</p></div>
+      <div className="card"><h3>Real outputs</h3><p>The agency creates strategy, design direction, website HTML, QA notes, and a project handover PDF.</p></div>
     </div>
   );
 }

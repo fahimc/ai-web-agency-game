@@ -1,14 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MODEL_OPTIONS, STATIC_VOUCHER_CODE, estimateAiCost } from '../utils/pricing.js';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal } from './Modal.jsx';
+import { packageOption } from '../utils/pricing.js';
 
 export function PaymentModal({ state, actions }) {
-  const [modelId, setModelId] = useState(state.projectModel || state.settings.selectedModel || MODEL_OPTIONS[0].id);
-  const [voucher, setVoucher] = useState('');
   const [error, setError] = useState('');
   const [paypalConfig, setPaypalConfig] = useState({ configured: false, clientId: '' });
   const buttonsRef = useRef(null);
-  const estimate = useMemo(() => estimateAiCost(modelId, state.settings.usdToGbp), [modelId, state.settings.usdToGbp]);
+  const selectedPackage = packageOption(state.projectPackage);
+  const packageId = selectedPackage.id;
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +37,7 @@ export function PaymentModal({ state, actions }) {
             const response = await fetch('/.netlify/functions/paypal-create-order', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ modelId }),
+              body: JSON.stringify({ packageId }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Could not create PayPal order.');
@@ -48,11 +47,11 @@ export function PaymentModal({ state, actions }) {
             const response = await fetch('/.netlify/functions/paypal-capture-order', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ orderId: data.orderID, modelId }),
+              body: JSON.stringify({ orderId: data.orderID, packageId }),
             });
             const capture = await response.json();
             if (!response.ok) throw new Error(capture.error || 'Could not capture PayPal order.');
-            actions.confirmPayment({ provider: 'paypal', orderId: capture.id, amountGbp: capture.amountGbp || estimate.publicPriceGbp, modelId: capture.modelId || modelId });
+            actions.confirmPayment({ provider: 'paypal', orderId: capture.id, amountGbp: capture.amountGbp, packageId: capture.packageId || packageId, modelId: capture.modelId || selectedPackage.modelId });
           },
           onError: (err) => setError(err?.message || 'PayPal checkout failed.'),
         }).render(buttonsRef.current);
@@ -61,50 +60,18 @@ export function PaymentModal({ state, actions }) {
     return () => {
       cancelled = true;
     };
-  }, [actions, estimate.publicPriceGbp, modelId, paypalConfig.clientId]);
-
-  function applyVoucher(event) {
-    event.preventDefault();
-    if (voucher.trim().toUpperCase() !== STATIC_VOUCHER_CODE) {
-      setError('Voucher code not recognised.');
-      return;
-    }
-    actions.confirmPayment({ provider: 'voucher', voucherCode: STATIC_VOUCHER_CODE, amountGbp: 0, modelId });
-  }
+  }, [actions, packageId, paypalConfig.clientId, selectedPackage.modelId]);
 
   return (
     <Modal title="Project Payment" onClose={actions.closeModal} className="details-modal">
       <div className="modal-body">
-        <div className="payment-grid">
+        <div className="payment-grid single">
           <div className="card">
-            <h3>Choose package</h3>
-            <div className="model-price-list">
-              {MODEL_OPTIONS.map((model) => {
-                const modelEstimate = estimateAiCost(model.id, state.settings.usdToGbp);
-                return (
-                  <button type="button" className={`model-price-option ${modelId === model.id ? 'active' : ''}`} key={model.id} onClick={() => setModelId(model.id)}>
-                    <span>{model.label}</span>
-                    <b>&pound;{modelEstimate.publicPriceGbp}</b>
-                  </button>
-                );
-              })}
-            </div>
-            <p className="small muted">Includes the project build and up to 3 revisions.</p>
-          </div>
-          <div className="card">
-            <h3>Pay with PayPal</h3>
-            <p className="price-total">GBP &pound;{estimate.publicPriceGbp}</p>
-            <form className="voucher-form" onSubmit={applyVoucher}>
-              <label>Voucher code
-                <input value={voucher} onChange={(event) => {
-                  setVoucher(event.target.value);
-                  setError('');
-                }} placeholder="Enter voucher code" />
-              </label>
-              <button type="submit" className="secondary">Apply voucher</button>
-            </form>
+            <h3>Secure checkout</h3>
+            <p><b>{selectedPackage.name}</b> - £{selectedPackage.priceGbp}</p>
+            <p className="small muted">Includes the selected website generation package and up to 3 revisions.</p>
             {paypalConfig.configured ? <div ref={buttonsRef} /> : (
-              <div className="empty">PayPal is not configured yet. Add PayPal credentials to Netlify environment variables.</div>
+              <div className="empty">Checkout is temporarily unavailable. Please try again shortly.</div>
             )}
             {error && <p className="small danger-text">{error}</p>}
           </div>

@@ -5,6 +5,7 @@ import { Hud } from './components/Hud.jsx';
 import { MenuModal } from './components/MenuModal.jsx';
 import { OfficeScene } from './components/OfficeScene.jsx';
 import { OutputsModal } from './components/OutputsModal.jsx';
+import { PackageModal } from './components/PackageModal.jsx';
 import { PauseModal } from './components/PauseModal.jsx';
 import { PaymentModal } from './components/PaymentModal.jsx';
 import { Toast } from './components/Toast.jsx';
@@ -25,6 +26,7 @@ export function App() {
       <ChatDock state={state} onSubmit={actions.submitChat} />
       {modal === 'menu' && <MenuModal state={state} actions={actions} menuTab={menuTab} phaseLabel={phaseLabel} />}
       {modal === 'details' && <DetailsModal state={state} actions={actions} />}
+      {modal === 'packages' && <PackageModal state={state} actions={actions} />}
       {modal === 'outputs' && <OutputsModal state={state} actions={actions} />}
       {modal === 'payment' && <PaymentModal state={state} actions={actions} />}
       {modal === 'pause' && <PauseModal state={state} actions={actions} />}

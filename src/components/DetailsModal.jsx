@@ -31,7 +31,7 @@ export function DetailsModal({ state, actions }) {
   }
 
   return (
-    <Modal title="Client Details" onClose={actions.closeModal} className="details-modal">
+    <Modal title="Project Details" onClose={actions.closeModal} className="details-modal">
       <div className="modal-tabs"><span className="modal-tab active">New customer intake</span></div>
       <div className="modal-body">
         <form className="details-form" autoComplete="on" onSubmit={submit}>
