@@ -30,7 +30,7 @@ export const previewSteps = [
     quest: 'Website preview',
     complex: true,
     contextKeys: ['Plan', 'TaskBoard', 'SelectedDesign', 'DesignDirection'],
-    task: 'Build a complete production-quality single-file HTML landing page for the client using the selected design direction, colour palette, pages, sections, and MicroAgency Blocks component system. Requirements: return only valid HTML starting with <!doctype html>; include all CSS inside <style>; no external libraries; responsive mobile-first layout; strong conversion copy; clear CTAs; accessible semantic markup; sections based on the selected project structure and intake form; polished modern design. Use the selected layout as the structure, not just inspiration.',
+    task: 'Build the final production customer website as one complete single-file HTML document using the selected design direction, colour palette, approved pages, approved sections, and MicroAgency Blocks component system. Requirements: return only valid HTML starting with <!doctype html>; include all CSS inside <style>; no external libraries; include a visible navigation menu linking to every approved page; create a real section for every approved page even if dummy production copy is needed; do not call it an example, sample, concept, or preview inside the customer site; responsive mobile-first layout; strong conversion copy; clear CTAs; accessible semantic markup; polished modern design. Use local /placeholders assets where imagery is useful.',
   },
 ];
 

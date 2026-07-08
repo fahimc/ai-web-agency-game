@@ -263,7 +263,7 @@ export function buildDesignSelectionMarkdown(layout, palette = layout.palette, s
   ].join('\n');
 }
 
-export function buildExampleSite(layout, state, palette = layout.palette) {
+export function buildExampleSite(layout, state, palette = layout.palette, options = {}) {
   const brief = parseBrief(state?.brief || state?.clientDetails || '');
   const business = brief.businessName || state?.projectName || 'Client Website';
   const industry = brief.industry || 'professional services';
@@ -273,29 +273,35 @@ export function buildExampleSite(layout, state, palette = layout.palette) {
   const [ink, accent, bg, secondary, surface] = normalizePalette(palette);
   const image = placeholderForLayout(layout, state);
   const examples = exampleContentFor(layout, { business, industry, audience, goal, offer });
+  const structure = recommendedStructure(layout, state);
+  const pages = normalizePages(state?.selectedSitePages?.length ? state.selectedSitePages : structure.pages);
+  const sections = uniqueItems(state?.selectedSiteSections?.length ? state.selectedSiteSections : structure.sections).slice(0, 10);
+  const isPreview = Boolean(options.preview);
+  const navLabel = isPreview ? 'Preview client site' : 'Customer website';
+  const eyebrow = isPreview ? `${layout.name} design direction` : `${business} website`;
+  const pageSections = pages
+    .filter((page) => page.toLowerCase() !== 'home')
+    .map((page) => pageSectionFor(page, { business, industry, audience, goal, offer, layout, examples, image }))
+    .join('\n');
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(business)} - ${escapeHtml(layout.name)}</title>
+<title>${escapeHtml(business)} - Website</title>
 <style>
 :root{--ink:${ink};--accent:${accent};--bg:${bg};--secondary:${secondary};--card:${surface};--muted:#64748b;--line:rgba(15,23,42,.12);--radius:20px;--space:clamp(18px,4vw,56px);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:var(--bg)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);line-height:1.5}a{color:inherit}.shell{width:min(1120px,calc(100% - 32px));margin:auto}.nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;font-weight:800}.nav span{color:var(--accent)}.hero{padding:var(--space) 0;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(20px,5vw,64px);align-items:center}.eyebrow{color:var(--accent);font-weight:900;text-transform:uppercase;font-size:12px;letter-spacing:0}.hero h1{font-size:clamp(34px,7vw,76px);line-height:.94;margin:10px 0 18px;letter-spacing:0}.hero p{font-size:clamp(16px,2vw,21px);color:var(--muted);max-width:62ch}.button{display:inline-flex;margin-top:14px;background:var(--accent);color:white;text-decoration:none;border-radius:999px;padding:13px 18px;font-weight:900}.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:0 24px 70px rgba(15,23,42,.12)}.metric{font-size:38px;font-weight:950;color:var(--secondary)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.card b{display:block;margin-bottom:7px}.section{padding:42px 0}.section h2{font-size:clamp(26px,4vw,44px);line-height:1;margin:0 0 14px}.steps{counter-reset:step;display:grid;gap:12px}.step{counter-increment:step;display:flex;gap:14px;align-items:flex-start}.step:before{content:counter(step);background:var(--accent);color:#fff;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;font-weight:900}.contact{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.form{display:grid;gap:10px}.input{border:1px solid var(--line);border-radius:14px;padding:13px;background:white;color:var(--ink)}@media(max-width:760px){.hero,.contact,.grid{grid-template-columns:1fr}.hero h1{font-size:42px}}
-.image-card{position:relative;overflow:hidden;min-height:360px;padding:0}.image-card img{width:100%;height:100%;min-height:360px;object-fit:cover;display:block}.image-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.42))}.image-caption{position:absolute;left:18px;right:18px;bottom:18px;color:white;z-index:2;font-weight:900}.media-strip{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;align-items:stretch}.media-strip img{width:100%;height:260px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--line)}@media(max-width:760px){.hero,.contact,.grid,.media-strip{grid-template-columns:1fr}.hero h1{font-size:42px}}</style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);line-height:1.5}a{color:inherit}.shell{width:min(1120px,calc(100% - 32px));margin:auto}.nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,white);backdrop-filter:blur(14px);display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 0;font-weight:800}.nav strong{font-size:20px}.nav-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.nav-links a{color:var(--muted);text-decoration:none;border:1px solid transparent;border-radius:999px;padding:8px 10px;font-size:14px}.nav-links a:hover{border-color:var(--line);color:var(--ink);background:var(--card)}.nav span{color:var(--accent)}.hero{padding:var(--space) 0;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(20px,5vw,64px);align-items:center}.eyebrow{color:var(--accent);font-weight:900;text-transform:uppercase;font-size:12px;letter-spacing:0}.hero h1{font-size:clamp(34px,7vw,76px);line-height:.94;margin:10px 0 18px;letter-spacing:0}.hero p{font-size:clamp(16px,2vw,21px);color:var(--muted);max-width:62ch}.button{display:inline-flex;margin-top:14px;background:var(--accent);color:white;text-decoration:none;border-radius:999px;padding:13px 18px;font-weight:900}.button.secondary{background:var(--ink)}.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:0 24px 70px rgba(15,23,42,.12)}.metric{font-size:38px;font-weight:950;color:var(--secondary)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.card b{display:block;margin-bottom:7px}.card span,.section p{color:var(--muted)}.section{padding:54px 0;scroll-margin-top:86px}.section h2{font-size:clamp(26px,4vw,44px);line-height:1;margin:0 0 14px}.page-kicker{color:var(--accent);font-weight:900;text-transform:uppercase;font-size:12px}.steps{counter-reset:step;display:grid;gap:12px}.step{counter-increment:step;display:flex;gap:14px;align-items:flex-start}.step:before{content:counter(step);background:var(--accent);color:#fff;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;font-weight:900}.contact{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.form{display:grid;gap:10px}.input{border:1px solid var(--line);border-radius:14px;padding:13px;background:white;color:var(--ink)}.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.tag{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 10px;font-weight:800;color:var(--muted);font-size:13px}.image-card{position:relative;overflow:hidden;min-height:360px;padding:0}.image-card img{width:100%;height:100%;min-height:360px;object-fit:cover;display:block}.image-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.42))}.image-caption{position:absolute;left:18px;right:18px;bottom:18px;color:white;z-index:2;font-weight:900}.media-strip{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;align-items:stretch}.media-strip img{width:100%;height:260px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--line)}@media(max-width:760px){.nav{position:static;align-items:flex-start;flex-direction:column}.nav-links{justify-content:flex-start}.hero,.contact,.grid,.media-strip{grid-template-columns:1fr}.hero h1{font-size:42px}}</style>
 </head>
 <body>
 <div class="shell">
-<nav class="nav"><strong>${escapeHtml(business)}</strong><span>Example client site</span></nav>
+<nav class="nav"><strong>${escapeHtml(business)}</strong><div class="nav-links">${pages.map((page) => `<a href="#${escapeHtml(slugify(page))}">${escapeHtml(page)}</a>`).join('')}</div><span>${escapeHtml(navLabel)}</span></nav>
 <main>
-<section class="hero">
-<div><div class="eyebrow">${escapeHtml(layout.name)} design direction sample</div><h1>${escapeHtml(headlineFor(layout, business, goal))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><a class="button" href="#contact">Start an enquiry</a></div>
-<aside class="panel image-card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)} placeholder"><div class="image-caption">${escapeHtml(layout.name)} image direction</div></aside>
+<section class="hero" id="home">
+<div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sections.slice(0, 5).map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="#contact">Start an enquiry</a></div>
+<aside class="panel image-card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(business)} visual direction</div></aside>
 </section>
-<section class="section"><h2>${escapeHtml(examples.servicesTitle)}</h2><p>${escapeHtml(examples.servicesLead)}</p><div class="grid">${examples.cards.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>
-<section class="section media-strip"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)} sample"><div class="panel"><div class="metric">${escapeHtml(metricFor(layout))}</div><b>${escapeHtml(examples.proofQuote)}</b><p>${escapeHtml(examples.proofText)}</p></div></section>
-<section class="section"><h2>${escapeHtml(examples.processTitle)}</h2><div class="steps">${examples.steps.map((step) => `<div class="step">${escapeHtml(step)}</div>`).join('')}</div></section>
-<section class="section contact" id="contact"><div><h2>${escapeHtml(examples.contactTitle)}</h2><p>${escapeHtml(examples.contactText)}</p></div><form class="form"><input class="input" placeholder="Name"><input class="input" placeholder="Email"><textarea class="input" rows="4" placeholder="Project message"></textarea><a class="button" href="#">Send enquiry</a></form></section>
+${pageSections}
 </main>
 </div>
 </body>
@@ -318,11 +324,12 @@ function parseBrief(text) {
   return fields;
 }
 
-function headlineFor(layout, business, goal) {
+function headlineFor(layout, business, goal, audience) {
   if (layout.id.includes('event')) return `${business} built for attention and action`;
   if (layout.id.includes('premium')) return `${business}, presented with clarity and confidence`;
   if (layout.id.includes('marketplace')) return `Find the right answer with ${business}`;
-  return `${business} site concept focused on ${goal}`;
+  if (/showcase|present|display/i.test(goal)) return `${business} presented clearly for ${audience}`;
+  return `${business} built to ${goal}`;
 }
 
 function copyFor(layout, audience, offer, goal) {
@@ -334,6 +341,84 @@ function metricFor(layout) {
   if (layout.id.includes('marketplace')) return '10+';
   if (layout.id.includes('premium')) return 'A+';
   return '3x';
+}
+
+function normalizePages(pages) {
+  const values = uniqueItems(pages?.length ? pages : ['Home', 'Services', 'About', 'FAQ', 'Contact']);
+  const withoutHome = values.filter((page) => page.toLowerCase() !== 'home');
+  const withHome = ['Home', ...withoutHome];
+  return withHome.some((page) => page.toLowerCase() === 'contact') ? withHome.slice(0, 8) : [...withHome, 'Contact'].slice(0, 8);
+}
+
+function pageSectionFor(page, context) {
+  const id = slugify(page);
+  const lower = page.toLowerCase();
+  if (lower.includes('service')) return servicesSection(id, context);
+  if (lower.includes('pricing')) return pricingSection(id, context);
+  if (lower.includes('case')) return caseStudiesSection(id, context);
+  if (lower.includes('gallery')) return gallerySection(id, context);
+  if (lower.includes('menu')) return menuSection(id, context);
+  if (lower.includes('event')) return eventsSection(id, context);
+  if (lower.includes('course')) return coursesSection(id, context);
+  if (lower.includes('faq')) return faqSection(id, context);
+  if (lower.includes('book')) return bookingSection(id, context);
+  if (lower.includes('contact')) return contactSection(id, context);
+  if (lower.includes('about')) return aboutSection(id, context);
+  return genericPageSection(id, page, context);
+}
+
+function servicesSection(id, { examples }) {
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Services</span><h2>${escapeHtml(examples.servicesTitle)}</h2><p>${escapeHtml(examples.servicesLead)}</p><div class="grid">${examples.cards.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>`;
+}
+
+function aboutSection(id, { business, industry, audience, offer, image }) {
+  return `<section class="section media-strip" id="${escapeHtml(id)}"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="panel"><span class="page-kicker">About</span><h2>Built around what ${escapeHtml(audience)} need to know</h2><p>${escapeHtml(business)} works in ${escapeHtml(industry)} with a clear focus on ${escapeHtml(offer)}. This section gives visitors the context, credibility, and reassurance they need before taking action.</p></div></section>`;
+}
+
+function pricingSection(id, { business, offer }) {
+  const tiers = ['Starter', 'Standard', 'Complete'];
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Pricing</span><h2>Simple ways to start with ${escapeHtml(business)}</h2><p>Use these placeholder packages as a clear pricing structure until final prices are confirmed.</p><div class="grid">${tiers.map((tier, index) => `<div class="card"><b>${tier}</b><span>${escapeHtml(index === 0 ? `A focused introduction to ${offer}.` : index === 1 ? `A fuller option for customers ready to compare ${offer}.` : `The most complete route with extra support and priority response.`)}</span><a class="button" href="#contact">Enquire</a></div>`).join('')}</div></section>`;
+}
+
+function caseStudiesSection(id, { business, goal }) {
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Case studies</span><h2>Proof that helps visitors decide</h2><div class="grid"><div class="card"><b>Recent customer win</b><span>${escapeHtml(business)} helped a customer move from browsing to enquiry with a clearer offer and direct next step.</span></div><div class="card"><b>Before and after</b><span>Replace this placeholder with a real example once the business has a project to showcase.</span></div><div class="card"><b>Outcome focus</b><span>Each story should connect the work back to the goal: ${escapeHtml(goal)}.</span></div></div></section>`;
+}
+
+function gallerySection(id, { image }) {
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Gallery</span><h2>Visual highlights</h2><div class="grid"><div class="card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}" style="width:100%;border-radius:16px"></div><div class="card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}" style="width:100%;border-radius:16px"></div><div class="card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}" style="width:100%;border-radius:16px"></div></div></section>`;
+}
+
+function menuSection(id, { business }) {
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Menu</span><h2>${escapeHtml(business)} menu highlights</h2><div class="grid"><div class="card"><b>Signature option</b><span>A customer favourite with a short description and clear price placeholder.</span></div><div class="card"><b>Seasonal feature</b><span>Use this space for a limited-time item or current promotion.</span></div><div class="card"><b>Group choice</b><span>A useful option for families, teams, groups, or repeat visitors.</span></div></div></section>`;
+}
+
+function eventsSection(id, { business }) {
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Events</span><h2>Upcoming moments at ${escapeHtml(business)}</h2><div class="steps"><div class="step">Featured event with date, location, and who it is for.</div><div class="step">Simple agenda or what visitors can expect.</div><div class="step">Clear booking or registration action.</div></div></section>`;
+}
+
+function coursesSection(id, { offer }) {
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Courses</span><h2>Learn ${escapeHtml(offer)} with a clear path</h2><div class="grid"><div class="card"><b>What you will learn</b><span>Summarise the key outcomes and practical skills.</span></div><div class="card"><b>How it works</b><span>Explain format, schedule, support, and what happens after enrolment.</span></div><div class="card"><b>Who it suits</b><span>Clarify the best-fit audience so the right people enquire.</span></div></div></section>`;
+}
+
+function faqSection(id, { business, offer }) {
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">FAQ</span><h2>Questions before contacting ${escapeHtml(business)}</h2><div class="grid"><div class="card"><b>What do you offer?</b><span>${escapeHtml(business)} helps with ${escapeHtml(offer)} and guides customers to the right next step.</span></div><div class="card"><b>How quickly do you reply?</b><span>Most enquiries receive a response within one working day.</span></div><div class="card"><b>What should I include?</b><span>Share what you need, your timeline, and any details that would help the team respond properly.</span></div></div></section>`;
+}
+
+function bookingSection(id, context) {
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Book a call</span><h2>Book a time to talk</h2><p>Use this section for a calendar link, phone booking route, or simple callback request.</p>${contactForm(context)}</section>`;
+}
+
+function contactSection(id, context) {
+  const { examples } = context;
+  return `<section class="section contact" id="${escapeHtml(id)}"><div><span class="page-kicker">Contact</span><h2>${escapeHtml(examples.contactTitle)}</h2><p>${escapeHtml(examples.contactText)}</p></div>${contactForm(context)}</section>`;
+}
+
+function genericPageSection(id, page, { business, offer }) {
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(page)} for ${escapeHtml(business)}</h2><p>This page section is ready for final content. It should explain how ${escapeHtml(offer)} helps visitors and give them a clear next step.</p><a class="button secondary" href="#contact">Contact us</a></section>`;
+}
+
+function contactForm({ business }) {
+  return `<form class="form" aria-label="Contact ${escapeHtml(business)}"><input class="input" placeholder="Name"><input class="input" placeholder="Email"><textarea class="input" rows="4" placeholder="Tell us what you need"></textarea><a class="button" href="#">Send enquiry</a></form>`;
 }
 
 function exampleContentFor(layout, context) {
@@ -436,6 +521,10 @@ function uniquePalettes(options) {
 
 function uniqueItems(items) {
   return [...new Set((items || []).map((item) => String(item || '').trim()).filter(Boolean))];
+}
+
+function slugify(value) {
+  return String(value || 'section').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
 }
 
 function escapeHtml(value) {

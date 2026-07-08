@@ -33,7 +33,7 @@ export function DesignOptionsModal({ state, actions }) {
   const selectedPalette = paletteMode === 'custom'
     ? normalizePalette(customColors)
     : normalizePalette(paletteOptions[paletteIndex]?.colors || activeLayout.palette);
-  const activeHtml = useMemo(() => buildExampleSite(activeLayout, state, selectedPalette), [activeLayout, selectedPalette, state]);
+  const activeHtml = useMemo(() => buildExampleSite(activeLayout, state, selectedPalette, { preview: true }), [activeLayout, selectedPalette, state]);
 
   useEffect(() => {
     setPaletteMode('preset');

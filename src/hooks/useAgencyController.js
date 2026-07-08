@@ -490,9 +490,9 @@ export function useAgencyController() {
     }
 
     let output = step.key === 'WebsiteHTML' ? cleanHTML(result) : String(result || '').trim();
-    if (step.key === 'WebsiteHTML' && !isCompleteHtml(output)) {
+    if (step.key === 'WebsiteHTML' && (!isCompleteHtml(output) || !hasRequiredSiteStructure(output, current) || hasPreviewLanguage(output))) {
       output = fallbackWebsiteHtml(current);
-      log(employee.name, 'Website preview fallback used because the returned HTML was incomplete.');
+      log(employee.name, 'Website preview fallback used because the returned HTML was incomplete, missed required pages, or used preview wording.');
     }
     addQuest(step.quest, employee.id, 'done');
     update((stateNow) => ({
@@ -950,6 +950,23 @@ function isCompleteHtml(html) {
     && /<body[\s>]/i.test(value)
     && /<\/body>/i.test(value)
     && /<\/html>/i.test(value);
+}
+
+function hasRequiredSiteStructure(html, state) {
+  const value = String(html || '').toLowerCase();
+  if (!/<nav[\s>]/i.test(html)) return false;
+  const pages = ['Home', ...(state.selectedSitePages || [])]
+    .map((page) => String(page || '').trim())
+    .filter(Boolean);
+  const uniquePages = [...new Set(pages)];
+  return uniquePages.every((page) => {
+    const slug = page.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
+    return value.includes(`id="${slug}"`) || value.includes(`id='${slug}'`) || value.includes(`#${slug}`);
+  });
+}
+
+function hasPreviewLanguage(html) {
+  return /example client site|preview client site|design direction sample|site concept/i.test(String(html || ''));
 }
 
 function sleep(ms) {
