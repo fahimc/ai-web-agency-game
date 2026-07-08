@@ -39,7 +39,7 @@
 .layout-stack { display: grid; gap: var(--stack-gap, var(--space-md)); }
 .layout-cluster { display: flex; flex-wrap: wrap; gap: var(--cluster-gap, var(--space-sm)); align-items: center; }
 .layout-cover { min-height: 100vh; display: grid; place-items: center; text-align: center; padding: var(--page-padding); }
-.layout-cta-band { display: grid; gap: var(--space-md); align-items: center; padding: clamp(24px, 5vw, 56px); border-radius: var(--radius-lg); background: var(--color-secondary); color: #fff; }
+.layout-cta-band { display: grid; gap: var(--space-md); align-items: center; padding: clamp(24px, 5vw, 56px); border-radius: var(--radius-lg); background: var(--secondary); color: var(--secondary-foreground); }
 .cta-split { grid-template-columns: 1fr auto; text-align: left; }
 .cta-inline { grid-template-columns: auto 1fr auto; }
 @media (max-width: 900px) {

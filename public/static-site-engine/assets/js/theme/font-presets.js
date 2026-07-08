@@ -1,0 +1,10 @@
+window.MicroAgencyTheme = window.MicroAgencyTheme || {};
+window.MicroAgencyTheme.fontPresets = [
+  { id: 'modern-saas', name: 'Modern SaaS', headingFont: 'Inter', bodyFont: 'Inter', fallback: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', baseFontSize: '16px', lineHeight: 1.6, headingWeight: 850, bodyWeight: 450, mood: ['clean', 'product'], category: 'SaaS' },
+  { id: 'friendly-local', name: 'Friendly Local', headingFont: 'Nunito Sans', bodyFont: 'Inter', fallback: 'ui-sans-serif, system-ui, sans-serif', baseFontSize: '16px', lineHeight: 1.65, headingWeight: 800, bodyWeight: 450, mood: ['warm', 'approachable'], category: 'local business' },
+  { id: 'professional', name: 'Professional', headingFont: 'Source Sans 3', bodyFont: 'Source Sans 3', fallback: 'ui-sans-serif, system-ui, sans-serif', baseFontSize: '16px', lineHeight: 1.6, headingWeight: 750, bodyWeight: 450, mood: ['clear', 'trusted'], category: 'professional services' },
+  { id: 'editorial', name: 'Editorial', headingFont: 'Georgia', bodyFont: 'Inter', fallback: 'Georgia, "Times New Roman", serif', baseFontSize: '17px', lineHeight: 1.7, headingWeight: 700, bodyWeight: 450, mood: ['story-led', 'refined'], category: 'editorial' },
+  { id: 'premium', name: 'Premium', headingFont: 'Playfair Display', bodyFont: 'Inter', fallback: 'ui-serif, Georgia, serif', baseFontSize: '16px', lineHeight: 1.65, headingWeight: 700, bodyWeight: 430, mood: ['luxury', 'calm'], category: 'premium' },
+  { id: 'playful', name: 'Playful', headingFont: 'Poppins', bodyFont: 'Nunito Sans', fallback: 'ui-sans-serif, system-ui, sans-serif', baseFontSize: '16px', lineHeight: 1.62, headingWeight: 850, bodyWeight: 500, mood: ['friendly', 'expressive'], category: 'playful' },
+  { id: 'technical', name: 'Technical', headingFont: 'IBM Plex Sans', bodyFont: 'IBM Plex Sans', fallback: 'ui-sans-serif, system-ui, sans-serif', baseFontSize: '16px', lineHeight: 1.58, headingWeight: 800, bodyWeight: 450, mood: ['technical', 'precise'], category: 'technology' },
+];

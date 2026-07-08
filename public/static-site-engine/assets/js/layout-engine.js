@@ -9,7 +9,11 @@ window.MicroAgencyLayoutEngine = (() => {
   function applyTheme(theme = 'default') {
     document.documentElement.dataset.theme = typeof theme === 'string' ? theme : (theme.id || 'default');
     if (theme && typeof theme === 'object') {
-      Object.entries(theme.tokens || {}).forEach(([key, value]) => document.documentElement.style.setProperty(key, value));
+      if (window.MicroAgencyTheme?.exporter) {
+        window.MicroAgencyTheme.exporter.injectTheme(theme);
+      } else {
+        Object.entries(theme.tokens || {}).forEach(([key, value]) => document.documentElement.style.setProperty(key, value));
+      }
       if (theme.buttonStyle) document.documentElement.dataset.buttonStyle = theme.buttonStyle;
       if (theme.cardStyle) document.documentElement.dataset.cardStyle = theme.cardStyle;
     }

@@ -9,6 +9,8 @@ export const componentLibrary = {
     'Use Bootstrap 5.3 components for navigation, forms, buttons, cards, accordions, modals, carousels, offcanvas menus, and responsive grid behaviour.',
     'Compose pages as Page -> Sections -> Layouts -> Components -> Content so small models can edit structured data instead of hand-coding every page.',
     'Choose layout primitives such as single-column, two-column, asymmetric, sidebar, card-grid, bento, split hero, centered hero, masonry, horizontal scroller, stack, cluster, cover, and CTA band.',
+    'Use semantic theme roles from the validated theme generator: background, foreground, surface, card, primary, secondary, accent, muted, border, success, warning, and danger with their matching foreground tokens.',
+    'Never invent arbitrary foreground/background component pairs; choose semantic roles from a validated WCAG AA theme and repair unsafe pairs before output.',
     'Every generated site header must use a Bootstrap responsive navbar with a visible hamburger toggler on mobile.',
     'Use semantic sections with clear h2 headings and one primary CTA per viewport.',
     'Keep all layouts mobile-first with CSS grid, flexible cards, and visible focus states.',
