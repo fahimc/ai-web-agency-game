@@ -484,12 +484,22 @@ export function useAgencyController() {
       });
     } catch (error) {
       if (aborter.current?.signal?.aborted) throw error;
-      if (step.key !== 'WebsiteHTML') throw error;
-      result = fallbackWebsiteHtml(current);
-      log(employee.name, `Website preview fallback used after model error: ${error?.message || error}`);
+      if (step.key === 'WebsiteHTML') {
+        result = fallbackWebsiteHtml(current);
+        log(employee.name, `Website preview fallback used after model error: ${error?.message || error}`);
+      } else if (step.key === 'DesignDirection') {
+        result = fallbackDesignDirection(current);
+        log(employee.name, `Design direction fallback used after model error: ${error?.message || error}`);
+      } else {
+        throw error;
+      }
     }
 
     let output = step.key === 'WebsiteHTML' ? cleanHTML(result) : String(result || '').trim();
+    if (step.key === 'DesignDirection' && !hasUsefulDesignDirection(output)) {
+      output = fallbackDesignDirection(current);
+      log(employee.name, 'Design direction fallback used because the returned output was incomplete.');
+    }
     if (step.key === 'WebsiteHTML' && (!isCompleteHtml(output) || !hasRequiredSiteStructure(output, current) || hasPreviewLanguage(output))) {
       output = fallbackWebsiteHtml(current);
       log(employee.name, 'Website preview fallback used because the returned HTML was incomplete, missed required pages, or used preview wording.');
@@ -941,6 +951,49 @@ function fallbackWebsiteHtml(state) {
   const layout = siteLayouts.find((item) => item.id === state.selectedDesignStyle) || siteLayouts[0];
   const palette = state.selectedDesignPalette?.length ? state.selectedDesignPalette : layout.palette;
   return buildExampleSite(layout, state, palette);
+}
+
+function fallbackDesignDirection(state) {
+  const layout = siteLayouts.find((item) => item.id === state.selectedDesignStyle) || siteLayouts[0];
+  const palette = state.selectedDesignPalette?.length ? state.selectedDesignPalette : layout.palette;
+  const pages = state.projectPackage === 'launch'
+    ? ['Home']
+    : (state.selectedSitePages?.length ? state.selectedSitePages : ['Home', 'Services', 'About', 'FAQ', 'Contact']);
+  const sections = state.selectedSiteSections?.length
+    ? state.selectedSiteSections
+    : ['Hero', 'Services', 'Benefits', 'Process', 'Testimonials', 'FAQ', 'Contact details', 'Final CTA'];
+
+  return [
+    `# ${layout.name} design direction`,
+    '',
+    '## Purpose',
+    'Create the final customer website from the approved design route, brief, package, colour palette, and content structure. Keep the site production-facing and do not label it as an example or sample.',
+    '',
+    '## Visual Style',
+    `Use the ${layout.name} direction with a ${layout.tone.toLowerCase()} feel. Prioritise clear hierarchy, scannable content, strong calls to action, and responsive spacing.`,
+    '',
+    '## Colour Palette',
+    palette.map((color, index) => `- Colour ${index + 1}: ${color}`).join('\n'),
+    '',
+    '## Approved Structure',
+    `Package: ${state.projectPackage === 'launch' ? 'Launch Site, one-page section-based site' : 'Multi-section customer website'}`,
+    `Pages: ${pages.join(', ')}`,
+    `Sections: ${sections.join(', ')}`,
+    '',
+    '## Build Notes',
+    '- Include visible navigation.',
+    state.projectPackage === 'launch'
+      ? '- Navigation should link to sections on the same page, not separate pages.'
+      : '- Navigation should link to each approved page section in the single-file site.',
+    '- Use dummy production copy where the brief is missing specifics.',
+    '- Include local placeholder imagery where useful.',
+    '- Keep forms, buttons, headings, and section ids accessible.',
+  ].join('\n');
+}
+
+function hasUsefulDesignDirection(text) {
+  const value = String(text || '').trim();
+  return value.length > 160 && /visual|layout|section|colour|color|responsive|cta|navigation/i.test(value);
 }
 
 function isCompleteHtml(html) {
