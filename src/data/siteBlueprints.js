@@ -46,6 +46,8 @@ export const siteLayouts = [
 
 export const MAX_PALETTE_COLORS = 5;
 
+export const PALETTE_ROLES = ['Text', 'Primary', 'Background', 'Accent', 'Surface'];
+
 export const PAGE_PRESETS = [
   'Home',
   'Services',
@@ -166,6 +168,76 @@ export function normalizePalette(colors = []) {
     .slice(0, MAX_PALETTE_COLORS);
 }
 
+export function paletteLabel(color) {
+  const value = String(color || '').toLowerCase();
+  const names = {
+    '#08111f': 'Midnight navy',
+    '#0ea5e9': 'Sky blue',
+    '#eef6ff': 'Soft blue',
+    '#22c55e': 'Fresh green',
+    '#ffffff': 'White',
+    '#10213f': 'Deep navy',
+    '#2563eb': 'Bright blue',
+    '#f8fafc': 'Cloud white',
+    '#64748b': 'Slate grey',
+    '#173d35': 'Forest green',
+    '#18a058': 'Leaf green',
+    '#fff7ed': 'Warm cream',
+    '#eab308': 'Golden yellow',
+    '#171717': 'Charcoal',
+    '#b7791f': 'Antique gold',
+    '#faf7f0': 'Porcelain',
+    '#6b7280': 'Warm grey',
+    '#111827': 'Ink black',
+    '#7c3aed': 'Royal violet',
+    '#f5f3ff': 'Lavender mist',
+    '#f43f5e': 'Rose red',
+    '#fff1f2': 'Blush',
+    '#2f1b12': 'Espresso',
+    '#d97706': 'Amber',
+    '#fff8eb': 'Vanilla',
+    '#164e63': 'Teal slate',
+    '#14b8a6': 'Sea green',
+    '#f0fdfa': 'Mint white',
+    '#f4a261': 'Soft coral',
+    '#240046': 'Plum',
+    '#ff5a5f': 'Coral red',
+    '#fff7f7': 'Rose white',
+    '#0f172a': 'Blue black',
+    '#123524': 'Evergreen',
+    '#f59e0b': 'Honey',
+    '#fefce8': 'Ivory',
+    '#1e3a8a': 'Royal blue',
+    '#06b6d4': 'Cyan',
+    '#eff6ff': 'Ice blue',
+    '#12343b': 'Deep teal',
+    '#2bb3a3': 'Aqua green',
+    '#f3fbf9': 'Seafoam',
+    '#f7c948': 'Sun yellow',
+    '#1e1b4b': 'Indigo',
+    '#ef4444': 'Signal red',
+  };
+  return names[value] || value.toUpperCase();
+}
+
+export function directionSummary(layout) {
+  const summaries = {
+    'conversion-classic': 'A clear sales page that moves visitors from promise, to proof, to enquiry.',
+    'local-service': 'A practical local business site built around trust, reviews, services, and fast contact.',
+    'premium-editorial': 'A refined brand-led site with larger imagery, slower pacing, and polished storytelling.',
+    'saas-product': 'A product-led site that explains features, outcomes, pricing, and the next action clearly.',
+    'consultant-authority': 'An expert-led site that builds confidence through outcomes, method, and booking prompts.',
+    'portfolio-studio': 'A visual portfolio direction for showing selected work and turning interest into enquiries.',
+    'restaurant-venue': 'A visit-focused direction for menus, atmosphere, location, booking, and events.',
+    'health-wellness': 'A calm, credible direction that explains care, credentials, services, and how to enquire.',
+    'event-launch': 'A high-energy direction for dates, benefits, speakers, tickets, and urgent signup.',
+    'marketplace-directory': 'A search-led direction that helps visitors compare categories, listings, and trust signals.',
+    'nonprofit-campaign': 'A mission-led direction that makes impact, stories, and donation actions easy to understand.',
+    'education-course': 'A structured course direction for outcomes, curriculum, pricing, proof, and enrolment.',
+  };
+  return summaries[layout?.id] || 'A complete website direction tailored to the brief, audience, and conversion goal.';
+}
+
 export function buildDesignSelectionMarkdown(layout, palette = layout.palette, structure = {}) {
   const colors = normalizePalette(palette);
   const pages = uniqueItems(structure.pages || []);
@@ -200,6 +272,7 @@ export function buildExampleSite(layout, state, palette = layout.palette) {
   const offer = brief.offer || industry;
   const [ink, accent, bg, secondary, surface] = normalizePalette(palette);
   const image = placeholderForLayout(layout, state);
+  const examples = exampleContentFor(layout, { business, industry, audience, goal, offer });
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -219,10 +292,10 @@ export function buildExampleSite(layout, state, palette = layout.palette) {
 <div><div class="eyebrow">${escapeHtml(layout.name)} design direction sample</div><h1>${escapeHtml(headlineFor(layout, business, goal))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><a class="button" href="#contact">Start an enquiry</a></div>
 <aside class="panel image-card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)} placeholder"><div class="image-caption">${escapeHtml(layout.name)} image direction</div></aside>
 </section>
-<section class="section"><h2>What this layout emphasises</h2><div class="grid">${cardsFor(layout, offer).map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>
-<section class="section media-strip"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)} sample"><div class="panel"><div class="metric">${escapeHtml(metricFor(layout))}</div><b>${escapeHtml(layout.model)}</b><p>${escapeHtml(layout.tone)} layout built from the MicroAgency component system with local placeholder imagery.</p></div></section>
-<section class="section"><h2>Customer journey</h2><div class="steps"><div class="step">Understand the offer and why it matters.</div><div class="step">See proof, services, or product details in a scannable order.</div><div class="step">Reach a confident CTA without hunting for contact details.</div></div></section>
-<section class="section contact" id="contact"><div><h2>Ready to use this direction?</h2><p>${escapeHtml(business)} can use this as the visual route for the final generated site.</p></div><form class="form"><input class="input" placeholder="Name"><input class="input" placeholder="Email"><textarea class="input" rows="4" placeholder="Project message"></textarea><a class="button" href="#">Send enquiry</a></form></section>
+<section class="section"><h2>${escapeHtml(examples.servicesTitle)}</h2><p>${escapeHtml(examples.servicesLead)}</p><div class="grid">${examples.cards.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>
+<section class="section media-strip"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)} sample"><div class="panel"><div class="metric">${escapeHtml(metricFor(layout))}</div><b>${escapeHtml(examples.proofQuote)}</b><p>${escapeHtml(examples.proofText)}</p></div></section>
+<section class="section"><h2>${escapeHtml(examples.processTitle)}</h2><div class="steps">${examples.steps.map((step) => `<div class="step">${escapeHtml(step)}</div>`).join('')}</div></section>
+<section class="section contact" id="contact"><div><h2>${escapeHtml(examples.contactTitle)}</h2><p>${escapeHtml(examples.contactText)}</p></div><form class="form"><input class="input" placeholder="Name"><input class="input" placeholder="Email"><textarea class="input" rows="4" placeholder="Project message"></textarea><a class="button" href="#">Send enquiry</a></form></section>
 </main>
 </div>
 </body>
@@ -263,12 +336,77 @@ function metricFor(layout) {
   return '3x';
 }
 
-function cardsFor(layout, offer) {
-  return [
-    { title: 'Structure', text: layout.model },
-    { title: 'Offer clarity', text: `Turns ${offer} into easy-to-scan sections.` },
-    { title: 'Components', text: 'Uses hero, proof, service cards, process, FAQ, and contact blocks.' },
-  ];
+function exampleContentFor(layout, context) {
+  const { business, industry, audience, goal, offer } = context;
+  const defaultContent = {
+    servicesTitle: `How ${business} helps`,
+    servicesLead: `This example shows how the finished site can explain ${offer} in plain language for ${audience}.`,
+    cards: [
+      { title: 'Clear first impression', text: `Visitors immediately understand what ${business} offers and who it is for.` },
+      { title: 'Useful proof', text: 'Testimonials, outcomes, and reassurance sit close to the actions that matter.' },
+      { title: 'Easy enquiry path', text: `The page keeps moving people toward ${goal} without forcing them to search.` },
+    ],
+    proofQuote: 'A confident example of the customer website direction.',
+    proofText: `${business} can use this structure to present ${industry} clearly across mobile and desktop.`,
+    processTitle: 'How a visitor moves through the page',
+    steps: [
+      `They see the main promise and understand ${offer}.`,
+      'They compare benefits, proof, and practical details.',
+      'They reach a simple enquiry form with confidence.',
+    ],
+    contactTitle: 'Start the conversation',
+    contactText: `A focused contact section gives ${audience} a clear next step.`,
+  };
+
+  const variants = {
+    'saas-product': {
+      servicesTitle: 'Product highlights',
+      servicesLead: `A product-led example for showing what ${business} does, why it matters, and how customers get value.`,
+      cards: [
+        { title: 'Live product overview', text: `Show the main ${offer} workflow with a concise product explanation and supporting image.` },
+        { title: 'Feature outcomes', text: 'Group features around customer results instead of a long technical list.' },
+        { title: 'Pricing confidence', text: 'Add a simple pricing or plan prompt after visitors understand the value.' },
+      ],
+      proofQuote: 'Built to make the product feel understandable before the demo request.',
+      proofText: 'The page balances benefits, screenshots, workflow, and proof so visitors can decide faster.',
+      processTitle: 'How the product story unfolds',
+      steps: ['Show the product promise above the fold.', 'Explain the everyday workflow in practical terms.', 'Close with pricing, proof, and a demo or enquiry action.'],
+      contactTitle: 'Book a product walkthrough',
+      contactText: `A concise form asks for the essentials and routes serious ${audience} to the next step.`,
+    },
+    'restaurant-venue': {
+      servicesTitle: 'Menu and visit highlights',
+      servicesLead: 'A venue example that makes food, atmosphere, booking, and location easy to scan.',
+      cards: [
+        { title: 'Signature menu items', text: 'Feature the dishes, drinks, or experiences people should remember.' },
+        { title: 'Atmosphere and occasions', text: 'Show whether the venue suits casual visits, celebrations, dates, or events.' },
+        { title: 'Booking details', text: 'Make location, opening times, and table booking visible before the final action.' },
+      ],
+      proofQuote: 'A site direction that helps visitors picture the visit.',
+      proofText: 'The layout uses imagery and short sections to turn interest into bookings.',
+      processTitle: 'How a visitor decides to book',
+      steps: ['They see the atmosphere and signature offer.', 'They check menu, location, reviews, and times.', 'They reserve a table or make an enquiry.'],
+      contactTitle: 'Reserve a table',
+      contactText: 'The final section keeps booking details, contact information, and reassurance together.',
+    },
+    'portfolio-studio': {
+      servicesTitle: 'Selected work and capabilities',
+      servicesLead: `A visual example that helps ${business} show taste, experience, and the kind of projects it wants more of.`,
+      cards: [
+        { title: 'Featured projects', text: 'Lead with a small number of strong examples instead of a crowded gallery.' },
+        { title: 'Creative services', text: 'Explain what clients can commission and what the working relationship feels like.' },
+        { title: 'Enquiry fit', text: 'Use the contact section to attract the right budgets, briefs, and timelines.' },
+      ],
+      proofQuote: 'A portfolio direction that feels selective and easy to judge.',
+      proofText: 'The page gives space to imagery while still making services and enquiry steps clear.',
+      processTitle: 'How a project enquiry builds',
+      steps: ['Visitors see the visual standard quickly.', 'They understand services, process, and fit.', 'They send a brief with enough context to respond well.'],
+      contactTitle: 'Discuss a project',
+      contactText: 'The form invites a useful project message rather than a vague contact request.',
+    },
+  };
+
+  return { ...defaultContent, ...(variants[layout.id] || {}) };
 }
 
 function placeholderForLayout(layout, state = {}) {

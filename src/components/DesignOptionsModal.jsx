@@ -2,10 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { employees } from '../data/employees.js';
 import {
   MAX_PALETTE_COLORS,
+  PALETTE_ROLES,
   PAGE_PRESETS,
   SECTION_PRESETS,
   buildExampleSite,
+  directionSummary,
   normalizePalette,
+  paletteLabel,
   paletteOptionsForLayout,
   recommendedStructure,
   recommendedDesignLayouts,
@@ -59,8 +62,8 @@ export function DesignOptionsModal({ state, actions }) {
   return (
     <Modal title="Choose Design Direction" onClose={actions.closeModal} className="design-options-modal">
       <div className="modal-tabs">
-        <span className="modal-tab active">MicroAgency design controls</span>
-        <span className="modal-tab preview-label">Client site example</span>
+        <span className="modal-tab active">Design controls</span>
+        <span className="modal-tab preview-label">Example client site</span>
       </div>
       <div className="modal-body design-options-body">
         <aside className="design-side-panel">
@@ -78,8 +81,8 @@ export function DesignOptionsModal({ state, actions }) {
           <div className="design-carousel-card">
             <div className="design-count">Option {optionNumber} of {designOptions.length}</div>
             <h3>{activeLayout.name}</h3>
-            <p className="muted">{activeLayout.model}</p>
-            <div className="swatches">{selectedPalette.map((color) => <i key={color} style={{ background: color }} />)}</div>
+            <p className="muted">{directionSummary(activeLayout)}</p>
+            <PaletteSwatches colors={selectedPalette} compact />
             <div className="design-carousel-actions">
               <button type="button" className="secondary" onClick={showPrevious}>Previous</button>
               <button type="button" className="secondary" onClick={showNext}>Next</button>
@@ -129,7 +132,8 @@ export function DesignOptionsModal({ state, actions }) {
           <div className="design-fullscreen-bar">
             <div>
               <b>Client site example: {activeLayout.name}</b>
-              <span>This preview is the proposed customer website, not the MicroAgency app. Palette: {selectedPalette.join(' / ')}</span>
+              <span>This is the proposed customer website direction, not the MicroAgency app.</span>
+              <PaletteSwatches colors={selectedPalette} />
             </div>
             <div className="stack">
               <button type="button" className="secondary" onClick={() => setFullScreen(false)}>Close</button>
@@ -140,6 +144,21 @@ export function DesignOptionsModal({ state, actions }) {
         </div>
       )}
     </Modal>
+  );
+}
+
+function PaletteSwatches({ colors, compact = false }) {
+  const normalized = normalizePalette(colors);
+  return (
+    <div className={`palette-summary ${compact ? 'compact' : ''}`} aria-label="Selected colour palette">
+      {normalized.map((color, index) => (
+        <span className="palette-chip" key={`${color}-${index}`}>
+          <i style={{ background: color }} />
+          {!compact && <b>{PALETTE_ROLES[index] || `Colour ${index + 1}`}</b>}
+          <small>{paletteLabel(color)}</small>
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -221,13 +240,13 @@ function PaletteChooser({
             }}
           >
             <span>{option.name}</span>
-            <span className="swatches">{option.colors.map((color) => <i key={color} style={{ background: color }} />)}</span>
+            <span className="swatches">{option.colors.map((color) => <i key={color} title={paletteLabel(color)} style={{ background: color }} />)}</span>
           </button>
         ))}
       </div>
       <button type="button" className={`palette-option custom-toggle ${paletteMode === 'custom' ? 'active' : ''}`} onClick={() => setPaletteMode('custom')}>
         <span>Use my colours</span>
-        <span className="swatches">{normalizePalette(customColors).map((color) => <i key={color} style={{ background: color }} />)}</span>
+        <span className="swatches">{normalizePalette(customColors).map((color) => <i key={color} title={paletteLabel(color)} style={{ background: color }} />)}</span>
       </button>
       {paletteMode === 'custom' && (
         <div className="custom-palette-grid">
