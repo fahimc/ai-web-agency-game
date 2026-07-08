@@ -20,8 +20,8 @@ export const previewSteps = [
     employee: 'design',
     progress: 48,
     quest: 'Visual design direction',
-    contextKeys: ['Plan', 'TaskBoard'],
-    task: 'Create the design direction for a high-converting responsive website. Include layout, section order, visual style, typography feel, UX notes, microcopy guidance, accessibility notes and mobile-first considerations.',
+    contextKeys: ['Plan', 'TaskBoard', 'SelectedDesign'],
+    task: 'Create the final design direction for a high-converting responsive website using the selected boilerplate direction and MicroAgency Blocks component system. Include layout, section order, visual style, typography feel, UX notes, microcopy guidance, accessibility notes and mobile-first considerations. Do not switch to a different layout style unless the brief makes the selected direction impossible.',
   },
   {
     key: 'WebsiteHTML',
@@ -29,8 +29,8 @@ export const previewSteps = [
     progress: 70,
     quest: 'Website preview',
     complex: true,
-    contextKeys: ['Plan', 'TaskBoard', 'DesignDirection'],
-    task: 'Build a complete production-quality single-file HTML landing page for the client. Requirements: return only valid HTML starting with <!doctype html>; include all CSS inside <style>; no external libraries; responsive mobile-first layout; strong conversion copy; clear CTAs; accessible semantic markup; sections based on the project intake form; polished modern design.',
+    contextKeys: ['Plan', 'TaskBoard', 'SelectedDesign', 'DesignDirection'],
+    task: 'Build a complete production-quality single-file HTML landing page for the client using the selected boilerplate direction and MicroAgency Blocks component system. Requirements: return only valid HTML starting with <!doctype html>; include all CSS inside <style>; no external libraries; responsive mobile-first layout; strong conversion copy; clear CTAs; accessible semantic markup; sections based on the project intake form; polished modern design. Use the selected layout as the structure, not just inspiration.',
   },
 ];
 

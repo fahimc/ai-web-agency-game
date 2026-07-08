@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChatDock } from './components/ChatDock.jsx';
+import { DesignOptionsModal } from './components/DesignOptionsModal.jsx';
 import { DetailsModal } from './components/DetailsModal.jsx';
 import { Hud } from './components/Hud.jsx';
 import { MenuModal } from './components/MenuModal.jsx';
@@ -25,6 +26,7 @@ export function App() {
       </main>
       <ChatDock state={state} onSubmit={actions.submitChat} />
       {modal === 'menu' && <MenuModal state={state} actions={actions} menuTab={menuTab} phaseLabel={phaseLabel} />}
+      {modal === 'designOptions' && <DesignOptionsModal state={state} actions={actions} />}
       {modal === 'details' && <DetailsModal state={state} actions={actions} />}
       {modal === 'packages' && <PackageModal state={state} actions={actions} />}
       {modal === 'outputs' && <OutputsModal state={state} actions={actions} />}

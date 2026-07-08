@@ -105,6 +105,7 @@ function actionButtons(actionIds, actions) {
     openDetails: { label: 'Open form', onClick: actions.openDetails },
     openPackages: { label: 'View packages', onClick: actions.openPackages },
     openPayment: { label: 'Pay now', onClick: actions.openPayment },
+    openDesignOptions: { label: 'See options', onClick: actions.openDesignOptions },
     openPreview: { label: 'Open preview', onClick: () => actions.openOutputs('WebsiteHTML') },
     approve: { label: 'Approve', onClick: actions.approve },
     resume: { label: 'Resume work', onClick: actions.resumeWork },

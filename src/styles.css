@@ -343,6 +343,51 @@ label input, label textarea, label select { margin-top: 6px; }
 .package-card ul { margin: 0; padding-left: 20px; color: var(--muted); font-size: 13px; line-height: 1.45; }
 .package-card li + li { margin-top: 6px; }
 .package-select { align-self: end; width: 100%; }
+.design-options-modal { width: min(1280px, 100%); }
+.design-options-body { display: grid; grid-template-columns: 340px 1fr; gap: 16px; min-height: min(720px, 74svh); }
+.design-list { display: grid; gap: 10px; align-content: start; overflow: auto; padding-right: 4px; }
+.design-intro h3 { margin: 0 0 8px; }
+.design-option {
+  width: 100%;
+  background: #ffffff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 13px;
+  box-shadow: 0 10px 24px rgba(6, 18, 47, .06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+.design-option.active { border-color: rgba(17, 103, 241, .62); background: var(--accent-soft); }
+.design-option b,
+.design-option small { display: block; }
+.design-option small { color: var(--muted); font-size: 12px; line-height: 1.35; margin-top: 3px; }
+.swatches { display: flex; gap: 4px; flex: 0 0 auto; }
+.swatches i { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(6, 18, 47, .16); }
+.design-preview-panel { display: grid; grid-template-rows: auto 1fr; gap: 12px; min-width: 0; }
+.design-preview-head {
+  background: var(--paper-strong);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.design-preview-head h3,
+.design-preview-head p { margin: 0; }
+.design-preview-frame {
+  width: 100%;
+  min-height: 560px;
+  height: 100%;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: #ffffff;
+}
 .model-price-list { display: grid; gap: 10px; }
 .model-price-option {
   width: 100%;
@@ -384,7 +429,11 @@ label input, label textarea, label select { margin-top: 6px; }
   .poster { left: 54px; top: 48px; }
   .desk-node { width: 200px; height: 205px; }
   .speech { min-width: 235px; max-width: 78vw; }
-  .split-preview, .modal-grid, .payment-grid, .package-grid, .row { grid-template-columns: 1fr; }
+  .split-preview, .modal-grid, .payment-grid, .package-grid, .design-options-body, .row { grid-template-columns: 1fr; }
+  .design-options-body { min-height: auto; }
+  .design-list { max-height: 260px; }
+  .design-preview-head { align-items: stretch; flex-direction: column; }
+  .design-preview-frame { min-height: 520px; }
   .modal { border-radius: 24px; }
   .chat-dock { grid-template-columns: 1fr auto; align-items: end; }
   .chat-dock button { width: auto; min-height: 48px; }

@@ -58,6 +58,7 @@ export function saveDraft(state) {
     projectName: state.projectName || deriveProjectName(state),
     projectModel: state.projectModel,
     projectPackage: state.projectPackage,
+    selectedDesignStyle: state.selectedDesignStyle,
     paid: state.paid,
     paymentEstimate: state.paymentEstimate,
     phase: state.phase,

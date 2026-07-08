@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { employees } from '../data/employees.js';
 import { outputNames, outputOrder } from '../data/outputs.js';
+import { siteLayouts, buildDesignSelectionMarkdown } from '../data/siteBlueprints.js';
 import { completionSteps, previewSteps } from '../data/steps.js';
 import { callModelInBackground } from '../services/modelClient.js';
 import {
@@ -22,6 +23,7 @@ const emptyState = {
   projectName: '',
   projectModel: 'gpt-5.4-mini',
   projectPackage: 'launch',
+  selectedDesignStyle: '',
   paid: false,
   paymentEstimate: null,
   availableProjects: [],
@@ -71,7 +73,8 @@ export function useAgencyController() {
         projectId: saved.projectId || next.projectId,
         projectName: saved.projectName || next.projectName,
         projectModel: saved.projectModel || next.projectModel,
-        projectPackage: saved.projectPackage || next.projectPackage,
+      projectPackage: saved.projectPackage || next.projectPackage,
+      selectedDesignStyle: saved.selectedDesignStyle || next.selectedDesignStyle,
         paid: saved.paid ?? next.paid,
         paymentEstimate: saved.paymentEstimate || next.paymentEstimate,
         lastSaved: saved.lastSaved,
@@ -163,6 +166,7 @@ export function useAgencyController() {
       projectName: 'Static website project',
       projectModel: current.settings.selectedModel || 'gpt-5.4-mini',
       projectPackage: packageForModel(current.settings.selectedModel || 'gpt-5.4-mini').id,
+      selectedDesignStyle: '',
       paid: false,
       paymentEstimate: null,
       availableProjects: [],
@@ -245,6 +249,7 @@ export function useAgencyController() {
       projectName: loaded.projectName || 'Static website project',
       projectModel: loaded.projectModel || loaded.settings?.selectedModel || 'gpt-5.4-mini',
       projectPackage: loaded.projectPackage || packageForModel(loaded.projectModel || loaded.settings?.selectedModel || 'gpt-5.4-mini').id,
+      selectedDesignStyle: loaded.selectedDesignStyle || '',
       paid: Boolean(loaded.paid),
       paymentEstimate: loaded.paymentEstimate || null,
       availableProjects: listProjects(email),
@@ -259,6 +264,9 @@ export function useAgencyController() {
     } else if (next.outputs.WebsiteHTML && !next.approved) {
       update((current) => ({ ...current, phase: 'approval' }));
       speak('dev', 'Welcome back. Your preview is ready for approval. Open Outputs when you want to review it.', ['openPreview', 'approve']);
+    } else if (next.paid && next.brief && !next.selectedDesignStyle) {
+      update((current) => ({ ...current, phase: 'design_options', activeEmployee: 'design' }));
+      speak('design', 'Welcome back. Payment is complete. Choose a design direction so the team can start production.', ['openDesignOptions']);
     } else if (next.brief) {
       update((current) => ({ ...current, phase: ['running', 'brief'].includes(current.phase) ? current.phase : 'running' }));
       speak('reception', 'Welcome back. I found the project in progress. Press Resume work to continue where it left off.', ['resume']);
@@ -281,6 +289,7 @@ export function useAgencyController() {
       projectName: 'Static website project',
       projectModel: current.settings.selectedModel || 'gpt-5.4-mini',
       projectPackage: packageForModel(current.settings.selectedModel || 'gpt-5.4-mini').id,
+      selectedDesignStyle: '',
       paid: false,
       paymentEstimate: null,
       availableProjects: listProjects(email),
@@ -373,14 +382,39 @@ export function useAgencyController() {
         ...details,
         amountGbp: details.amountGbp ?? packageOption(details.packageId || current.projectPackage).priceGbp,
       },
-      phase: 'running',
-      progressTask: 'Payment received',
+      phase: 'design_options',
+      activeEmployee: 'design',
+      progress: Math.max(current.progress || 0, 6),
+      progressTask: 'Choose design direction',
     }));
     setModal(null);
-    addConvo('Nova', 'Payment received. The team is starting now.');
-    speak('reception', 'Payment received. I am handing the brief to the team now.');
-    window.setTimeout(() => startAgency(), 50);
+    addConvo('Nova', 'Payment received. Mira will show design directions before production starts.');
+    speak('design', 'Payment received. I have reviewed the brief and prepared common website directions using our boilerplate system. Click to see the options and choose the route you like.', ['openDesignOptions']);
   }, [addConvo, speak, update]);
+
+  const openDesignOptions = useCallback(() => {
+    update((current) => ({ ...current, phase: 'design_options', activeEmployee: 'design', progressTask: 'Choose design direction' }));
+    setModal('designOptions');
+  }, [update]);
+
+  const selectDesignStyle = useCallback((layoutId) => {
+    const layout = siteLayouts.find((item) => item.id === layoutId) || siteLayouts[0];
+    const selectedDesign = buildDesignSelectionMarkdown(layout);
+    update((current) => ({
+      ...current,
+      selectedDesignStyle: layout.id,
+      outputs: { ...current.outputs, SelectedDesign: selectedDesign },
+      activeOutput: 'SelectedDesign',
+      phase: 'running',
+      progress: Math.max(current.progress || 0, 8),
+      progressTask: 'Design direction selected',
+    }));
+    addConvo('Nova', `${layout.name} selected as the design direction.`);
+    log('Client', `Selected design direction: ${layout.name}`);
+    speak('design', `${layout.name} selected. I will now turn that direction into the final design plan before Kai builds the site.`);
+    setModal(null);
+    window.setTimeout(() => startAgency(), 50);
+  }, [addConvo, log, speak, update]);
 
   const buildContext = useCallback((keys) => {
     const current = stateRef.current;
@@ -493,6 +527,12 @@ export function useAgencyController() {
       update((stateNow) => ({ ...stateNow, phase: 'payment', running: false, progressTask: 'Payment required' }));
       speak('reception', 'Payment is required before the team starts. Please complete PayPal checkout.', ['openPayment']);
       setModal('payment');
+      return;
+    }
+    if (!current.selectedDesignStyle || !current.outputs.SelectedDesign) {
+      update((stateNow) => ({ ...stateNow, phase: 'design_options', running: false, activeEmployee: 'design', progressTask: 'Choose design direction' }));
+      speak('design', 'Before I write the final design direction, choose one of the prepared website layout options.', ['openDesignOptions']);
+      setModal('designOptions');
       return;
     }
     update((stateNow) => ({
@@ -617,6 +657,12 @@ export function useAgencyController() {
       return;
     }
     update((stateNow) => ({ ...stateNow, error: '', running: false }));
+    if (current.paid && (!current.selectedDesignStyle || !current.outputs.SelectedDesign)) {
+      update((stateNow) => ({ ...stateNow, phase: 'design_options', activeEmployee: 'design' }));
+      speak('design', 'Choose a design direction first, then I will start the production run.', ['openDesignOptions']);
+      setModal('designOptions');
+      return;
+    }
     if (current.outputs.WebsiteHTML && !current.approved) {
       update((stateNow) => ({ ...stateNow, phase: 'approval' }));
       speak('dev', 'Preview is ready. Approve it or request changes.', ['openPreview', 'approve']);
@@ -696,6 +742,8 @@ export function useAgencyController() {
     submitDetails,
     confirmPayment,
     selectPackage,
+    openDesignOptions,
+    selectDesignStyle,
     processCustomerChoice,
     processProjectChoice,
     loadProject,
@@ -714,6 +762,7 @@ export function useAgencyController() {
     openOutputs,
     openDetails: () => setModal('details'),
     openPackages: () => setModal('packages'),
+    openDesignOptions,
     openPayment: () => setModal('payment'),
     openMenu: (tab = 'status') => {
       setMenuTab(tab);
@@ -749,6 +798,8 @@ export function useAgencyController() {
     submitDetails,
     confirmPayment,
     selectPackage,
+    openDesignOptions,
+    selectDesignStyle,
     processCustomerChoice,
     processProjectChoice,
     loadProject,

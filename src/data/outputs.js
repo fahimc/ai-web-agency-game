@@ -1,6 +1,7 @@
 export const outputOrder = [
   'Plan',
   'TaskBoard',
+  'SelectedDesign',
   'DesignDirection',
   'WebsiteHTML',
   'QAReport',
@@ -10,6 +11,7 @@ export const outputOrder = [
 export const outputNames = {
   Plan: 'Director Plan',
   TaskBoard: 'Task Board',
+  SelectedDesign: 'Selected Design',
   DesignDirection: 'Design Direction',
   WebsiteHTML: 'Website Preview',
   QAReport: 'QA Report',
@@ -19,6 +21,7 @@ export const outputNames = {
 export const outputOwners = {
   Plan: 'director',
   TaskBoard: 'pm',
+  SelectedDesign: 'design',
   DesignDirection: 'design',
   WebsiteHTML: 'dev',
   QAReport: 'qa',
