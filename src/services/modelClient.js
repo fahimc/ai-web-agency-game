@@ -16,6 +16,18 @@ export function callModelInBackground(payload) {
       if (error) callbacks.reject(new Error(error));
       else callbacks.resolve(result);
     };
+    worker.onerror = (event) => {
+      const error = new Error(event?.message || 'Background worker interrupted.');
+      pending.forEach(({ reject }) => reject(error));
+      pending.clear();
+      worker?.terminate();
+      worker = null;
+    };
+    worker.onmessageerror = () => {
+      const error = new Error('Background worker message failed.');
+      pending.forEach(({ reject }) => reject(error));
+      pending.clear();
+    };
   }
   const id = ++callId;
   const message = {

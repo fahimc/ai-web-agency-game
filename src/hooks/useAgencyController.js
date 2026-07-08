@@ -23,6 +23,7 @@ import {
   listProjects,
   loadSession,
   repairStoredSessions,
+  restoreDraft,
   restoreSettings,
   saveDraft,
 } from '../services/storage.js';
@@ -65,6 +66,9 @@ const emptyState = {
   running: false,
   approved: false,
   revisionCount: 0,
+  pendingRun: '',
+  pendingRevisionText: '',
+  autoResumeAttempts: 0,
   lastSaved: '',
   speech: {
     employeeId: 'reception',
@@ -77,6 +81,15 @@ export function useAgencyController() {
   const [state, setState] = useState(() => {
     repairStoredSessions();
     const settings = restoreSettings();
+    const saved = restoreDraft();
+    if (saved && isRecoverableDraft(saved)) {
+      return {
+        ...emptyState,
+        ...saved,
+        settings: { ...settings, ...(saved.settings || {}) },
+        running: false,
+      };
+    }
     return { ...emptyState, settings };
   });
   const [menuTab, setMenuTab] = useState('status');
@@ -84,6 +97,7 @@ export function useAgencyController() {
   const [toast, setToast] = useState('');
   const aborter = useRef(null);
   const startAgencyRef = useRef(null);
+  const resumeWorkRef = useRef(null);
   const stateRef = useRef(state);
 
   const update = useCallback((updater, persist = true) => {
@@ -104,6 +118,9 @@ export function useAgencyController() {
       designRecommendations: saved.designRecommendations || next.designRecommendations,
       designRecommendationStatus: saved.designRecommendationStatus || next.designRecommendationStatus,
       reviewAssets: saved.reviewAssets || next.reviewAssets,
+      pendingRun: saved.pendingRun || next.pendingRun,
+      pendingRevisionText: saved.pendingRevisionText || next.pendingRevisionText,
+      autoResumeAttempts: saved.autoResumeAttempts ?? next.autoResumeAttempts,
         paid: saved.paid ?? next.paid,
         paymentEstimate: saved.paymentEstimate || next.paymentEstimate,
         lastSaved: saved.lastSaved,
@@ -220,6 +237,9 @@ export function useAgencyController() {
       running: false,
       approved: false,
       revisionCount: 0,
+      pendingRun: '',
+      pendingRevisionText: '',
+      autoResumeAttempts: 0,
     }));
     speak('reception', 'New project. First, what email address should this job be saved under?');
     addConvo('Nova', 'Please enter your email address.');
@@ -291,6 +311,9 @@ export function useAgencyController() {
       designRecommendations: loaded.designRecommendations || [],
       designRecommendationStatus: loaded.designRecommendationStatus || 'idle',
       reviewAssets: loaded.reviewAssets || [],
+      pendingRun: loaded.pendingRun || '',
+      pendingRevisionText: loaded.pendingRevisionText || '',
+      autoResumeAttempts: Number(loaded.autoResumeAttempts || 0),
       paid: Boolean(loaded.paid),
       paymentEstimate: loaded.paymentEstimate || null,
       availableProjects: listProjects(email),
@@ -346,6 +369,9 @@ export function useAgencyController() {
       designRecommendations: [],
       designRecommendationStatus: 'idle',
       reviewAssets: [],
+      pendingRun: '',
+      pendingRevisionText: '',
+      autoResumeAttempts: 0,
       paid: false,
       paymentEstimate: null,
       availableProjects: listProjects(email),
@@ -698,6 +724,25 @@ export function useAgencyController() {
 
   const handleRunError = useCallback((error) => {
     const message = error?.message || String(error || 'Unknown error');
+    const current = stateRef.current;
+    const transient = isTransientRunError(message);
+    const attempts = Number(current.autoResumeAttempts || 0);
+    if (transient && attempts < 3) {
+      update((stateNow) => ({
+        ...stateNow,
+        running: false,
+        phase: stateNow.phase === 'complete' ? 'complete' : 'running',
+        error: message,
+        pendingRun: stateNow.pendingRun || inferPendingRun(stateNow),
+        autoResumeAttempts: attempts + 1,
+        progressTask: document.visibilityState === 'hidden' ? 'Waiting for browser to resume' : 'Retrying agency work',
+      }));
+      log('System', `Background-safe retry queued after interruption: ${message}`);
+      if (document.visibilityState !== 'hidden') {
+        window.setTimeout(() => resumeWorkRef.current?.(), 1200);
+      }
+      return;
+    }
     update((current) => ({
       ...current,
       running: false,
@@ -719,6 +764,10 @@ export function useAgencyController() {
       ...current,
       phase: 'approval',
       running: false,
+      pendingRun: '',
+      pendingRevisionText: '',
+      autoResumeAttempts: 0,
+      error: '',
       progress: 70,
       progressTask: 'Preview approval',
       activeOutput: 'WebsiteHTML',
@@ -770,6 +819,9 @@ export function useAgencyController() {
       phase: 'running',
       running: true,
       error: '',
+      pendingRun: 'preview',
+      pendingRevisionText: '',
+      autoResumeAttempts: 0,
       approved: false,
       progress: Math.max(stateNow.progress, 3),
       progressTask: 'Agency working',
@@ -800,13 +852,13 @@ export function useAgencyController() {
   }, [speak, startAgency, update]);
 
   const continueAfterApproval = useCallback(async () => {
-    update((current) => ({ ...current, phase: 'running', running: true, progressTask: 'Finishing agency pack' }));
+    update((current) => ({ ...current, phase: 'running', running: true, pendingRun: 'completion', autoResumeAttempts: 0, error: '', progressTask: 'Finishing agency pack' }));
       speak('qa', 'Preview approved. I will finish the QA notes and package the project handover PDF.');
     try {
       aborter.current = new AbortController();
       for (const step of completionSteps) await runStep(step);
       const pdfData = createProjectPdf(stateRef.current);
-      update((current) => ({ ...current, outputs: { ...current.outputs, ProjectPDF: pdfData }, activeOutput: 'ProjectPDF', phase: 'complete', running: false, progress: 100, progressTask: 'Complete' }));
+      update((current) => ({ ...current, outputs: { ...current.outputs, ProjectPDF: pdfData }, activeOutput: 'ProjectPDF', phase: 'complete', running: false, pendingRun: '', pendingRevisionText: '', autoResumeAttempts: 0, error: '', progress: 100, progressTask: 'Complete' }));
       speak('reception', 'All done. Your preview, QA notes, and project handover PDF are in Outputs. You can start a fresh project whenever you are ready.', ['openPreview', 'reset']);
       addConvo('Nova', 'Project complete. Open Outputs to view or download the work.');
       log('Company', 'All deliverables completed.');
@@ -834,6 +886,10 @@ export function useAgencyController() {
       running: true,
       approved: false,
       revisionCount,
+      pendingRun: 'revision',
+      pendingRevisionText: changeText,
+      autoResumeAttempts: 0,
+      error: '',
       selectedDesignPalette: revisionPalette || current.selectedDesignPalette,
       activeEmployee: 'design',
       progressTask: 'Design revision',
@@ -874,7 +930,7 @@ export function useAgencyController() {
           selectedDesignPalette: revisionPalette,
         }));
       }
-      update((current) => ({ ...current, phase: 'approval', running: false, progress: 70, progressTask: 'Preview approval' }));
+      update((current) => ({ ...current, phase: 'approval', running: false, pendingRun: '', pendingRevisionText: '', autoResumeAttempts: 0, error: '', progress: 70, progressTask: 'Preview approval' }));
       speak('dev', 'Updated preview is ready. Check it, then approve or request another change.', ['openPreview', 'approve']);
       addConvo('Nova', 'Updated preview ready for approval.');
       setModal('websitePreview');
@@ -927,6 +983,36 @@ export function useAgencyController() {
     if (current.approved || current.outputs.QAReport || current.outputs.ProjectPDF) continueAfterApproval();
     else startAgency();
   }, [continueAfterApproval, notify, speak, startAgency, update]);
+
+  useEffect(() => {
+    resumeWorkRef.current = resumeWork;
+  }, [resumeWork]);
+
+  useEffect(() => {
+    let timer = 0;
+    function maybeResume() {
+      const current = stateRef.current;
+      if (!shouldAutoResumeWork(current)) return;
+      if (document.visibilityState === 'hidden') return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const latest = stateRef.current;
+        if (shouldAutoResumeWork(latest) && document.visibilityState !== 'hidden') {
+          resumeWorkRef.current?.();
+        }
+      }, 700);
+    }
+    maybeResume();
+    document.addEventListener('visibilitychange', maybeResume);
+    window.addEventListener('focus', maybeResume);
+    window.addEventListener('online', maybeResume);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', maybeResume);
+      window.removeEventListener('focus', maybeResume);
+      window.removeEventListener('online', maybeResume);
+    };
+  }, []);
 
   const submitChat = useCallback((text) => {
     const value = text.trim();
@@ -1412,6 +1498,39 @@ function parseStateBrief(text) {
 
 function uniqueStateItems(items) {
   return [...new Set((items || []).map((item) => String(item || '').trim()).filter(Boolean))];
+}
+
+function isRecoverableDraft(saved) {
+  return Boolean(
+    saved?.pendingRun
+    || saved?.brief
+    || saved?.email
+    || saved?.phase === 'running'
+    || saved?.phase === 'approval'
+    || saved?.phase === 'complete'
+  );
+}
+
+function inferPendingRun(state) {
+  if (state?.pendingRun) return state.pendingRun;
+  if (state?.approved && !state?.outputs?.ProjectPDF) return 'completion';
+  if (state?.outputs?.WebsiteHTML && state?.phase === 'running') return 'revision';
+  if (state?.brief && state?.paid && state?.selectedDesignStyle && !state?.outputs?.WebsiteHTML) return 'preview';
+  return '';
+}
+
+function isTransientRunError(message) {
+  return /(failed to fetch|network|offline|connection|timeout|timed out|aborted|interrupted|body stream|load failed|fetch failed|model call failed \((408|425|429|500|502|503|504)\))/i.test(String(message || ''));
+}
+
+function shouldAutoResumeWork(state) {
+  if (!state || state.running || state.phase === 'complete') return false;
+  const pendingRun = inferPendingRun(state);
+  if (!pendingRun) return false;
+  if (!state.brief || !state.paid || !state.selectedDesignStyle) return false;
+  if (state.error && !isTransientRunError(state.error)) return false;
+  if (Number(state.autoResumeAttempts || 0) > 3) return false;
+  return true;
 }
 
 function paletteFromRevision(text) {

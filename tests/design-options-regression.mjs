@@ -207,6 +207,47 @@ async function testGeneratedComponentContrast(browser) {
   }
 }
 
+async function testPendingDraftAutoResume(browser) {
+  const session = baseSession({
+    phase: 'running',
+    running: false,
+    pendingRun: 'preview',
+    selectedDesignStyle: 'local-service',
+    selectedDesignPalette: ['#064e3b', '#2563eb', '#fff7ed', '#16a34a', '#ffffff'],
+    selectedSitePages: ['Home', 'Services', 'About', 'Contact'],
+    selectedSiteSections: ['Hero', 'Services', 'Process', 'Testimonials', 'Contact details'],
+    outputs: {
+      SelectedDesign: 'Selected layout: Local Service\nPalette: #064e3b, #2563eb, #fff7ed, #16a34a, #ffffff',
+    },
+    progress: 25,
+    progressTask: 'Agency working',
+    speech: {
+      employeeId: 'dev',
+      text: 'The team is building the preview.',
+      actions: [],
+    },
+  });
+  const context = await browser.newContext({ viewport: { width: 430, height: 920 } });
+  await context.addInitScript((storedSession) => {
+    localStorage.clear();
+    localStorage.setItem('tiny_office_draft_v2', JSON.stringify(storedSession));
+  }, session);
+  const page = await context.newPage();
+  await page.route('**/.netlify/functions/openai-response', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ output_text: 'Resume-safe model response for the restored draft.' }),
+  }));
+  try {
+    await page.goto(baseUrl);
+    await page.locator('[role="dialog"][aria-label="Website Preview"]').waitFor({ timeout: 45000 });
+    assert.equal(await page.getByRole('dialog', { name: 'Agency paused' }).count(), 0, 'resumable draft should not show the paused modal');
+    assert.ok(await page.getByText('Approve preview').count(), 'auto-resumed draft should reach preview approval');
+  } finally {
+    await context.close();
+  }
+}
+
 const server = await startServer();
 let browser;
 try {
@@ -217,6 +258,8 @@ try {
   await testPaletteModeSwitching(browser);
   console.log('Running generated contrast regression...');
   await testGeneratedComponentContrast(browser);
+  console.log('Running pending-draft auto-resume regression...');
+  await testPendingDraftAutoResume(browser);
   console.log('Design options regression tests passed.');
 } finally {
   if (browser) await browser.close();

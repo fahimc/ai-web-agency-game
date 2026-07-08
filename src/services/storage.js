@@ -100,6 +100,9 @@ export function saveDraft(state) {
     convos: state.convos,
     activeOutput: state.activeOutput,
     error: state.error,
+    pendingRun: state.pendingRun || '',
+    pendingRevisionText: state.pendingRevisionText || '',
+    autoResumeAttempts: Number(state.autoResumeAttempts || 0),
     settings: state.settings,
     running: false,
     approved: state.approved,
@@ -224,6 +227,10 @@ function normalizeStoredSession(snapshot) {
     quests: ensureArray(snapshot.quests),
     logs: ensureArray(snapshot.logs),
     convos: ensureArray(snapshot.convos),
+    pendingRun: snapshot.pendingRun || '',
+    pendingRevisionText: snapshot.pendingRevisionText || '',
+    autoResumeAttempts: Number(snapshot.autoResumeAttempts || 0),
+    running: false,
   };
 }
 
