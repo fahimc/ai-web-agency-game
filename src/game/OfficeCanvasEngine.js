@@ -229,6 +229,7 @@ export class OfficeCanvasEngine {
     }
     const target = actor.path[0];
     if (!target) {
+      actor.dir = 'down';
       actor.frame = 0;
       actor.frameTimer = 0;
       return;
@@ -241,6 +242,7 @@ export class OfficeCanvasEngine {
       actor.y = target.y;
       actor.path.shift();
       actor.hold = target.hold || 0;
+      if (!actor.path.length) actor.dir = 'down';
       return;
     }
     const speed = 0.22 * dt;

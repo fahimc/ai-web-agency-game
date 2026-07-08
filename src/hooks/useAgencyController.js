@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { employees } from '../data/employees.js';
 import { outputNames, outputOrder } from '../data/outputs.js';
-import { siteLayouts, buildDesignSelectionMarkdown } from '../data/siteBlueprints.js';
+import { siteLayouts, buildDesignSelectionMarkdown, buildExampleSite } from '../data/siteBlueprints.js';
 import { completionSteps, previewSteps } from '../data/steps.js';
 import { callModelInBackground } from '../services/modelClient.js';
 import {
@@ -471,17 +471,29 @@ export function useAgencyController() {
     await sleep(250);
 
     current = stateRef.current;
-    const result = await callModelInBackground({
-      employee,
-      task: step.task,
-      context: buildContext(step.contextKeys || []),
-      settings: current.settings,
-      state: current,
-      signal: aborter.current?.signal,
-      complex: Boolean(step.complex),
-    });
+    let result = '';
+    try {
+      result = await callModelInBackground({
+        employee,
+        task: step.task,
+        context: buildContext(step.contextKeys || []),
+        settings: current.settings,
+        state: current,
+        signal: aborter.current?.signal,
+        complex: Boolean(step.complex),
+      });
+    } catch (error) {
+      if (aborter.current?.signal?.aborted) throw error;
+      if (step.key !== 'WebsiteHTML') throw error;
+      result = fallbackWebsiteHtml(current);
+      log(employee.name, `Website preview fallback used after model error: ${error?.message || error}`);
+    }
 
-    const output = step.key === 'WebsiteHTML' ? cleanHTML(result) : String(result || '').trim();
+    let output = step.key === 'WebsiteHTML' ? cleanHTML(result) : String(result || '').trim();
+    if (step.key === 'WebsiteHTML' && !isCompleteHtml(output)) {
+      output = fallbackWebsiteHtml(current);
+      log(employee.name, 'Website preview fallback used because the returned HTML was incomplete.');
+    }
     addQuest(step.quest, employee.id, 'done');
     update((stateNow) => ({
       ...stateNow,
@@ -923,6 +935,21 @@ function stepSpeech(id, quest) {
     qa: 'I am checking the pack and preparing the project PDF.',
   };
   return lines[id] || `Working on ${quest}...`;
+}
+
+function fallbackWebsiteHtml(state) {
+  const layout = siteLayouts.find((item) => item.id === state.selectedDesignStyle) || siteLayouts[0];
+  const palette = state.selectedDesignPalette?.length ? state.selectedDesignPalette : layout.palette;
+  return buildExampleSite(layout, state, palette);
+}
+
+function isCompleteHtml(html) {
+  const value = String(html || '').trim();
+  return /^<!doctype html/i.test(value)
+    && /<html[\s>]/i.test(value)
+    && /<body[\s>]/i.test(value)
+    && /<\/body>/i.test(value)
+    && /<\/html>/i.test(value);
 }
 
 function sleep(ms) {
