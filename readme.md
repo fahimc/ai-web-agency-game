@@ -1,83 +1,247 @@
-# Tiny AI Office | React Static App
+# MicroAgency AI
 
-Tiny AI Office is a responsive client-side React app that presents an AI web agency as a virtual office. Visitors complete intake, submit a brief, watch the agency work desk by desk, review a generated website preview, and then receive the full delivery pack.
+MicroAgency AI is a responsive React/Vite app that presents an AI web agency as a virtual office. A customer completes intake, selects a package, pays or applies a voucher, chooses a design direction, reviews the generated site, requests revisions, and receives a handover pack.
 
-The office scene is powered by a plain JavaScript canvas engine. Characters are drawn with pixel-art functions, move between desks for handovers, and the camera supports bounds, smooth desk focus, drag-to-pan, zoom, and responsive resizing.
+Production site:
 
-## Run locally
-
-```bash
-npm install
-npm run dev
+```text
+https://ai-web-agency.netlify.app
 ```
 
-Build the static app with:
+GitHub:
 
-```bash
-npm run build
+```text
+https://github.com/fahimc/ai-web-agency-game
 ```
 
-The compiled files are written to `dist/` and can be hosted by any static web host.
+## Features
 
-## Project structure
+- Pixel-art virtual office with staff desks, speech bubbles, pan/zoom, mobile framing, and employee inspection.
+- Returning and new customer flows saved by email in browser `localStorage`.
+- Multi-project support per customer email.
+- Project export and delete controls in **Office Menu > Projects**.
+- Structured client intake form for business name, industry, audience, goal, offer, tone, pages, and must-haves.
+- Three customer-facing packages: `Launch Site`, `Growth Site`, and `Signature Site`.
+- PayPal checkout through Netlify Functions.
+- Voucher field in payment for approved voucher codes.
+- Post-payment design direction picker led by Mira Sol, the designer.
+- 3-4 recommended design directions per brief with previous/next navigation.
+- Full-screen preview for each proposed client site example.
+- Colour palette recommendations plus custom colour selection, capped at five colours.
+- Recommended pages and sections from presets, with client add/remove controls.
+- Local placeholder image assets used by templates and design previews.
+- AI generation through Netlify `openai-response` function.
+- Website preview approval and revision loop.
+- QA notes and PDF handover generation.
+
+## Customer Flow
+
+1. Nova asks whether the visitor is a new or returning customer.
+2. Returning customers enter an email and choose a saved project.
+3. Existing projects automatically resume to the correct next step instead of opening the menu.
+4. New customers enter an email and complete the project details form.
+5. Nova presents three package options explaining what the agency will do and deliver.
+6. Customer selects a package and completes PayPal checkout or applies a voucher.
+7. Mira presents recommended design directions, colour palettes, pages, and sections.
+8. Customer selects a direction and structure.
+9. The agency generates strategy, task board, design direction, and website preview.
+10. Customer approves the preview or requests revisions.
+11. QA completes handover notes and a PDF pack.
+
+## Design System And Templates
+
+The design picker is powered by `src/data/siteBlueprints.js`.
+
+It contains:
+
+- `MicroAgency Blocks` component library notes.
+- Common layout directions such as local service, SaaS product, premium editorial, portfolio, restaurant/venue, wellness, event, marketplace, nonprofit, and education.
+- Brief-aware recommendations for design direction.
+- Colour palette recommendations.
+- Page presets such as `Home`, `Services`, `Pricing`, `Gallery`, `FAQ`, and `Contact`.
+- Section presets such as `Hero`, `Services`, `Process`, `Testimonials`, `Pricing`, `Lead capture form`, and `Final CTA`.
+- Preview HTML generation for example client sites.
+
+Selected design choices are saved into the `SelectedDesign` output and passed into the final design/build prompts.
+
+## Placeholder Images
+
+Local placeholder assets live in:
+
+```text
+public/placeholders/
+```
+
+Included image categories:
+
+- business/team
+- office/workspace
+- restaurant
+- wellness
+- tech/product
+- premium/interior
+- event
+- education
+- creative studio
+- community/nonprofit
+
+The images are downloaded from Unsplash and documented in `public/placeholders/README.md`. Template previews reference local `/placeholders/...` paths so generated examples do not depend on remote image URLs.
+
+## Project Structure
 
 ```text
 index.html
+netlify.toml
+netlify/
+  functions/
+    _paypal.cjs
+    openai-response.cjs
+    paypal-capture-order.cjs
+    paypal-config.cjs
+    paypal-create-order.cjs
+public/
+  placeholders/
 src/
   App.jsx
   main.jsx
   styles.css
   components/
     ChatDock.jsx
+    DesignOptionsModal.jsx
     DetailsModal.jsx
     Hud.jsx
     MenuModal.jsx
     Modal.jsx
     OfficeScene.jsx
     OutputsModal.jsx
+    PackageModal.jsx
     PauseModal.jsx
+    PaymentModal.jsx
     Toast.jsx
+    WorkerModal.jsx
   data/
     employees.js
     outputs.js
+    siteBlueprints.js
     steps.js
-  hooks/
-    useAgencyController.js
   game/
     OfficeCanvasEngine.js
+  hooks/
+    useAgencyController.js
   services/
+    modelClient.js
+    netlify.js
     openai.js
     storage.js
   utils/
+    pdf.js
+    pricing.js
     text.js
+  workers/
+    modelWorker.js
 ```
 
-## Main flow
+## Local Development
 
-1. Nova asks whether the visitor is returning or new.
-2. Returning customers load saved sessions by email from local browser storage.
-3. New customers enter email and complete the client details form.
-4. The visitor pastes the client brief.
-5. The agency runs autonomously until the website preview needs approval.
-6. If approved, the agency completes QA notes and a project PDF with invoice draft.
-7. If changes are requested, Kai revises the preview and asks for approval again.
+Install dependencies:
 
-## Game controls
+```bash
+npm install
+```
 
-- Drag the office scene to pan around the floor.
-- Use the mouse wheel to zoom on desktop.
-- Tap a desk to inspect that employee.
-- On mobile, the camera uses tighter zoom and the speech panel is constrained so the game remains usable on small screens.
+Run the Vite dev server:
 
-## Model settings
+```bash
+npm run dev
+```
 
-Open **Office Menu > Settings** to add either an OpenAI API key for local testing or a proxy endpoint for production. Direct browser API keys are not safe for public production use.
+Build production assets:
 
-Default routing:
+```bash
+npm run build
+```
 
-- Fast model: `gpt-4.1-mini`
-- Complex model: `gpt-4.1`
+Preview the production build:
+
+```bash
+npm run preview
+```
+
+## Deployment
+
+The project is configured for Netlify.
+
+```bash
+npm run build
+netlify deploy --prod --dir dist --functions netlify/functions
+```
+
+Useful scripts:
+
+```bash
+npm run netlify:status
+npm run deploy
+npm run deploy:prod
+```
+
+The current Netlify app uses:
+
+```text
+Site: ai-web-agency
+Production URL: https://ai-web-agency.netlify.app
+```
+
+## Environment Variables
+
+Set these in Netlify for production:
+
+```text
+OPENAI_API_KEY
+PAYPAL_CLIENT_ID
+PAYPAL_CLIENT_SECRET
+PAYPAL_ENV
+```
+
+`PAYPAL_ENV` should be `sandbox` or `live`.
+
+## Payment And Voucher
+
+Package pricing is defined in `src/utils/pricing.js` and mirrored in `netlify/functions/_paypal.cjs`.
+
+Current packages:
+
+- `Launch Site`
+- `Growth Site`
+- `Signature Site`
+
+Voucher code:
+
+```text
+MICROAGENCY100
+```
+
+The voucher allows continuing without PayPal and is intended for approved testing or manual payment cases.
 
 ## Persistence
 
-Sessions are saved in `localStorage`, keyed by email. Refreshing the page starts a clean welcome flow, but entering the same email loads the saved returning-customer project. Saved data includes client details, brief, outputs, progress, task log, conversation log, settings, and optional remembered API key.
+Project data is stored in browser `localStorage`.
+
+Saved data includes:
+
+- customer email and name
+- project id and project name
+- selected package and model
+- payment state
+- selected design direction, palette, pages, and sections
+- project brief
+- generated outputs
+- task log and conversation log
+- progress and phase
+
+Projects can be resumed, exported as JSON, or deleted from **Office Menu > Projects**.
+
+## Notes
+
+- The app is a static frontend with Netlify Functions for server-side API work.
+- The OpenAI API key should not be exposed in the browser in production.
+- Vite currently reports a large chunk warning during build because PDF/html libraries are bundled into the app.
