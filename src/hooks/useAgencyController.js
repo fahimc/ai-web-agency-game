@@ -1022,7 +1022,7 @@ function hasRequiredSiteStructure(html, state) {
 }
 
 function hasPreviewLanguage(html) {
-  return /example client site|preview client site|design direction sample|site concept/i.test(String(html || ''));
+  return /example client site|preview client site|customer website|visual direction|design direction sample|design direction|site concept|this example shows|finished site can explain|placeholder packages|final content/i.test(String(html || ''));
 }
 
 function sleep(ms) {

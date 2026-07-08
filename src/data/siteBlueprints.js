@@ -279,8 +279,8 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
   const pages = isOnePagePackage ? ['Home'] : normalizePages(state?.selectedSitePages?.length ? state.selectedSitePages : structure.pages);
   const onePageSections = isOnePagePackage ? normalizeOnePageSections(sections, structure.pages) : [];
   const isPreview = Boolean(options.preview);
-  const navLabel = isPreview ? 'Preview client site' : 'Customer website';
-  const eyebrow = isPreview ? `${layout.name} design direction` : `${business} website`;
+  const navLabel = isPreview ? 'Design option' : '';
+  const eyebrow = isPreview ? `${layout.name} direction` : `${business}`;
   const navItems = isOnePagePackage ? ['Home', ...onePageSections] : pages;
   const ctaTarget = slugify(navItems.find((item) => /contact|book/i.test(item)) || 'Contact');
   const pageSections = (isOnePagePackage ? onePageSections : pages.filter((page) => page.toLowerCase() !== 'home'))
@@ -298,11 +298,11 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
 </head>
 <body>
 <div class="shell">
-<nav class="nav"><strong>${escapeHtml(business)}</strong><div class="nav-links">${navItems.map((page) => `<a href="#${escapeHtml(slugify(page))}">${escapeHtml(page)}</a>`).join('')}</div><span>${escapeHtml(navLabel)}</span></nav>
+<nav class="nav"><strong>${escapeHtml(business)}</strong><div class="nav-links">${navItems.map((page) => `<a href="#${escapeHtml(slugify(page))}">${escapeHtml(page)}</a>`).join('')}</div>${navLabel ? `<span>${escapeHtml(navLabel)}</span>` : ''}</nav>
 <main>
 <section class="hero" id="home">
 <div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sections.slice(0, 5).map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="#${escapeHtml(ctaTarget)}">Start an enquiry</a></div>
-<aside class="panel image-card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(business)} visual direction</div></aside>
+<aside class="panel image-card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(heroImageCaptionFor(business, offer))}</div></aside>
 </section>
 ${pageSections}
 </main>
@@ -336,7 +336,11 @@ function headlineFor(layout, business, goal, audience) {
 }
 
 function copyFor(layout, audience, offer, goal) {
-  return `${layout.name} is shaped for ${audience}, presenting ${offer} with a clear path toward ${goal}.`;
+  return `Built for ${audience}, with ${offer} presented clearly and a simple path toward ${goal}.`;
+}
+
+function heroImageCaptionFor(business, offer) {
+  return `${business} - ${offer}`;
 }
 
 function metricFor(layout) {
@@ -390,11 +394,11 @@ function aboutSection(id, { business, industry, audience, offer, image }) {
 
 function pricingSection(id, { business, offer, ctaTarget }) {
   const tiers = ['Starter', 'Standard', 'Complete'];
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Pricing</span><h2>Simple ways to start with ${escapeHtml(business)}</h2><p>Use these placeholder packages as a clear pricing structure until final prices are confirmed.</p><div class="grid">${tiers.map((tier, index) => `<div class="card"><b>${tier}</b><span>${escapeHtml(index === 0 ? `A focused introduction to ${offer}.` : index === 1 ? `A fuller option for customers ready to compare ${offer}.` : `The most complete route with extra support and priority response.`)}</span><a class="button" href="#${escapeHtml(ctaTarget)}">Enquire</a></div>`).join('')}</div></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Pricing</span><h2>Simple ways to start with ${escapeHtml(business)}</h2><p>Choose the level of support that matches what you need today.</p><div class="grid">${tiers.map((tier, index) => `<div class="card"><b>${tier}</b><span>${escapeHtml(index === 0 ? `A focused introduction to ${offer}.` : index === 1 ? `A fuller option for customers ready to compare ${offer}.` : `The most complete route with extra support and priority response.`)}</span><a class="button" href="#${escapeHtml(ctaTarget)}">Enquire</a></div>`).join('')}</div></section>`;
 }
 
 function caseStudiesSection(id, { business, goal }) {
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Case studies</span><h2>Proof that helps visitors decide</h2><div class="grid"><div class="card"><b>Recent customer win</b><span>${escapeHtml(business)} helped a customer move from browsing to enquiry with a clearer offer and direct next step.</span></div><div class="card"><b>Before and after</b><span>Replace this placeholder with a real example once the business has a project to showcase.</span></div><div class="card"><b>Outcome focus</b><span>Each story should connect the work back to the goal: ${escapeHtml(goal)}.</span></div></div></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Case studies</span><h2>Proof that helps visitors decide</h2><div class="grid"><div class="card"><b>Recent customer win</b><span>${escapeHtml(business)} helped a customer move from browsing to enquiry with a clearer offer and direct next step.</span></div><div class="card"><b>Before and after</b><span>A clear comparison of the challenge, the work, and the improvement visitors can understand quickly.</span></div><div class="card"><b>Outcome focus</b><span>Each story connects the work back to the goal: ${escapeHtml(goal)}.</span></div></div></section>`;
 }
 
 function gallerySection(id, { image }) {
@@ -427,7 +431,7 @@ function contactSection(id, context) {
 }
 
 function genericPageSection(id, page, { business, offer, ctaTarget }) {
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(page)} for ${escapeHtml(business)}</h2><p>This page section is ready for final content. It should explain how ${escapeHtml(offer)} helps visitors and give them a clear next step.</p><a class="button secondary" href="#${escapeHtml(ctaTarget)}">Contact us</a></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(page)} for ${escapeHtml(business)}</h2><p>${escapeHtml(offer)} is explained here in practical terms so visitors can understand the value and choose the next step.</p><a class="button secondary" href="#${escapeHtml(ctaTarget)}">Contact us</a></section>`;
 }
 
 function contactForm({ business }) {
@@ -438,14 +442,14 @@ function exampleContentFor(layout, context) {
   const { business, industry, audience, goal, offer } = context;
   const defaultContent = {
     servicesTitle: `How ${business} helps`,
-    servicesLead: `This example shows how the finished site can explain ${offer} in plain language for ${audience}.`,
+    servicesLead: `${offer} explained in plain language for ${audience}.`,
     cards: [
       { title: 'Clear first impression', text: `Visitors immediately understand what ${business} offers and who it is for.` },
       { title: 'Useful proof', text: 'Testimonials, outcomes, and reassurance sit close to the actions that matter.' },
       { title: 'Easy enquiry path', text: `The page keeps moving people toward ${goal} without forcing them to search.` },
     ],
-    proofQuote: 'A confident example of the customer website direction.',
-    proofText: `${business} can use this structure to present ${industry} clearly across mobile and desktop.`,
+    proofQuote: 'Clear information, useful proof, and a direct next step.',
+    proofText: `${business} presents ${industry} clearly across mobile and desktop.`,
     processTitle: 'How a visitor moves through the page',
     steps: [
       `They see the main promise and understand ${offer}.`,
@@ -459,7 +463,7 @@ function exampleContentFor(layout, context) {
   const variants = {
     'saas-product': {
       servicesTitle: 'Product highlights',
-      servicesLead: `A product-led example for showing what ${business} does, why it matters, and how customers get value.`,
+      servicesLead: `${business} explains what the product does, why it matters, and how customers get value.`,
       cards: [
         { title: 'Live product overview', text: `Show the main ${offer} workflow with a concise product explanation and supporting image.` },
         { title: 'Feature outcomes', text: 'Group features around customer results instead of a long technical list.' },
