@@ -4,6 +4,7 @@ import { Modal } from './Modal.jsx';
 export function DetailsModal({ state, actions }) {
   const initial = useMemo(() => parseStoredClientDetails(state.clientDetails), [state.clientDetails]);
   const [form, setForm] = useState(initial);
+  const editingForRevision = state.phase === 'approval';
 
   function setField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -27,17 +28,22 @@ export function DetailsModal({ state, actions }) {
       form.mustHaves ? `Must-haves: ${form.mustHaves}` : '',
       form.extraNotes ? `Extra notes: ${form.extraNotes}` : '',
     ].filter(Boolean).join('\n');
+    if (editingForRevision) {
+      actions.saveClientEdits({ clientDetails: details, brief: details });
+      actions.closeModal();
+      return;
+    }
     actions.submitDetails(details);
   }
 
   return (
-    <Modal title="Project Details" onClose={actions.closeModal} className="details-modal">
-      <div className="modal-tabs"><span className="modal-tab active">New customer intake</span></div>
+    <Modal title={editingForRevision ? 'Edit Content Fields' : 'Project Details'} onClose={actions.closeModal} className="details-modal">
+      <div className="modal-tabs"><span className="modal-tab active">{editingForRevision ? 'Revision content fields' : 'New customer intake'}</span></div>
       <div className="modal-body">
         <form className="details-form" autoComplete="on" onSubmit={submit}>
           <div className="card form-intro">
-            <h3>Hi {state.userName || 'there'}, please fill in this form</h3>
-            <p className="muted">This is the brief. Once you send it, the office starts work without asking for a separate message.</p>
+            <h3>{editingForRevision ? 'Update the content brief' : `Hi ${state.userName || 'there'}, please fill in this form`}</h3>
+            <p className="muted">{editingForRevision ? 'These fields will be used by Mira and Kai when you request the next revision.' : 'This is the brief. Once you send it, the office starts work without asking for a separate message.'}</p>
           </div>
           <div className="row">
             <Field label="Business / client name *" value={form.businessName} onChange={(value) => setField('businessName', value)} required />
@@ -67,7 +73,7 @@ export function DetailsModal({ state, actions }) {
           <TextField label="Must-haves" value={form.mustHaves} onChange={(value) => setField('mustHaves', value)} />
           <TextField label="Anything else the team should know?" value={form.extraNotes} onChange={(value) => setField('extraNotes', value)} />
           <div className="stack form-actions">
-            <button type="submit" className="green">Save details and continue</button>
+            <button type="submit" className="green">{editingForRevision ? 'Save content fields' : 'Save details and continue'}</button>
             <button type="button" className="secondary" onClick={() => setForm(parseStoredClientDetails(''))}>Clear form</button>
           </div>
         </form>

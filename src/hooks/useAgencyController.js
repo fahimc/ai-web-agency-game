@@ -25,6 +25,7 @@ import {
 } from '../services/storage.js';
 import { cleanHTML, downloadText, extractEmail, phaseLabel, safeFileName } from '../utils/text.js';
 import { createSitePackageString, fileNameForPage, parseSitePackage } from '../utils/sitePackage.js';
+import { reviewAssetsPrompt } from '../utils/reviewAssets.js';
 import { createProjectPdf } from '../utils/pdf.js';
 import { MAX_REVISIONS, estimateAiCost, packageForModel, packageOption } from '../utils/pricing.js';
 
@@ -304,6 +305,10 @@ export function useAgencyController() {
       update((current) => ({ ...current, phase: 'approval' }));
       speak('dev', 'Welcome back. Your website preview is ready for approval.', ['openPreview', 'approve']);
       window.setTimeout(() => setModal('websitePreview'), 120);
+    } else if (next.phase === 'assets') {
+      update((current) => ({ ...current, phase: 'assets', activeEmployee: 'pm' }));
+      speak('pm', 'Welcome back. You can upload optional project files now, or skip this step and move to design.', ['openAssetUpload']);
+      window.setTimeout(() => setModal('assetUpload'), 120);
     } else if (next.paid && next.brief && !next.selectedDesignStyle) {
       update((current) => ({ ...current, phase: 'design_options', activeEmployee: 'design' }));
       speak('design', 'Welcome back. Payment is complete. Choose a design direction so the team can start production.', ['openDesignOptions']);
@@ -435,15 +440,15 @@ export function useAgencyController() {
         ...details,
         amountGbp: details.amountGbp ?? packageOption(details.packageId || current.projectPackage).priceGbp,
       },
-      phase: 'design_options',
-      activeEmployee: 'design',
+      phase: 'assets',
+      activeEmployee: 'pm',
       progress: Math.max(current.progress || 0, 6),
-      progressTask: 'Choose design direction',
+      progressTask: 'Optional project files',
       designRecommendationStatus: current.designRecommendations?.length ? 'ready' : 'idle',
     }));
-    setModal(null);
-    addConvo('Nova', 'Payment received. Mira will show design directions before production starts.');
-    speak('design', 'Payment received. I have reviewed the brief and prepared design directions with colour palettes. Click to see the options and choose the route you like.', ['openDesignOptions']);
+    setModal('assetUpload');
+    addConvo('Nova', 'Payment received. Rin will ask for optional project files before design starts.');
+    speak('pm', 'Payment received. You can optionally upload images, logos, copy notes, menus, PDFs, or documents for the team. If you do not have any files, skip this and Mira will prepare design options.', ['openAssetUpload']);
   }, [addConvo, speak, update]);
 
   const buildContext = useCallback((keys) => {
@@ -496,6 +501,19 @@ export function useAgencyController() {
       return recommendations;
     }
   }, [buildContext, log, speak, update]);
+
+  const skipAssetUpload = useCallback(() => {
+    update((current) => ({
+      ...current,
+      phase: 'design_options',
+      activeEmployee: 'design',
+      progressTask: current.designRecommendations?.length ? 'Choose design direction' : 'Preparing design recommendations',
+    }));
+    setModal('designOptions');
+    addConvo('Nova', stateRef.current.reviewAssets?.length ? 'Project files saved. Mira will use them for design recommendations.' : 'File upload skipped. Mira will continue from the brief.');
+    speak('design', 'I have the brief and any uploaded files. I will prepare design directions with colour palettes for you to choose from.', ['openDesignOptions']);
+    window.setTimeout(() => generateDesignRecommendations(), 50);
+  }, [addConvo, generateDesignRecommendations, speak, update]);
 
   const openDesignOptions = useCallback(() => {
     update((current) => ({ ...current, phase: 'design_options', activeEmployee: 'design', progressTask: current.designRecommendations?.length ? 'Choose design direction' : 'Preparing design recommendations' }));
@@ -814,15 +832,16 @@ export function useAgencyController() {
     speak('design', 'Got it. I am taking the revision back through design first, then Kai will rebuild the preview.');
     try {
       aborter.current = new AbortController();
-      const assetContext = reviewAssetsContext(stateRef.current.reviewAssets || []);
+      if (!stateRef.current.outputs.PageContent) await producePageContent();
+      const assetContext = reviewAssetsPrompt(stateRef.current.reviewAssets || []);
       await runStep({
         key: 'DesignDirection',
         employee: 'design',
         progress: 56,
         quest: `Design revision ${revisionCount}`,
         replace: true,
-        contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'WebsiteHTML'],
-        task: `Revise the design direction using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across the whole site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn a concise updated design direction with layout, visual, content, and responsive instructions for the developer. Keep strong existing choices that still fit.`,
+        contextKeys: ['Plan', 'TaskBoard', 'SelectedDesign', 'DesignDirection', 'PageContent', 'WebsiteHTML'],
+        task: `Think like the visual designer reviewing an existing customer website. Use the original selected design, the previous design direction, the current page content, and the current website output as context. Client revision request: "${changeText}". ${revisionPalette ? `The client asked for a full colour-scheme change. Use this exact palette across the whole site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn an updated REVISION DESIGN PLAN for the developer. Include: 1. what changes, 2. what stays, 3. exact colour tokens for text, primary, background, accent, and surface, 4. content/copy changes required, 5. image changes required, 6. page-by-page developer instructions, 7. mobile/accessibility checks. Be specific enough that Kai can rebuild the website without guessing.`,
       });
       const revisedOutput = await runStep({
         key: 'WebsiteHTML',
@@ -833,8 +852,8 @@ export function useAgencyController() {
         replace: true,
         contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'PageContent', 'WebsiteHTML'],
         task: stateRef.current.projectPackage === 'launch'
-          ? `Revise the existing website HTML using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across the whole site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts, improve the requested parts, and ensure responsive accessible markup. Use Bootstrap 5.3 CSS and bootstrap.bundle JS, and keep a Bootstrap responsive navbar with navbar-toggler/collapse so mobile shows a hamburger menu.`
-          : `Revise the existing multi-page website package using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across every file in the site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes. Use Bootstrap 5.3 CSS and bootstrap.bundle JS in every file, and keep a Bootstrap responsive navbar with navbar-toggler/collapse so mobile shows a hamburger menu.`,
+          ? `Implement the revised DesignDirection exactly. The DesignDirection is Mira's revision plan and is the source of truth. Client revision request: "${changeText}". ${revisionPalette ? `Apply this exact palette across the whole site: ${revisionPalette.join(', ')}. Update CSS variables, Bootstrap overrides, buttons, links, cards, nav, backgrounds, borders, headings, and forms so no old scheme remains.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts that Mira kept, rebuild every requested part, and ensure responsive accessible markup. Use Bootstrap 5.3 CSS and bootstrap.bundle JS, and keep a Bootstrap responsive navbar with navbar-toggler/collapse so mobile shows a hamburger menu.`
+          : `Implement the revised DesignDirection exactly. The DesignDirection is Mira's revision plan and is the source of truth. Client revision request: "${changeText}". ${revisionPalette ? `Apply this exact palette across every file in the site: ${revisionPalette.join(', ')}. Update CSS variables, Bootstrap overrides, buttons, links, cards, nav, backgrounds, borders, headings, and forms so no old scheme remains.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes. Use Bootstrap 5.3 CSS and bootstrap.bundle JS in every file, and keep a Bootstrap responsive navbar with navbar-toggler/collapse so mobile shows a hamburger menu.`,
       });
       if (revisionPalette) {
         const paletteOutput = applyPaletteToWebsiteOutput(revisedOutput, revisionPalette);
@@ -852,7 +871,7 @@ export function useAgencyController() {
     } catch (error) {
       handleRunError(error);
     }
-  }, [addConvo, handleRunError, log, runStep, speak, update]);
+  }, [addConvo, handleRunError, log, notify, producePageContent, runStep, speak, update]);
 
   const processApproval = useCallback((text) => {
     if (/^(approve|approved|yes|go ahead|looks good|ship|done)\b/i.test(text)) {
@@ -877,6 +896,12 @@ export function useAgencyController() {
       return;
     }
     update((stateNow) => ({ ...stateNow, error: '', running: false }));
+    if (current.phase === 'assets') {
+      update((stateNow) => ({ ...stateNow, phase: 'assets', activeEmployee: 'pm', progressTask: 'Optional project files' }));
+      speak('pm', 'You can upload optional project files now, or skip this step and move to design.', ['openAssetUpload']);
+      setModal('assetUpload');
+      return;
+    }
     if (current.paid && (!current.selectedDesignStyle || !current.outputs.SelectedDesign)) {
       update((stateNow) => ({ ...stateNow, phase: 'design_options', activeEmployee: 'design' }));
       speak('design', 'Choose a design direction first, then I will start the production run.', ['openDesignOptions']);
@@ -908,7 +933,12 @@ export function useAgencyController() {
   }, [addConvo, processApproval, processCustomerChoice, processName, processNewEmail, processProjectChoice, processReturningEmail, resumeWork]);
 
   const saveClientEdits = useCallback((client) => {
-    update((current) => ({ ...current, ...client, brief: client.clientDetails || client.brief || current.brief }));
+    update((current) => {
+      const outputs = current.phase === 'approval' && (client.clientDetails || client.brief)
+        ? { ...current.outputs, PageContent: '' }
+        : current.outputs;
+      return { ...current, ...client, outputs, brief: client.clientDetails || client.brief || current.brief };
+    });
     notify('Client info saved.');
   }, [notify, update]);
 
@@ -1093,6 +1123,10 @@ export function useAgencyController() {
       setModal('payment');
       return;
     }
+    if (current.phase === 'assets') {
+      setModal('assetUpload');
+      return;
+    }
     if (current.phase === 'design_options') {
       setModal('designOptions');
       return;
@@ -1112,6 +1146,7 @@ export function useAgencyController() {
     submitChat,
     submitDetails,
     confirmPayment,
+    skipAssetUpload,
     selectPackage,
     openDesignOptions,
     selectDesignStyle,
@@ -1136,6 +1171,7 @@ export function useAgencyController() {
     openPackages: () => setModal('packages'),
     openDesignOptions,
     openPayment: () => setModal('payment'),
+    openAssetUpload: () => setModal('assetUpload'),
     openAgencyInfo: () => setModal('agencyInfo'),
     openMenu: (tab = 'status') => {
       setMenuTab(tab);
@@ -1184,6 +1220,7 @@ export function useAgencyController() {
     submitChat,
     submitDetails,
     confirmPayment,
+    skipAssetUpload,
     selectPackage,
     openDesignOptions,
     selectDesignStyle,
@@ -1374,6 +1411,36 @@ function paletteFromRevision(text) {
   }
   const hexColors = String(text || '').match(/#[0-9a-f]{6}\b/ig);
   if (hexColors?.length >= 2) return normalizePalette(hexColors);
+  if (/\b(colou?r|palette|scheme|theme|brand)\b/i.test(value)) {
+    const namedColors = {
+      black: '#0a0a0a',
+      white: '#ffffff',
+      grey: '#6b7280',
+      gray: '#6b7280',
+      navy: '#0f172a',
+      blue: '#2563eb',
+      sky: '#0ea5e9',
+      teal: '#14b8a6',
+      green: '#16a34a',
+      lime: '#84cc16',
+      yellow: '#eab308',
+      gold: '#b7791f',
+      orange: '#f97316',
+      red: '#dc2626',
+      pink: '#ec4899',
+      rose: '#f43f5e',
+      purple: '#7c3aed',
+      violet: '#8b5cf6',
+      brown: '#92400e',
+      cream: '#fff7ed',
+      beige: '#f5f0e6',
+    };
+    const matches = Object.entries(namedColors)
+      .filter(([name]) => new RegExp(`\\b${name}\\b`, 'i').test(value))
+      .map(([, color]) => color);
+    if (matches.length >= 2) return normalizePalette(matches);
+    if (matches.length === 1) return normalizePalette(['#111827', matches[0], '#ffffff', '#64748b', '#f8fafc']);
+  }
   return null;
 }
 
@@ -1400,7 +1467,7 @@ function applyPaletteToHtml(html, palette) {
   replacements.forEach(([name, color]) => {
     value = value.replace(new RegExp(`${name}:\\s*#[0-9a-f]{3,6}`, 'ig'), `${name}:${color}`);
   });
-  const override = `:root{--ink:${ink};--accent:${accent};--bg:${bg};--secondary:${secondary};--card:${surface};--muted:#5f6368;--line:rgba(10,10,10,.14)}body{background:var(--bg)!important;color:var(--ink)!important}.button{background:var(--accent)!important}.button.secondary{background:var(--ink)!important}.card,.panel,.tag,.input{background:var(--card)!important}.page-kicker,.eyebrow{color:var(--accent)!important}`;
+  const override = `:root{--ink:${ink};--accent:${accent};--bg:${bg};--secondary:${secondary};--card:${surface};--bs-body-color:${ink};--bs-body-bg:${bg};--bs-primary:${accent};--bs-secondary:${secondary};--muted:#5f6368;--line:rgba(10,10,10,.14)}html,body{background:var(--bg)!important;color:var(--ink)!important}.site-nav,.navbar{background:color-mix(in srgb,var(--bg) 92%,white)!important;color:var(--ink)!important}.navbar-brand,.nav-link,h1,h2,h3,h4,h5,h6,strong{color:var(--ink)!important}.nav-link.active,.nav-link:hover{background:var(--card)!important;border-color:var(--line)!important;color:var(--ink)!important}.button,.btn-primary,[class*="btn-primary"]{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important}.button.secondary,.btn-secondary{background:var(--ink)!important;border-color:var(--ink)!important;color:var(--bg)!important}.card,.panel,.tag,.input,.form-control,.accordion-item,.list-group-item{background:var(--card)!important;color:var(--ink)!important;border-color:var(--line)!important}.page-kicker,.eyebrow,a:not(.button):not(.btn){color:var(--accent)!important}.hero,.section,main,header,footer{background-color:transparent!important}`;
   if (/<\/style>/i.test(value)) return value.replace(/<\/style>/i, `${override}</style>`);
   return value.replace(/<\/head>/i, `<style>${override}</style></head>`);
 }
@@ -1433,15 +1500,6 @@ function replaceFirstImageSource(html, asset) {
     return String(html || '').replace(/<img\b[^>]*>/i, replacement);
   }
   return String(html || '').replace(/<\/main>/i, `<section class="section"><img src="${asset.dataUrl}" alt="${escapeHtmlAttr(alt)}" style="width:100%;border-radius:20px"></section></main>`);
-}
-
-function reviewAssetsContext(assets = []) {
-  return assets.slice(-12).map((asset, index) => {
-    const kind = String(asset.type || '').startsWith('image/') ? 'Image' : 'Document';
-    const text = asset.text ? `\nNotes/text excerpt: ${String(asset.text).slice(0, 1200)}` : '';
-    const imageNote = kind === 'Image' ? '\nUse this image as available site imagery when relevant. The app can embed the uploaded image data directly.' : '';
-    return `${index + 1}. ${kind}: ${asset.name} (${asset.type || 'unknown'}, ${Math.round((asset.size || 0) / 1024)} KB)${imageNote}${text}`;
-  }).join('\n\n');
 }
 
 function escapeHtmlAttr(value) {

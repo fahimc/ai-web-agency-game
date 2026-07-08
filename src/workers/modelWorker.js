@@ -1,3 +1,5 @@
+import { reviewAssetsPrompt } from '../utils/reviewAssets.js';
+
 function toOutputText(value) {
   if (value == null) return '';
   if (typeof value === 'string') return value;
@@ -57,6 +59,7 @@ self.onmessage = async (event) => {
       `Autonomy mode: ${settings.autonomy}`,
       `Client contact: ${state.userName || 'Unknown'}${state.email ? ` <${state.email}>` : ''}`,
       `Project intake form / brief: ${state.clientDetails || state.brief || 'Not provided'}`,
+      state.reviewAssets?.length ? `Client supplied files and context:\n${reviewAssetsPrompt(state.reviewAssets)}` : '',
       context ? `Context from previous employees:\n${context}` : '',
       `Task:\n${task}`,
     ].filter(Boolean).join('\n\n');

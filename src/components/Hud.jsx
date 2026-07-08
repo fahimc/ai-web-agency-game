@@ -5,7 +5,7 @@ import { canResumeProject } from '../utils/text.js';
 export function Hud({ state, phaseLabel, actions }) {
   const showProgress = state.progress > 0 || ['running', 'approval', 'complete', 'error'].includes(state.phase);
   const canResume = canResumeProject(state);
-  const canContinue = ['new_details', 'brief', 'packages', 'payment', 'design_options', 'approval'].includes(state.phase) && !state.running;
+  const canContinue = ['new_details', 'brief', 'packages', 'payment', 'assets', 'design_options', 'approval'].includes(state.phase) && !state.running;
   return (
     <header className="hud" aria-label="Office HUD">
       <div className="hud-row">

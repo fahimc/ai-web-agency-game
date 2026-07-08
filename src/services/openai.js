@@ -1,4 +1,5 @@
 import { toOutputText } from '../utils/text.js';
+import { reviewAssetsPrompt } from '../utils/reviewAssets.js';
 
 export async function callModel({ employee, task, context, settings, state, signal, complex }) {
   const model = state.projectModel || settings.selectedModel || (complex ? settings.complexModel : settings.fastModel);
@@ -13,6 +14,7 @@ export async function callModel({ employee, task, context, settings, state, sign
     `Client email: ${state.email}`,
     `Client/company details: ${state.clientDetails || 'Not provided'}`,
     `Client brief: ${state.brief}`,
+    state.reviewAssets?.length ? `Client supplied files and context:\n${reviewAssetsPrompt(state.reviewAssets)}` : '',
     context ? `Context from previous employees:\n${context}` : '',
     `Task:\n${task}`,
   ].filter(Boolean).join('\n\n');

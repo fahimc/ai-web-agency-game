@@ -1,5 +1,6 @@
 import React from 'react';
 import { AgencyInfoModal } from './components/AgencyInfoModal.jsx';
+import { AssetUploadModal } from './components/AssetUploadModal.jsx';
 import { ChatDock } from './components/ChatDock.jsx';
 import { DesignOptionsModal } from './components/DesignOptionsModal.jsx';
 import { DetailsModal } from './components/DetailsModal.jsx';
@@ -34,6 +35,7 @@ export function App() {
       {modal === 'outputs' && <OutputsModal state={state} actions={actions} />}
       {modal === 'websitePreview' && <OutputsModal state={state} actions={actions} previewOnly />}
       {modal === 'payment' && <PaymentModal state={state} actions={actions} />}
+      {modal === 'assetUpload' && <AssetUploadModal state={state} actions={actions} />}
       {modal === 'pause' && <PauseModal state={state} actions={actions} />}
       {modal === 'worker' && <WorkerModal state={state} actions={actions} />}
       <Toast message={toast} />

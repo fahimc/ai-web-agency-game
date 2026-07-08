@@ -78,6 +78,7 @@ export function phaseLabel(phase) {
     brief: 'Project form',
     packages: 'Package selection',
     payment: 'Payment',
+    assets: 'Optional files',
     design_options: 'Design options',
     running: 'Agency working',
     approval: 'Preview approval',

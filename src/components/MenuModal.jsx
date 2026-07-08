@@ -78,7 +78,7 @@ function Status({ state, actions, phaseLabel }) {
   const complete = outputOrder.filter((key) => state.outputs[key]).length;
   const activeEmployee = employees[state.activeEmployee] || employees.reception;
   const canResume = canResumeProject(state);
-  const canContinue = ['new_details', 'brief', 'packages', 'payment', 'design_options', 'approval'].includes(state.phase) && !state.running;
+  const canContinue = ['new_details', 'brief', 'packages', 'payment', 'assets', 'design_options', 'approval'].includes(state.phase) && !state.running;
   return (
     <div className="modal-grid">
       <div className="card">
