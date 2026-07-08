@@ -345,8 +345,53 @@ label input, label textarea, label select { margin-top: 6px; }
 .package-select { align-self: end; width: 100%; }
 .design-options-modal { width: min(1280px, 100%); }
 .design-options-body { display: grid; grid-template-columns: 340px 1fr; gap: 16px; min-height: min(720px, 74svh); }
-.design-list { display: grid; gap: 10px; align-content: start; overflow: auto; padding-right: 4px; }
+.design-side-panel { display: grid; gap: 12px; align-content: start; }
+.designer-badge {
+  background: var(--ink);
+  color: #ffffff;
+  border-radius: 24px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 14px 34px rgba(6, 18, 47, .16);
+}
+.designer-badge span {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, .12);
+  font-weight: 950;
+}
+.designer-badge b,
+.designer-badge small { display: block; }
+.designer-badge small { color: rgba(255, 255, 255, .72); font-size: 12px; margin-top: 2px; }
 .design-intro h3 { margin: 0 0 8px; }
+.design-carousel-card {
+  background: var(--paper-strong);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 14px 34px rgba(6, 18, 47, .07);
+}
+.design-carousel-card h3,
+.design-carousel-card p { margin: 0; }
+.design-count { color: var(--accent); font-weight: 950; font-size: 13px; }
+.design-carousel-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.design-dots { display: flex; justify-content: center; gap: 8px; }
+.design-dots button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  padding: 0;
+  background: #d7def0;
+  border: 0;
+}
+.design-dots button.active { width: 28px; border-radius: 999px; background: var(--accent); }
 .design-option {
   width: 100%;
   background: #ffffff;
@@ -431,7 +476,7 @@ label input, label textarea, label select { margin-top: 6px; }
   .speech { min-width: 235px; max-width: 78vw; }
   .split-preview, .modal-grid, .payment-grid, .package-grid, .design-options-body, .row { grid-template-columns: 1fr; }
   .design-options-body { min-height: auto; }
-  .design-list { max-height: 260px; }
+  .design-side-panel { gap: 10px; }
   .design-preview-head { align-items: stretch; flex-direction: column; }
   .design-preview-frame { min-height: 520px; }
   .modal { border-radius: 24px; }
@@ -834,7 +879,7 @@ label,
     grid-row: 2;
   }
 
-  .hud-actions button:not(.menu-button):not(.resume-button) {
+  .hud-actions button:not(.menu-button):not(.resume-button):not(.continue-button) {
     display: none;
   }
 

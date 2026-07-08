@@ -31,6 +31,34 @@ export const siteLayouts = [
   { id: 'education-course', name: 'Education / Course', model: 'Course promise + curriculum + outcomes + enrolment', tone: 'Structured, motivating, clear', palette: ['#1e3a8a', '#06b6d4', '#eff6ff'] },
 ];
 
+const layoutKeywords = {
+  'local-service': ['local', 'trade', 'plumber', 'electrician', 'cleaning', 'garden', 'repair', 'service', 'clinic', 'salon'],
+  'saas-product': ['software', 'saas', 'app', 'platform', 'dashboard', 'automation', 'tool', 'product'],
+  'premium-editorial': ['luxury', 'premium', 'brand', 'boutique', 'interior', 'fashion', 'jewellery', 'consulting'],
+  'consultant-authority': ['consultant', 'coach', 'advisor', 'agency', 'law', 'accountant', 'finance', 'expert'],
+  'portfolio-studio': ['portfolio', 'studio', 'creative', 'photography', 'designer', 'artist', 'film'],
+  'restaurant-venue': ['restaurant', 'cafe', 'bar', 'venue', 'food', 'menu', 'hotel'],
+  'health-wellness': ['health', 'wellness', 'therapy', 'fitness', 'dentist', 'medical', 'yoga', 'care'],
+  'event-launch': ['event', 'conference', 'launch', 'webinar', 'ticket', 'festival'],
+  'marketplace-directory': ['marketplace', 'directory', 'listing', 'search', 'community', 'members'],
+  'nonprofit-campaign': ['charity', 'nonprofit', 'campaign', 'donate', 'fundraiser', 'cause'],
+  'education-course': ['course', 'school', 'education', 'training', 'lesson', 'academy'],
+};
+
+export function recommendedDesignLayouts(state, count = 4) {
+  const text = `${state?.brief || ''}\n${state?.clientDetails || ''}`.toLowerCase();
+  const scored = siteLayouts.map((layout, index) => {
+    const keywords = layoutKeywords[layout.id] || [];
+    const keywordScore = keywords.reduce((score, word) => score + (text.includes(word) ? 3 : 0), 0);
+    const defaultScore = ['conversion-classic', 'local-service', 'premium-editorial', 'saas-product'].includes(layout.id) ? 1 : 0;
+    return { layout, score: keywordScore + defaultScore, index };
+  });
+  return scored
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, Math.max(3, Math.min(count, 4)))
+    .map((item) => item.layout);
+}
+
 export function buildDesignSelectionMarkdown(layout) {
   return [
     `Selected layout: ${layout.name}`,

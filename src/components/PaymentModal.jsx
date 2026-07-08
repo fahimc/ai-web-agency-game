@@ -100,8 +100,8 @@ export function PaymentModal({ state, actions }) {
             {error && <p className="small danger-text">{error}</p>}
           </div>
           <form className="card voucher-form" onSubmit={submitVoucher}>
-            <h3>Voucher bypass</h3>
-            <p className="small muted">Use an approved voucher code to skip PayPal and continue to design selection.</p>
+            <h3>Voucher</h3>
+            <p className="small muted">Use an approved voucher code to continue without PayPal.</p>
             <label>Voucher code
               <input value={voucher} onChange={(event) => setVoucher(event.target.value)} placeholder="Enter voucher code" />
             </label>

@@ -24,7 +24,7 @@ export function Hud({ state, phaseLabel, actions }) {
             <RotateCcw size={16} /> Reset
           </button>
           {canResume && <button className="green tiny keep-mobile resume-button" type="button" onClick={actions.resumeWork}>Resume</button>}
-          {canContinue && <button className="green tiny keep-mobile" type="button" onClick={actions.openCurrentStep}>Continue</button>}
+          {canContinue && <button className="green tiny keep-mobile continue-button" type="button" onClick={actions.openCurrentStep}>Continue</button>}
           <button className="secondary tiny" type="button" onClick={() => actions.openOutputs(state.activeOutput || 'Plan')}>
             <Box size={16} /> Outputs
           </button>
