@@ -2,9 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { employees } from '../data/employees.js';
 import {
   MAX_PALETTE_COLORS,
+  PAGE_PRESETS,
+  SECTION_PRESETS,
   buildExampleSite,
   normalizePalette,
   paletteOptionsForLayout,
+  recommendedStructure,
   recommendedDesignLayouts,
 } from '../data/siteBlueprints.js';
 import { Modal } from './Modal.jsx';
@@ -15,9 +18,12 @@ export function DesignOptionsModal({ state, actions }) {
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const activeLayout = designOptions[activeIndex] || designOptions[0];
   const paletteOptions = useMemo(() => paletteOptionsForLayout(activeLayout, state), [activeLayout, state]);
+  const structureRecommendation = useMemo(() => recommendedStructure(activeLayout, state), [activeLayout, state]);
   const [paletteMode, setPaletteMode] = useState('preset');
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [customColors, setCustomColors] = useState(() => normalizePalette(state.selectedDesignPalette || activeLayout.palette));
+  const [selectedPages, setSelectedPages] = useState(() => state.selectedSitePages?.length ? state.selectedSitePages : structureRecommendation.pages);
+  const [selectedSections, setSelectedSections] = useState(() => state.selectedSiteSections?.length ? state.selectedSiteSections : structureRecommendation.sections);
   const [fullScreen, setFullScreen] = useState(false);
   const designer = employees.design;
   const optionNumber = activeIndex + 1;
@@ -30,7 +36,9 @@ export function DesignOptionsModal({ state, actions }) {
     setPaletteMode('preset');
     setPaletteIndex(0);
     setCustomColors(normalizePalette(activeLayout.palette));
-  }, [activeLayout]);
+    setSelectedPages(state.selectedSitePages?.length ? state.selectedSitePages : structureRecommendation.pages);
+    setSelectedSections(state.selectedSiteSections?.length ? state.selectedSiteSections : structureRecommendation.sections);
+  }, [activeLayout, state.selectedSitePages, state.selectedSiteSections, structureRecommendation]);
 
   function showPrevious() {
     setActiveIndex((current) => (current === 0 ? designOptions.length - 1 : current - 1));
@@ -45,7 +53,7 @@ export function DesignOptionsModal({ state, actions }) {
   }
 
   function selectCurrent() {
-    actions.selectDesignStyle(activeLayout.id, selectedPalette);
+    actions.selectDesignStyle(activeLayout.id, selectedPalette, { pages: selectedPages, sections: selectedSections });
   }
 
   return (
@@ -85,6 +93,12 @@ export function DesignOptionsModal({ state, actions }) {
             paletteOptions={paletteOptions}
             customColors={customColors}
             updateCustomColor={updateCustomColor}
+          />
+          <StructureChooser
+            selectedPages={selectedPages}
+            setSelectedPages={setSelectedPages}
+            selectedSections={selectedSections}
+            setSelectedSections={setSelectedSections}
           />
           <div className="design-dots" aria-label="Design options">
             {designOptions.map((layout, index) => (
@@ -126,6 +140,57 @@ export function DesignOptionsModal({ state, actions }) {
         </div>
       )}
     </Modal>
+  );
+}
+
+function StructureChooser({ selectedPages, setSelectedPages, selectedSections, setSelectedSections }) {
+  const [customPage, setCustomPage] = useState('');
+  const [customSection, setCustomSection] = useState('');
+
+  function toggle(items, setItems, item) {
+    setItems((current) => current.includes(item) ? current.filter((value) => value !== item) : [...current, item]);
+  }
+
+  function addCustom(event, value, setValue, setItems) {
+    event.preventDefault();
+    const next = value.trim().replace(/\s+/g, ' ');
+    if (!next) return;
+    setItems((current) => current.includes(next) ? current : [...current, next]);
+    setValue('');
+  }
+
+  return (
+    <div className="structure-panel">
+      <div>
+        <h3>Pages and sections</h3>
+        <p className="small muted">Mira recommends this structure. Remove anything unnecessary or add from presets.</p>
+      </div>
+      <ChipGroup title="Pages" items={PAGE_PRESETS} selected={selectedPages} onToggle={(item) => toggle(selectedPages, setSelectedPages, item)} />
+      <form className="inline-add" onSubmit={(event) => addCustom(event, customPage, setCustomPage, setSelectedPages)}>
+        <input value={customPage} onChange={(event) => setCustomPage(event.target.value)} placeholder="Add page" />
+        <button type="submit" className="secondary">Add</button>
+      </form>
+      <ChipGroup title="Sections" items={SECTION_PRESETS} selected={selectedSections} onToggle={(item) => toggle(selectedSections, setSelectedSections, item)} />
+      <form className="inline-add" onSubmit={(event) => addCustom(event, customSection, setCustomSection, setSelectedSections)}>
+        <input value={customSection} onChange={(event) => setCustomSection(event.target.value)} placeholder="Add section" />
+        <button type="submit" className="secondary">Add</button>
+      </form>
+    </div>
+  );
+}
+
+function ChipGroup({ title, items, selected, onToggle }) {
+  return (
+    <div>
+      <b className="chip-title">{title}</b>
+      <div className="structure-chips">
+        {items.map((item) => (
+          <button type="button" className={`structure-chip ${selected.includes(item) ? 'active' : ''}`} key={item} onClick={() => onToggle(item)}>
+            {item}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

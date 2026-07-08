@@ -33,6 +33,38 @@ export const siteLayouts = [
 
 export const MAX_PALETTE_COLORS = 5;
 
+export const PAGE_PRESETS = [
+  'Home',
+  'Services',
+  'About',
+  'Pricing',
+  'Case Studies',
+  'Gallery',
+  'Menu',
+  'Events',
+  'Courses',
+  'FAQ',
+  'Contact',
+  'Book a Call',
+];
+
+export const SECTION_PRESETS = [
+  'Hero',
+  'Trust / proof bar',
+  'Services',
+  'Featured products',
+  'Benefits',
+  'Process',
+  'Testimonials',
+  'Gallery',
+  'Pricing',
+  'FAQ',
+  'Lead capture form',
+  'Contact details',
+  'Location map',
+  'Final CTA',
+];
+
 const layoutKeywords = {
   'local-service': ['local', 'trade', 'plumber', 'electrician', 'cleaning', 'garden', 'repair', 'service', 'clinic', 'salon'],
   'saas-product': ['software', 'saas', 'app', 'platform', 'dashboard', 'automation', 'tool', 'product'],
@@ -85,6 +117,34 @@ export function paletteOptionsForLayout(layout, state) {
   ]).slice(0, 4);
 }
 
+export function recommendedStructure(layout, state) {
+  const text = `${state?.brief || ''}\n${state?.clientDetails || ''}`.toLowerCase();
+  let pages = ['Home', 'Services', 'About', 'FAQ', 'Contact'];
+  let sections = ['Hero', 'Trust / proof bar', 'Services', 'Benefits', 'Process', 'Testimonials', 'FAQ', 'Lead capture form', 'Final CTA'];
+
+  if (layout.id === 'saas-product' || /software|saas|app|platform|tool/.test(text)) {
+    pages = ['Home', 'Pricing', 'Case Studies', 'FAQ', 'Contact'];
+    sections = ['Hero', 'Trust / proof bar', 'Benefits', 'Featured products', 'Process', 'Pricing', 'Testimonials', 'FAQ', 'Lead capture form'];
+  } else if (layout.id === 'restaurant-venue' || /restaurant|cafe|bar|venue|food|menu/.test(text)) {
+    pages = ['Home', 'Menu', 'Gallery', 'Events', 'Contact'];
+    sections = ['Hero', 'Featured products', 'Gallery', 'Testimonials', 'Location map', 'FAQ', 'Final CTA'];
+  } else if (layout.id === 'portfolio-studio' || /portfolio|studio|creative|photography|designer|artist/.test(text)) {
+    pages = ['Home', 'Gallery', 'Case Studies', 'About', 'Contact'];
+    sections = ['Hero', 'Gallery', 'Services', 'Process', 'Testimonials', 'Lead capture form', 'Final CTA'];
+  } else if (layout.id === 'education-course' || /course|training|school|academy/.test(text)) {
+    pages = ['Home', 'Courses', 'Pricing', 'FAQ', 'Contact'];
+    sections = ['Hero', 'Benefits', 'Process', 'Pricing', 'Testimonials', 'FAQ', 'Lead capture form'];
+  } else if (layout.id === 'event-launch' || /event|conference|launch|ticket|festival/.test(text)) {
+    pages = ['Home', 'Events', 'Pricing', 'FAQ', 'Contact'];
+    sections = ['Hero', 'Trust / proof bar', 'Benefits', 'Process', 'Pricing', 'FAQ', 'Lead capture form', 'Final CTA'];
+  }
+
+  return {
+    pages: uniqueItems(pages).slice(0, 6),
+    sections: uniqueItems(sections).slice(0, 10),
+  };
+}
+
 export function normalizePalette(colors = []) {
   const fallback = ['#10213f', '#2563eb', '#f8fafc', '#64748b', '#ffffff'];
   return [...colors, ...fallback]
@@ -93,14 +153,18 @@ export function normalizePalette(colors = []) {
     .slice(0, MAX_PALETTE_COLORS);
 }
 
-export function buildDesignSelectionMarkdown(layout, palette = layout.palette) {
+export function buildDesignSelectionMarkdown(layout, palette = layout.palette, structure = {}) {
   const colors = normalizePalette(palette);
+  const pages = uniqueItems(structure.pages || []);
+  const sections = uniqueItems(structure.sections || []);
   return [
     `Selected layout: ${layout.name}`,
     `Layout model: ${layout.model}`,
     `Tone: ${layout.tone}`,
     `Palette: ${colors.join(', ')}`,
     `Palette max: ${MAX_PALETTE_COLORS} colours. Use them as text, primary, background, accent, and surface colours.`,
+    `Recommended pages: ${pages.length ? pages.join(', ') : 'Home, Contact'}`,
+    `Recommended sections: ${sections.length ? sections.join(', ') : 'Hero, Services, Contact details, Final CTA'}`,
     '',
     `Design system: ${componentLibrary.name}`,
     ...componentLibrary.principles.map((item) => `- ${item}`),
@@ -108,7 +172,7 @@ export function buildDesignSelectionMarkdown(layout, palette = layout.palette) {
     'Component library:',
     ...componentLibrary.components.map((item) => `- ${item}`),
     '',
-    'Developer instruction: build the final site from this selected design direction and colour palette. Preserve the client brief, but adapt section order, copy density, and CTAs to this direction.',
+    'Developer instruction: build the final site from this selected design direction, colour palette, pages, and sections. Preserve the client brief, but adapt section order, copy density, and CTAs to this direction.',
   ].join('\n');
 }
 
@@ -198,6 +262,10 @@ function uniquePalettes(options) {
     seen.add(key);
     return true;
   });
+}
+
+function uniqueItems(items) {
+  return [...new Set((items || []).map((item) => String(item || '').trim()).filter(Boolean))];
 }
 
 function escapeHtml(value) {

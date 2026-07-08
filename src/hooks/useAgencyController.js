@@ -27,6 +27,8 @@ const emptyState = {
   projectPackage: 'launch',
   selectedDesignStyle: '',
   selectedDesignPalette: [],
+  selectedSitePages: [],
+  selectedSiteSections: [],
   paid: false,
   paymentEstimate: null,
   availableProjects: [],
@@ -80,6 +82,8 @@ export function useAgencyController() {
       projectPackage: saved.projectPackage || next.projectPackage,
       selectedDesignStyle: saved.selectedDesignStyle || next.selectedDesignStyle,
       selectedDesignPalette: saved.selectedDesignPalette || next.selectedDesignPalette,
+      selectedSitePages: saved.selectedSitePages || next.selectedSitePages,
+      selectedSiteSections: saved.selectedSiteSections || next.selectedSiteSections,
         paid: saved.paid ?? next.paid,
         paymentEstimate: saved.paymentEstimate || next.paymentEstimate,
         lastSaved: saved.lastSaved,
@@ -173,6 +177,8 @@ export function useAgencyController() {
       projectPackage: packageForModel(current.settings.selectedModel || 'gpt-5.4-mini').id,
       selectedDesignStyle: '',
       selectedDesignPalette: [],
+      selectedSitePages: [],
+      selectedSiteSections: [],
       paid: false,
       paymentEstimate: null,
       availableProjects: [],
@@ -257,6 +263,8 @@ export function useAgencyController() {
       projectPackage: loaded.projectPackage || packageForModel(loaded.projectModel || loaded.settings?.selectedModel || 'gpt-5.4-mini').id,
       selectedDesignStyle: loaded.selectedDesignStyle || '',
       selectedDesignPalette: loaded.selectedDesignPalette || [],
+      selectedSitePages: loaded.selectedSitePages || [],
+      selectedSiteSections: loaded.selectedSiteSections || [],
       paid: Boolean(loaded.paid),
       paymentEstimate: loaded.paymentEstimate || null,
       availableProjects: listProjects(email),
@@ -303,6 +311,8 @@ export function useAgencyController() {
       projectPackage: packageForModel(current.settings.selectedModel || 'gpt-5.4-mini').id,
       selectedDesignStyle: '',
       selectedDesignPalette: [],
+      selectedSitePages: [],
+      selectedSiteSections: [],
       paid: false,
       paymentEstimate: null,
       availableProjects: listProjects(email),
@@ -410,13 +420,15 @@ export function useAgencyController() {
     setModal('designOptions');
   }, [update]);
 
-  const selectDesignStyle = useCallback((layoutId, palette = []) => {
+  const selectDesignStyle = useCallback((layoutId, palette = [], structure = {}) => {
     const layout = siteLayouts.find((item) => item.id === layoutId) || siteLayouts[0];
-    const selectedDesign = buildDesignSelectionMarkdown(layout, palette);
+    const selectedDesign = buildDesignSelectionMarkdown(layout, palette, structure);
     update((current) => ({
       ...current,
       selectedDesignStyle: layout.id,
       selectedDesignPalette: palette,
+      selectedSitePages: structure.pages || [],
+      selectedSiteSections: structure.sections || [],
       outputs: { ...current.outputs, SelectedDesign: selectedDesign },
       activeOutput: 'SelectedDesign',
       phase: 'running',

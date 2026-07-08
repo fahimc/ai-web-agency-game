@@ -60,6 +60,8 @@ export function saveDraft(state) {
     projectPackage: state.projectPackage,
     selectedDesignStyle: state.selectedDesignStyle,
     selectedDesignPalette: state.selectedDesignPalette,
+    selectedSitePages: state.selectedSitePages,
+    selectedSiteSections: state.selectedSiteSections,
     paid: state.paid,
     paymentEstimate: state.paymentEstimate,
     phase: state.phase,
