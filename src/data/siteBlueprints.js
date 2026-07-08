@@ -1,3 +1,5 @@
+import { createSitePackageString, fileNameForPage } from '../utils/sitePackage.js';
+
 export const componentLibrary = {
   name: 'MicroAgency Blocks',
   principles: [
@@ -391,6 +393,9 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
   const sections = uniqueItems(state?.selectedSiteSections?.length ? state.selectedSiteSections : structure.sections).slice(0, 10);
   const pages = isOnePagePackage ? ['Home'] : normalizePages(state?.selectedSitePages?.length ? state.selectedSitePages : structure.pages);
   const onePageSections = isOnePagePackage ? normalizeOnePageSections(sections, structure.pages) : [];
+  if (!isOnePagePackage && !options.preview) {
+    return buildMultiPageSitePackage({ layout, state, palette, business, industry, audience, goal, offer, image, examples, pages, sections, colors: [ink, accent, bg, secondary, surface] });
+  }
   const isMultiPage = !isOnePagePackage;
   const isPreview = Boolean(options.preview);
   const navLabel = isPreview ? 'Design option' : '';
@@ -467,6 +472,70 @@ document.addEventListener('click', function(event) {
 </script>
 </body>
 </html>`;
+}
+
+function buildMultiPageSitePackage({ layout, business, industry, audience, goal, offer, image, examples, pages, sections, colors }) {
+  const [ink, accent, bg, secondary, surface] = colors;
+  const navItems = normalizePages(pages);
+  const ctaPage = navItems.find((item) => /contact|book/i.test(item)) || 'Contact';
+  const ctaHref = fileNameForPage(ctaPage);
+  const css = siteCss({ ink, accent, bg, secondary, surface });
+  const files = {};
+  navItems.forEach((page) => {
+    const fileName = fileNameForPage(page);
+    const navLinks = navItems.map((item) => {
+      const href = fileNameForPage(item);
+      const active = href === fileName ? ' class="active"' : '';
+      return `<a href="${escapeHtml(href)}"${active}>${escapeHtml(item)}</a>`;
+    }).join('');
+    const body = page.toLowerCase() === 'home'
+      ? homePageBody({ layout, business, industry, audience, goal, offer, image, examples, sections, ctaHref })
+      : pageSectionFor(page, { business, industry, audience, goal, offer, layout, examples, image, ctaHref });
+    files[fileName] = siteDocument({
+      title: `${business} - ${page}`,
+      business,
+      navLinks,
+      css,
+      body,
+    });
+  });
+  return createSitePackageString(files, 'index.html');
+}
+
+function siteDocument({ title, business, navLinks, css, body }) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<style>${css}</style>
+</head>
+<body>
+<div class="shell">
+<nav class="nav"><strong>${escapeHtml(business)}</strong><div class="nav-links">${navLinks}</div></nav>
+<main>${body}</main>
+</div>
+</body>
+</html>`;
+}
+
+function homePageBody({ layout, business, audience, goal, offer, image, examples, sections, ctaHref }) {
+  const usefulSections = uniqueItems(sections)
+    .filter((section) => !/^(hero|contact details|lead capture form|final cta)$/i.test(section))
+    .slice(0, 5);
+  const sectionTags = usefulSections.length ? usefulSections : ['Services', 'Process', 'Testimonials'];
+  return `<section class="hero" id="home">
+<div><div class="eyebrow">${escapeHtml(business)}</div><h1>${escapeHtml(headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sectionTags.map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">Start an enquiry</a></div>
+<aside class="panel image-card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(heroImageCaptionFor(business, offer))}</div></aside>
+</section>
+<section class="section"><span class="page-kicker">Overview</span><h2>${escapeHtml(examples.servicesTitle)}</h2><p>${escapeHtml(examples.servicesLead)}</p><div class="grid">${examples.cards.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>
+<section class="section"><span class="page-kicker">Next step</span><h2>A clear path from interest to action</h2><div class="steps"><div class="step">Understand the offer and who it is for.</div><div class="step">Review the details, proof, and practical fit.</div><div class="step">Send an enquiry when the next step is clear.</div></div><a class="button" href="${escapeHtml(ctaHref)}">Contact ${escapeHtml(business)}</a></section>`;
+}
+
+function siteCss({ ink, accent, bg, secondary, surface }) {
+  return `:root{--ink:${ink};--accent:${accent};--bg:${bg};--secondary:${secondary};--card:${surface};--muted:#64748b;--line:rgba(15,23,42,.12);--radius:20px;--space:clamp(18px,4vw,56px);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:var(--bg)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);line-height:1.5}a{color:inherit}.shell{width:min(1120px,calc(100% - 32px));margin:auto}.nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,white);backdrop-filter:blur(14px);display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 0;font-weight:800}.nav strong{font-size:20px}.nav-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.nav-links a{color:var(--muted);text-decoration:none;border:1px solid transparent;border-radius:999px;padding:8px 10px;font-size:14px}.nav-links a:hover,.nav-links a.active{border-color:var(--line);color:var(--ink);background:var(--card)}.hero{padding:var(--space) 0;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(20px,5vw,64px);align-items:center}.eyebrow{color:var(--accent);font-weight:900;text-transform:uppercase;font-size:12px;letter-spacing:0}.hero h1{font-size:clamp(34px,7vw,76px);line-height:.94;margin:10px 0 18px;letter-spacing:0}.hero p{font-size:clamp(16px,2vw,21px);color:var(--muted);max-width:62ch}.button{display:inline-flex;margin-top:14px;background:var(--accent);color:white;text-decoration:none;border-radius:999px;padding:13px 18px;font-weight:900}.button.secondary{background:var(--ink)}.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:0 24px 70px rgba(15,23,42,.12)}.metric{font-size:38px;font-weight:950;color:var(--secondary)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.card b{display:block;margin-bottom:7px}.card span,.section p{color:var(--muted)}.section{padding:54px 0;scroll-margin-top:86px}.section h2{font-size:clamp(26px,4vw,44px);line-height:1;margin:0 0 14px}.page-kicker{color:var(--accent);font-weight:900;text-transform:uppercase;font-size:12px}.steps{counter-reset:step;display:grid;gap:12px}.step{counter-increment:step;display:flex;gap:14px;align-items:flex-start}.step:before{content:counter(step);background:var(--accent);color:#fff;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;font-weight:900}.contact{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.form{display:grid;gap:10px}.input{border:1px solid var(--line);border-radius:14px;padding:13px;background:white;color:var(--ink)}.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.tag{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 10px;font-weight:800;color:var(--muted);font-size:13px}.image-card{position:relative;overflow:hidden;min-height:360px;padding:0}.image-card img{width:100%;height:100%;min-height:360px;object-fit:cover;display:block}.image-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.42))}.image-caption{position:absolute;left:18px;right:18px;bottom:18px;color:white;z-index:2;font-weight:900}.media-strip{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;align-items:stretch}.media-strip img{width:100%;height:260px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--line)}@media(max-width:760px){.nav{position:static;align-items:flex-start;flex-direction:column}.nav-links{justify-content:flex-start}.hero,.contact,.grid,.media-strip{grid-template-columns:1fr}.hero h1{font-size:42px}}`;
 }
 
 function parseBrief(text) {

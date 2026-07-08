@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { employees } from '../data/employees.js';
 import { outputNames, outputOrder, outputOwners } from '../data/outputs.js';
 import { MAX_REVISIONS } from '../utils/pricing.js';
+import { normalizeFileName, parseSitePackage } from '../utils/sitePackage.js';
 import { Modal } from './Modal.jsx';
 
 export function OutputsModal({ state, actions, previewOnly = false }) {
@@ -50,11 +51,32 @@ function TextOutput({ outputKey, state, actions }) {
 }
 
 function Website({ state, actions, previewOnly = false }) {
-  const html = state.outputs.WebsiteHTML || '';
+  const output = state.outputs.WebsiteHTML || '';
+  const sitePackage = useMemo(() => parseSitePackage(output), [output]);
+  const [currentFile, setCurrentFile] = useState(sitePackage?.entry || 'index.html');
   const [showRevision, setShowRevision] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
   const [revision, setRevision] = useState('');
+  const html = sitePackage ? (sitePackage.files[currentFile] || sitePackage.files[sitePackage.entry] || '') : output;
   const revisionsRemaining = Math.max(0, MAX_REVISIONS - (state.revisionCount || 0));
+  useEffect(() => {
+    setCurrentFile(sitePackage?.entry || 'index.html');
+  }, [sitePackage?.entry, output]);
+  function handleFrameLoad(event) {
+    if (!sitePackage) return;
+    const doc = event.currentTarget.contentDocument;
+    if (!doc) return;
+    doc.addEventListener('click', (clickEvent) => {
+      const link = clickEvent.target?.closest?.('a[href]');
+      if (!link) return;
+      const rawHref = link.getAttribute('href') || '';
+      const fileName = normalizeFileName(rawHref.split('#')[0]);
+      if (!fileName || !sitePackage.files[fileName]) return;
+      clickEvent.preventDefault();
+      setCurrentFile(fileName);
+      setFullScreen((value) => value);
+    });
+  }
   function submitRevision(event) {
     event.preventDefault();
     const text = revision.trim();
@@ -71,14 +93,24 @@ function Website({ state, actions, previewOnly = false }) {
       <aside className="approval-card">
         <strong>Website preview</strong>
         <p className="muted">Review the customer site, approve it, or request a revision.</p>
+        {sitePackage && <p className="small"><b>{currentFile}</b> from {Object.keys(sitePackage.files).length} HTML files.</p>}
         <p className="small"><b>{revisionsRemaining}</b> of {MAX_REVISIONS} revisions remaining.</p>
         <div className="stack">
           <button type="button" className="green" disabled={!html} onClick={() => setFullScreen(true)}>View full screen</button>
-          {!previewOnly && <button type="button" onClick={actions.copyCurrentOutput}>Copy HTML</button>}
-          {!previewOnly && <button type="button" className="secondary" onClick={actions.downloadCurrentOutput}>Download HTML</button>}
+          {!previewOnly && <button type="button" onClick={actions.copyCurrentOutput}>{sitePackage ? 'Copy package' : 'Copy HTML'}</button>}
+          {!previewOnly && <button type="button" className="secondary" onClick={actions.downloadCurrentOutput}>{sitePackage ? 'Download site .zip' : 'Download HTML'}</button>}
           {state.phase === 'approval' && <button type="button" className="green" onClick={actions.approve}>Approve preview</button>}
           {state.phase === 'approval' && <button type="button" className="secondary" disabled={revisionsRemaining <= 0} onClick={() => setShowRevision((value) => !value)}>Request revision</button>}
         </div>
+        {sitePackage && (
+          <div className="site-file-list">
+            {Object.keys(sitePackage.files).map((fileName) => (
+              <button type="button" className={fileName === currentFile ? 'active' : ''} key={fileName} onClick={() => setCurrentFile(fileName)}>
+                {fileName}
+              </button>
+            ))}
+          </div>
+        )}
         {showRevision && (
           <form className="revision-form" onSubmit={submitRevision}>
             <label>Revision request
@@ -88,7 +120,7 @@ function Website({ state, actions, previewOnly = false }) {
           </form>
         )}
       </aside>
-      <div className="card">{html ? <iframe className="preview-frame" sandbox="allow-same-origin allow-scripts" title="Generated website preview" srcDoc={html} /> : <div className="empty">Website preview is not ready yet.</div>}</div>
+      <div className="card">{html ? <iframe className="preview-frame" sandbox="allow-same-origin allow-scripts" title="Generated website preview" srcDoc={html} onLoad={handleFrameLoad} /> : <div className="empty">Website preview is not ready yet.</div>}</div>
       {fullScreen && (
         <div className="site-fullscreen" role="dialog" aria-modal="true" aria-label="Full screen website preview">
           <div className="site-fullscreen-bar">
@@ -98,11 +130,11 @@ function Website({ state, actions, previewOnly = false }) {
             </div>
             <div className="stack">
               {state.phase === 'approval' && <button type="button" className="green" onClick={actions.approve}>Approve preview</button>}
-              <button type="button" className="secondary" onClick={actions.downloadCurrentOutput}>Download HTML</button>
+              <button type="button" className="secondary" onClick={actions.downloadCurrentOutput}>{sitePackage ? 'Download site .zip' : 'Download HTML'}</button>
               <button type="button" className="secondary" onClick={() => setFullScreen(false)}>Close</button>
             </div>
           </div>
-          <iframe className="site-fullscreen-frame" sandbox="allow-same-origin allow-scripts" title="Full screen generated website preview" srcDoc={html} />
+          <iframe className="site-fullscreen-frame" sandbox="allow-same-origin allow-scripts" title="Full screen generated website preview" srcDoc={html} onLoad={handleFrameLoad} />
         </div>
       )}
     </div>

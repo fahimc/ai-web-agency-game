@@ -23,6 +23,7 @@ import {
   saveDraft,
 } from '../services/storage.js';
 import { cleanHTML, downloadText, extractEmail, phaseLabel, safeFileName } from '../utils/text.js';
+import { fileNameForPage, parseSitePackage } from '../utils/sitePackage.js';
 import { createProjectPdf } from '../utils/pdf.js';
 import { MAX_REVISIONS, estimateAiCost, packageForModel, packageOption } from '../utils/pricing.js';
 
@@ -586,7 +587,7 @@ export function useAgencyController() {
       }
     }
 
-    let output = step.key === 'WebsiteHTML' ? cleanHTML(result) : String(result || '').trim();
+    let output = step.key === 'WebsiteHTML' ? cleanWebsiteOutput(result, current) : String(result || '').trim();
     if (step.key === 'DesignDirection' && !hasUsefulDesignDirection(output)) {
       output = fallbackDesignDirection(current);
       log(employee.name, 'Design direction fallback used because the returned output was incomplete.');
@@ -820,7 +821,9 @@ export function useAgencyController() {
         complex: true,
         replace: true,
         contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'WebsiteHTML'],
-        task: `Revise the existing website HTML using this client change request: "${changeText}". Return only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts, improve the requested parts, and ensure responsive accessible markup.`,
+        task: stateRef.current.projectPackage === 'launch'
+          ? `Revise the existing website HTML using this client change request: "${changeText}". Return only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts, improve the requested parts, and ensure responsive accessible markup.`
+          : `Revise the existing multi-page website package using this client change request: "${changeText}". Return JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes.`,
       });
       update((current) => ({ ...current, phase: 'approval', running: false, progress: 70, progressTask: 'Preview approval' }));
       speak('dev', 'Updated preview is ready. Check it, then approve or request another change.', ['openPreview', 'approve']);
@@ -916,7 +919,7 @@ export function useAgencyController() {
     }
   }, [notify]);
 
-  const downloadCurrentOutput = useCallback(() => {
+  const downloadCurrentOutput = useCallback(async () => {
     const current = stateRef.current;
     const key = current.activeOutput;
     if (key === 'ProjectPDF' && current.outputs.ProjectPDF) {
@@ -927,6 +930,25 @@ export function useAgencyController() {
       anchor.click();
       anchor.remove();
       return;
+    }
+    if (key === 'WebsiteHTML') {
+      const sitePackage = parseSitePackage(current.outputs.WebsiteHTML || '');
+      if (sitePackage) {
+        const { default: JSZip } = await import('jszip');
+        const zip = new JSZip();
+        Object.entries(sitePackage.files).forEach(([fileName, content]) => zip.file(fileName, content));
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const anchor = document.createElement('a');
+        anchor.href = URL.createObjectURL(blob);
+        anchor.download = `${safeFileName(current.projectName || current.email || 'website')}.zip`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(anchor.href);
+          anchor.remove();
+        }, 100);
+        return;
+      }
     }
     const extension = key === 'WebsiteHTML' ? 'html' : 'md';
     downloadText(`${safeFileName(current.email || key)}.${extension}`, current.outputs[key] || '');
@@ -1294,7 +1316,7 @@ function fallbackDesignDirection(state) {
     '- Include visible navigation.',
     state.projectPackage === 'launch'
       ? '- Navigation should link to sections on the same page, not separate pages.'
-      : '- Navigation should link to separate page views using routes such as #/pricing, not same-page section anchors.',
+      : '- Build separate HTML files for each page: index.html for Home, then files such as services.html, about.html, and contact.html. Navigation should use normal .html file links, not hash routes.',
     '- Use dummy production copy where the brief is missing specifics.',
     '- Include local placeholder imagery where useful.',
     '- Keep forms, buttons, headings, and section ids accessible.',
@@ -1306,7 +1328,22 @@ function hasUsefulDesignDirection(text) {
   return value.length > 160 && /visual|layout|section|colour|color|responsive|cta|navigation/i.test(value);
 }
 
+function cleanWebsiteOutput(result, state) {
+  const value = String(result || '').trim();
+  const sitePackage = parseSitePackage(value);
+  if (state.projectPackage !== 'launch' && sitePackage) return JSON.stringify(sitePackage, null, 2);
+  return cleanHTML(value);
+}
+
 function isCompleteHtml(html) {
+  const sitePackage = parseSitePackage(html);
+  if (sitePackage) {
+    return Object.values(sitePackage.files).every((value) => isCompleteHtmlDocument(value));
+  }
+  return isCompleteHtmlDocument(html);
+}
+
+function isCompleteHtmlDocument(html) {
   const value = String(html || '').trim();
   return /^<!doctype html/i.test(value)
     && /<html[\s>]/i.test(value)
@@ -1316,6 +1353,11 @@ function isCompleteHtml(html) {
 }
 
 function hasRequiredSiteStructure(html, state) {
+  const sitePackage = parseSitePackage(html);
+  if (state.projectPackage !== 'launch') {
+    if (!sitePackage) return false;
+    return hasRequiredSiteFiles(sitePackage, state);
+  }
   const value = String(html || '').toLowerCase();
   if (!/<nav[\s>]/i.test(html)) return false;
   const selectedPages = Array.isArray(state.selectedSitePages) && state.selectedSitePages.length
@@ -1330,9 +1372,23 @@ function hasRequiredSiteStructure(html, state) {
   const uniquePages = [...new Set(pages)];
   return uniquePages.every((page) => {
     const slug = page.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
-    const expectedHref = state.projectPackage === 'launch' ? `href="#${slug}"` : `href="#/${slug}"`;
+    const expectedHref = `href="#${slug}"`;
     return hasHtmlId(value, slug) && value.includes(expectedHref);
   });
+}
+
+function hasRequiredSiteFiles(sitePackage, state) {
+  const selectedPages = Array.isArray(state.selectedSitePages) && state.selectedSitePages.length
+    ? state.selectedSitePages
+    : ['Home', 'Services', 'About', 'FAQ', 'Contact'];
+  const pages = [...new Set(['Home', ...selectedPages].map((page) => String(page || '').trim()).filter(Boolean))];
+  return pages.every((page) => {
+    const fileName = fileNameForPage(page);
+    const html = sitePackage.files[fileName] || '';
+    if (!isCompleteHtmlDocument(html) || !/<nav[\s>]/i.test(html)) return false;
+    const value = html.toLowerCase();
+    return pages.every((navPage) => value.includes(`href="${fileNameForPage(navPage)}"`));
+  }) && !Object.values(sitePackage.files).some((html) => /href="#\/|href="#[a-z0-9-]+"/i.test(html));
 }
 
 function hasHtmlId(html, id) {
