@@ -600,9 +600,9 @@ export function useAgencyController() {
       output = fallbackDesignDirection(current);
       log(employee.name, 'Design direction fallback used because the returned output was incomplete.');
     }
-    if (step.key === 'WebsiteHTML' && (!isCompleteHtml(output) || !hasRequiredSiteStructure(output, current) || hasPreviewLanguage(output))) {
+    if (step.key === 'WebsiteHTML' && (!isCompleteHtml(output) || !hasRequiredSiteStructure(output, current) || !hasResponsiveMobileNav(output) || hasPreviewLanguage(output))) {
       output = fallbackWebsiteHtml(current);
-      log(employee.name, 'Website preview fallback used because the returned HTML was incomplete, missed required pages, or used preview wording.');
+      log(employee.name, 'Website preview fallback used because the returned HTML was incomplete, missed required pages, missed mobile navigation, or used preview wording.');
     }
     addQuest(step.quest, employee.id, 'done');
     update((stateNow) => ({
@@ -833,8 +833,8 @@ export function useAgencyController() {
         replace: true,
         contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'PageContent', 'WebsiteHTML'],
         task: stateRef.current.projectPackage === 'launch'
-          ? `Revise the existing website HTML using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across the whole site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts, improve the requested parts, and ensure responsive accessible markup.`
-          : `Revise the existing multi-page website package using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across every file in the site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes.`,
+          ? `Revise the existing website HTML using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across the whole site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts, improve the requested parts, and ensure responsive accessible markup. Use Bootstrap 5.3 CSS and bootstrap.bundle JS, and keep a Bootstrap responsive navbar with navbar-toggler/collapse so mobile shows a hamburger menu.`
+          : `Revise the existing multi-page website package using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across every file in the site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes. Use Bootstrap 5.3 CSS and bootstrap.bundle JS in every file, and keep a Bootstrap responsive navbar with navbar-toggler/collapse so mobile shows a hamburger menu.`,
       });
       if (revisionPalette) {
         const paletteOutput = applyPaletteToWebsiteOutput(revisedOutput, revisionPalette);
@@ -1558,6 +1558,18 @@ function hasRequiredSiteFiles(sitePackage, state) {
     const value = html.toLowerCase();
     return pages.every((navPage) => value.includes(`href="${fileNameForPage(navPage)}"`));
   }) && !Object.values(sitePackage.files).some((html) => /href="#\/|href="#[a-z0-9-]+"/i.test(html));
+}
+
+function hasResponsiveMobileNav(html) {
+  const sitePackage = parseSitePackage(html);
+  const documents = sitePackage ? Object.values(sitePackage.files) : [html];
+  return documents.every((documentHtml) => {
+    const value = String(documentHtml || '').toLowerCase();
+    return value.includes('navbar-toggler')
+      && value.includes('data-bs-toggle="collapse"')
+      && value.includes('navbar-collapse')
+      && value.includes('bootstrap');
+  });
 }
 
 function hasHtmlId(html, id) {
