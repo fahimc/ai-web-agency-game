@@ -1,3 +1,11 @@
+export const UPLOAD_LIMITS = {
+  maxFiles: 5,
+  maxBatchBytes: 25 * 1024 * 1024,
+  maxEmbeddableImageBytes: 3 * 1024 * 1024,
+  maxReferenceImageBytes: 10 * 1024 * 1024,
+  maxDocumentBytes: 10 * 1024 * 1024,
+};
+
 export async function readReviewFile(file) {
   const type = file.type || fileTypeFromName(file.name);
   const isImage = String(type).startsWith('image/');
@@ -38,7 +46,7 @@ function readAsDataUrl(file) {
 }
 
 async function readImageDataUrl(file) {
-  if (file.size > 3000000) return '';
+  if (file.size > UPLOAD_LIMITS.maxEmbeddableImageBytes) return '';
   if (/svg/i.test(file.type || file.name)) {
     return file.size <= 350000 ? readAsDataUrl(file) : '';
   }
@@ -122,4 +130,30 @@ function fileTypeFromName(name) {
   if (/\.pdf$/i.test(name)) return 'application/pdf';
   if (/\.docx?$/i.test(name)) return 'application/msword';
   return 'application/octet-stream';
+}
+
+export function validateReviewFiles(files = []) {
+  const list = Array.from(files || []);
+  const errors = [];
+  if (list.length > UPLOAD_LIMITS.maxFiles) {
+    errors.push(`Upload up to ${UPLOAD_LIMITS.maxFiles} files at a time.`);
+  }
+  const batchBytes = list.reduce((sum, file) => sum + (file.size || 0), 0);
+  if (batchBytes > UPLOAD_LIMITS.maxBatchBytes) {
+    errors.push(`Upload batch must be ${formatFileSize(UPLOAD_LIMITS.maxBatchBytes)} or less.`);
+  }
+  list.forEach((file) => {
+    const type = file.type || fileTypeFromName(file.name);
+    const isImage = String(type).startsWith('image/');
+    const maxBytes = isImage ? UPLOAD_LIMITS.maxReferenceImageBytes : UPLOAD_LIMITS.maxDocumentBytes;
+    if ((file.size || 0) > maxBytes) {
+      errors.push(`${file.name} is too large. ${isImage ? 'Images' : 'Documents'} must be ${formatFileSize(maxBytes)} or less.`);
+    }
+  });
+  return { ok: errors.length === 0, errors };
+}
+
+export function formatFileSize(bytes) {
+  if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
+  return `${Math.round(bytes / 1024)} KB`;
 }

@@ -342,6 +342,12 @@ label input, label textarea, label select { margin-top: 6px; }
 .upload-drop input {
   display: none;
 }
+.upload-rules {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  background: #f8fafc;
+}
 .page-html-editor {
   display: grid;
   gap: 8px;
