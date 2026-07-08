@@ -16,6 +16,19 @@ export const componentLibrary = {
   ],
 };
 
+export const placeholderImages = [
+  { id: 'business', label: 'Business team', path: '/placeholders/business-team.jpg' },
+  { id: 'office', label: 'Office workspace', path: '/placeholders/office-workspace.jpg' },
+  { id: 'restaurant', label: 'Restaurant table', path: '/placeholders/restaurant-table.jpg' },
+  { id: 'wellness', label: 'Wellness studio', path: '/placeholders/wellness-studio.jpg' },
+  { id: 'tech', label: 'Tech product team', path: '/placeholders/tech-product.jpg' },
+  { id: 'premium', label: 'Premium interior', path: '/placeholders/premium-interior.jpg' },
+  { id: 'event', label: 'Event audience', path: '/placeholders/event-audience.jpg' },
+  { id: 'education', label: 'Education laptop', path: '/placeholders/education-laptop.jpg' },
+  { id: 'creative', label: 'Creative studio', path: '/placeholders/creative-studio.jpg' },
+  { id: 'community', label: 'Community impact', path: '/placeholders/community-impact.jpg' },
+];
+
 export const siteLayouts = [
   { id: 'conversion-classic', name: 'Conversion Classic', model: 'Hero + proof + services + process + CTA', tone: 'Direct, polished, high-converting', palette: ['#10213f', '#2563eb', '#f8fafc'] },
   { id: 'local-service', name: 'Local Service', model: 'Local hero + services + reviews + contact', tone: 'Friendly, trustworthy, practical', palette: ['#173d35', '#18a058', '#fff7ed'] },
@@ -157,6 +170,7 @@ export function buildDesignSelectionMarkdown(layout, palette = layout.palette, s
   const colors = normalizePalette(palette);
   const pages = uniqueItems(structure.pages || []);
   const sections = uniqueItems(structure.sections || []);
+  const image = placeholderForLayout(layout);
   return [
     `Selected layout: ${layout.name}`,
     `Layout model: ${layout.model}`,
@@ -165,6 +179,7 @@ export function buildDesignSelectionMarkdown(layout, palette = layout.palette, s
     `Palette max: ${MAX_PALETTE_COLORS} colours. Use them as text, primary, background, accent, and surface colours.`,
     `Recommended pages: ${pages.length ? pages.join(', ') : 'Home, Contact'}`,
     `Recommended sections: ${sections.length ? sections.join(', ') : 'Hero, Services, Contact details, Final CTA'}`,
+    `Placeholder image: ${image.path} (${image.label})`,
     '',
     `Design system: ${componentLibrary.name}`,
     ...componentLibrary.principles.map((item) => `- ${item}`),
@@ -172,7 +187,7 @@ export function buildDesignSelectionMarkdown(layout, palette = layout.palette, s
     'Component library:',
     ...componentLibrary.components.map((item) => `- ${item}`),
     '',
-    'Developer instruction: build the final site from this selected design direction, colour palette, pages, and sections. Preserve the client brief, but adapt section order, copy density, and CTAs to this direction.',
+    'Developer instruction: build the final site from this selected design direction, colour palette, pages, sections, and local placeholder image. Use local /placeholders assets where imagery is needed. Preserve the client brief, but adapt section order, copy density, and CTAs to this direction.',
   ].join('\n');
 }
 
@@ -184,6 +199,7 @@ export function buildExampleSite(layout, state, palette = layout.palette) {
   const goal = brief.goal || 'turn visitors into confident enquiries';
   const offer = brief.offer || industry;
   const [ink, accent, bg, secondary, surface] = normalizePalette(palette);
+  const image = placeholderForLayout(layout, state);
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -193,7 +209,7 @@ export function buildExampleSite(layout, state, palette = layout.palette) {
 <style>
 :root{--ink:${ink};--accent:${accent};--bg:${bg};--secondary:${secondary};--card:${surface};--muted:#64748b;--line:rgba(15,23,42,.12);--radius:20px;--space:clamp(18px,4vw,56px);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:var(--bg)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);line-height:1.5}a{color:inherit}.shell{width:min(1120px,calc(100% - 32px));margin:auto}.nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;font-weight:800}.nav span{color:var(--accent)}.hero{padding:var(--space) 0;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(20px,5vw,64px);align-items:center}.eyebrow{color:var(--accent);font-weight:900;text-transform:uppercase;font-size:12px;letter-spacing:0}.hero h1{font-size:clamp(34px,7vw,76px);line-height:.94;margin:10px 0 18px;letter-spacing:0}.hero p{font-size:clamp(16px,2vw,21px);color:var(--muted);max-width:62ch}.button{display:inline-flex;margin-top:14px;background:var(--accent);color:white;text-decoration:none;border-radius:999px;padding:13px 18px;font-weight:900}.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:0 24px 70px rgba(15,23,42,.12)}.metric{font-size:38px;font-weight:950;color:var(--secondary)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.card b{display:block;margin-bottom:7px}.section{padding:42px 0}.section h2{font-size:clamp(26px,4vw,44px);line-height:1;margin:0 0 14px}.steps{counter-reset:step;display:grid;gap:12px}.step{counter-increment:step;display:flex;gap:14px;align-items:flex-start}.step:before{content:counter(step);background:var(--accent);color:#fff;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;font-weight:900}.contact{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.form{display:grid;gap:10px}.input{border:1px solid var(--line);border-radius:14px;padding:13px;background:white;color:var(--ink)}@media(max-width:760px){.hero,.contact,.grid{grid-template-columns:1fr}.hero h1{font-size:42px}}
-</style>
+.image-card{position:relative;overflow:hidden;min-height:360px;padding:0}.image-card img{width:100%;height:100%;min-height:360px;object-fit:cover;display:block}.image-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.42))}.image-caption{position:absolute;left:18px;right:18px;bottom:18px;color:white;z-index:2;font-weight:900}.media-strip{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;align-items:stretch}.media-strip img{width:100%;height:260px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--line)}@media(max-width:760px){.hero,.contact,.grid,.media-strip{grid-template-columns:1fr}.hero h1{font-size:42px}}</style>
 </head>
 <body>
 <div class="shell">
@@ -201,9 +217,10 @@ export function buildExampleSite(layout, state, palette = layout.palette) {
 <main>
 <section class="hero">
 <div><div class="eyebrow">${escapeHtml(layout.name)} design direction sample</div><h1>${escapeHtml(headlineFor(layout, business, goal))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><a class="button" href="#contact">Start an enquiry</a></div>
-<aside class="panel"><div class="metric">${escapeHtml(metricFor(layout))}</div><b>${escapeHtml(layout.model)}</b><p>${escapeHtml(layout.tone)} layout built from the MicroAgency component system.</p></aside>
+<aside class="panel image-card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)} placeholder"><div class="image-caption">${escapeHtml(layout.name)} image direction</div></aside>
 </section>
 <section class="section"><h2>What this layout emphasises</h2><div class="grid">${cardsFor(layout, offer).map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>
+<section class="section media-strip"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)} sample"><div class="panel"><div class="metric">${escapeHtml(metricFor(layout))}</div><b>${escapeHtml(layout.model)}</b><p>${escapeHtml(layout.tone)} layout built from the MicroAgency component system with local placeholder imagery.</p></div></section>
 <section class="section"><h2>Customer journey</h2><div class="steps"><div class="step">Understand the offer and why it matters.</div><div class="step">See proof, services, or product details in a scannable order.</div><div class="step">Reach a confident CTA without hunting for contact details.</div></div></section>
 <section class="section contact" id="contact"><div><h2>Ready to use this direction?</h2><p>${escapeHtml(business)} can use this as the visual route for the final generated site.</p></div><form class="form"><input class="input" placeholder="Name"><input class="input" placeholder="Email"><textarea class="input" rows="4" placeholder="Project message"></textarea><a class="button" href="#">Send enquiry</a></form></section>
 </main>
@@ -252,6 +269,21 @@ function cardsFor(layout, offer) {
     { title: 'Offer clarity', text: `Turns ${offer} into easy-to-scan sections.` },
     { title: 'Components', text: 'Uses hero, proof, service cards, process, FAQ, and contact blocks.' },
   ];
+}
+
+function placeholderForLayout(layout, state = {}) {
+  const text = `${layout?.id || ''} ${state?.brief || ''} ${state?.clientDetails || ''}`.toLowerCase();
+  const match = text.match(/restaurant|cafe|bar|food|menu/) ? 'restaurant'
+    : text.match(/health|wellness|therapy|fitness|yoga|care/) ? 'wellness'
+    : text.match(/software|saas|app|platform|tool|tech/) ? 'tech'
+    : text.match(/premium|luxury|interior|boutique/) ? 'premium'
+    : text.match(/event|conference|launch|festival/) ? 'event'
+    : text.match(/education|course|training|school|academy/) ? 'education'
+    : text.match(/portfolio|studio|creative|photography|designer|artist/) ? 'creative'
+    : text.match(/nonprofit|charity|community|campaign|donate/) ? 'community'
+    : text.match(/office|consultant|agency|service|local/) ? 'office'
+    : 'business';
+  return placeholderImages.find((image) => image.id === match) || placeholderImages[0];
 }
 
 function uniquePalettes(options) {
