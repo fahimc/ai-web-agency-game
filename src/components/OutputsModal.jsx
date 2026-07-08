@@ -79,7 +79,7 @@ function Website({ state, actions }) {
           </form>
         )}
       </aside>
-      <div className="card">{html ? <iframe className="preview-frame" sandbox="allow-same-origin" title="Generated website preview" srcDoc={html} /> : <div className="empty">Website preview is not ready yet.</div>}</div>
+      <div className="card">{html ? <iframe className="preview-frame" sandbox="allow-same-origin allow-scripts" title="Generated website preview" srcDoc={html} /> : <div className="empty">Website preview is not ready yet.</div>}</div>
       {fullScreen && (
         <div className="site-fullscreen" role="dialog" aria-modal="true" aria-label="Full screen website preview">
           <div className="site-fullscreen-bar">
@@ -93,7 +93,7 @@ function Website({ state, actions }) {
               <button type="button" className="secondary" onClick={() => setFullScreen(false)}>Close</button>
             </div>
           </div>
-          <iframe className="site-fullscreen-frame" sandbox="allow-same-origin" title="Full screen generated website preview" srcDoc={html} />
+          <iframe className="site-fullscreen-frame" sandbox="allow-same-origin allow-scripts" title="Full screen generated website preview" srcDoc={html} />
         </div>
       )}
     </div>

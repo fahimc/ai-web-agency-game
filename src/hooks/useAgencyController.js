@@ -1017,8 +1017,13 @@ function hasRequiredSiteStructure(html, state) {
   const uniquePages = [...new Set(pages)];
   return uniquePages.every((page) => {
     const slug = page.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
-    return value.includes(`id="${slug}"`) || value.includes(`id='${slug}'`) || value.includes(`#${slug}`);
+    return hasHtmlId(value, slug) && value.includes(`href="#${slug}"`);
   });
+}
+
+function hasHtmlId(html, id) {
+  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`id=(["'])${escaped}\\1|id=${escaped}(\\s|>)`, 'i').test(html);
 }
 
 function hasPreviewLanguage(html) {

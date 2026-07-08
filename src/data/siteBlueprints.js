@@ -307,6 +307,18 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
 ${pageSections}
 </main>
 </div>
+<script>
+document.addEventListener('click', function(event) {
+  var link = event.target.closest && event.target.closest('a[href^="#"]');
+  if (!link) return;
+  var id = decodeURIComponent(link.getAttribute('href').slice(1));
+  var target = document.getElementById(id);
+  if (!target) return;
+  event.preventDefault();
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (window.history && window.history.replaceState) window.history.replaceState(null, '', '#' + id);
+});
+</script>
 </body>
 </html>`;
 }
