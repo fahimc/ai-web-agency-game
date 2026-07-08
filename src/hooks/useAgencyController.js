@@ -860,6 +860,7 @@ export function useAgencyController() {
     openPackages: () => setModal('packages'),
     openDesignOptions,
     openPayment: () => setModal('payment'),
+    openAgencyInfo: () => setModal('agencyInfo'),
     openMenu: (tab = 'status') => {
       setMenuTab(tab);
       setModal('menu');

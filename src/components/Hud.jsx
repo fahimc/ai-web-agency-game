@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Menu, RotateCcw } from 'lucide-react';
+import { Box, Info, Menu, RotateCcw } from 'lucide-react';
 import { canResumeProject } from '../utils/text.js';
 
 export function Hud({ state, phaseLabel, actions }) {
@@ -20,6 +20,9 @@ export function Hud({ state, phaseLabel, actions }) {
           <span>{phaseLabel}</span>
         </div>
         <div className="hud-actions">
+          <button className="secondary tiny keep-mobile info-button" type="button" onClick={actions.openAgencyInfo} title="About MicroAgency AI" aria-label="About MicroAgency AI">
+            <Info size={16} /> <span>Info</span>
+          </button>
           <button className="secondary tiny keep-mobile" type="button" onClick={actions.startFresh}>
             <RotateCcw size={16} /> Reset
           </button>

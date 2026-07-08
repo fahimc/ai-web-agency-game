@@ -1,4 +1,5 @@
 import React from 'react';
+import { AgencyInfoModal } from './components/AgencyInfoModal.jsx';
 import { ChatDock } from './components/ChatDock.jsx';
 import { DesignOptionsModal } from './components/DesignOptionsModal.jsx';
 import { DetailsModal } from './components/DetailsModal.jsx';
@@ -25,6 +26,7 @@ export function App() {
         <OfficeScene state={state} actions={actions} phaseLabel={phaseLabel} />
       </main>
       <ChatDock state={state} onSubmit={actions.submitChat} />
+      {modal === 'agencyInfo' && <AgencyInfoModal actions={actions} />}
       {modal === 'menu' && <MenuModal state={state} actions={actions} menuTab={menuTab} phaseLabel={phaseLabel} />}
       {modal === 'designOptions' && <DesignOptionsModal state={state} actions={actions} />}
       {modal === 'details' && <DetailsModal state={state} actions={actions} />}

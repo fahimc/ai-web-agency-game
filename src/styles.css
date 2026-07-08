@@ -1032,6 +1032,140 @@ label,
   box-shadow: 0 20px 60px rgba(6, 18, 47, .28);
 }
 
+.agency-info-modal {
+  width: min(1080px, 100%);
+}
+
+.agency-info-body {
+  display: grid;
+  gap: 18px;
+}
+
+.agency-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.agency-hero h2 {
+  margin: 4px 0 10px;
+  font-size: clamp(28px, 4vw, 48px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.agency-hero p,
+.agency-step p,
+.team-card p {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.eyebrow-text {
+  margin: 0;
+  color: var(--accent);
+  font-weight: 950;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.agency-summary-card {
+  background: var(--ink);
+  color: #ffffff;
+  border-radius: 24px;
+  padding: 20px;
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  box-shadow: 0 16px 42px rgba(6, 18, 47, .18);
+}
+
+.agency-summary-card b {
+  font-size: 22px;
+}
+
+.agency-summary-card span {
+  color: rgba(255, 255, 255, .78);
+  line-height: 1.45;
+}
+
+.agency-info-body h3 {
+  margin: 0 0 12px;
+  font-size: 24px;
+}
+
+.agency-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.agency-step {
+  background: var(--paper-strong);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 13px;
+  display: grid;
+  gap: 10px;
+}
+
+.agency-step > span {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 950;
+}
+
+.agency-step b,
+.team-card b {
+  display: block;
+}
+
+.agency-step p,
+.team-card p {
+  margin: 7px 0 0;
+  font-size: 13px;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.team-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  box-shadow: 0 12px 30px rgba(6, 18, 47, .06);
+}
+
+.team-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 950;
+  flex: 0 0 auto;
+}
+
+.team-card small {
+  color: var(--accent);
+  font-weight: 900;
+}
+
 @media (max-width: 900px) {
   .hud-row {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -1059,8 +1193,14 @@ label,
     grid-row: 2;
   }
 
-  .hud-actions button:not(.menu-button):not(.resume-button):not(.continue-button) {
+  .hud-actions button:not(.menu-button):not(.resume-button):not(.continue-button):not(.info-button) {
     display: none;
+  }
+
+  .agency-hero,
+  .agency-steps,
+  .team-grid {
+    grid-template-columns: 1fr;
   }
 
   .office-card,
