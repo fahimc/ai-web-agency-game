@@ -1049,6 +1049,14 @@ label,
   grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
 }
 
+.split-preview.preview-only .card {
+  min-width: 0;
+}
+
+.split-preview.preview-only .preview-frame {
+  min-height: 620px;
+}
+
 .site-fullscreen {
   position: fixed;
   inset: 0;
@@ -1286,6 +1294,14 @@ label,
     grid-template-columns: 1fr;
   }
 
+  .split-preview.preview-only {
+    grid-template-columns: 1fr;
+  }
+
+  .split-preview.preview-only .preview-frame {
+    min-height: 520px;
+  }
+
   .site-fullscreen-bar {
     align-items: stretch;
     flex-direction: column;
@@ -1313,5 +1329,9 @@ label,
   .office-card {
     border-radius: 24px;
     box-shadow: var(--shadow), 0 0 0 5px rgba(255, 255, 255, .72);
+  }
+
+  .split-preview.preview-only .preview-frame {
+    min-height: 58svh;
   }
 }

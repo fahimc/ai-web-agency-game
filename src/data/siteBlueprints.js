@@ -433,17 +433,23 @@ function asPagePanel(sectionHtml) {
   return sectionHtml.replace('<section class="section', '<section class="section site-page');
 }
 
-function servicesSection(id, { examples }) {
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Services</span><h2>${escapeHtml(examples.servicesTitle)}</h2><p>${escapeHtml(examples.servicesLead)}</p><div class="grid">${examples.cards.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>`;
+function servicesSection(id, context) {
+  const { business, audience, goal, offer } = context;
+  const services = serviceCardsFor(context);
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Services</span><h2>${escapeHtml(`${offer} shaped around what ${audience} need`)}</h2><p>${escapeHtml(`${business} gives visitors enough detail to understand the service, compare the right level of support, and move toward ${goal} with confidence.`)}</p><div class="grid">${services.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span><a class="button secondary" href="${escapeHtml(context.ctaHref)}">${escapeHtml(card.cta)}</a></div>`).join('')}</div><div class="panel"><span class="page-kicker">How it works</span><h2>A simple route from first enquiry to clear next step</h2><div class="steps"><div class="step">Share the key details so ${escapeHtml(business)} can understand the need, timing, and preferred outcome.</div><div class="step">Get a practical recommendation that explains the best-fit service and any useful options.</div><div class="step">Confirm the route, receive the next actions, and keep communication clear from the start.</div></div></div></section>`;
 }
 
 function aboutSection(id, { business, industry, audience, offer, image }) {
-  return `<section class="section media-strip" id="${escapeHtml(id)}"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="panel"><span class="page-kicker">About</span><h2>Built around what ${escapeHtml(audience)} need to know</h2><p>${escapeHtml(business)} works in ${escapeHtml(industry)} with a clear focus on ${escapeHtml(offer)}. This section gives visitors the context, credibility, and reassurance they need before taking action.</p></div></section>`;
+  return `<section class="section media-strip" id="${escapeHtml(id)}"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="panel"><span class="page-kicker">About</span><h2>Built around what ${escapeHtml(audience)} need to know</h2><p>${escapeHtml(business)} works in ${escapeHtml(industry)} with a clear focus on ${escapeHtml(offer)}. The page should make the business feel credible by explaining who it helps, what standards it works to, and how customers are supported before and after they enquire.</p><div class="steps"><div class="step">Straightforward advice before customers commit.</div><div class="step">Clear expectations around timing, fit, and next steps.</div><div class="step">A practical route to ask questions or request support.</div></div></div></section>`;
 }
 
 function pricingSection(id, { business, offer, ctaHref }) {
-  const tiers = ['Starter', 'Standard', 'Complete'];
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Pricing</span><h2>Simple ways to start with ${escapeHtml(business)}</h2><p>Choose the level of support that matches what you need today.</p><div class="grid">${tiers.map((tier, index) => `<div class="card"><b>${tier}</b><span>${escapeHtml(index === 0 ? `A focused introduction to ${offer}.` : index === 1 ? `A fuller option for customers ready to compare ${offer}.` : `The most complete route with extra support and priority response.`)}</span><a class="button" href="${escapeHtml(ctaHref)}">Enquire</a></div>`).join('')}</div></section>`;
+  const tiers = [
+    { name: 'Starter', text: `A focused route for customers who need the essentials around ${offer}, a clear recommendation, and a simple next step.` },
+    { name: 'Standard', text: `A fuller option with more guidance, stronger support, and enough detail for customers comparing ${offer}.` },
+    { name: 'Complete', text: 'The most supported route for customers who want priority response, extra guidance, and a more complete handover.' },
+  ];
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Pricing</span><h2>Simple ways to start with ${escapeHtml(business)}</h2><p>Use this page to explain common routes, what affects the quote, and how customers can choose without pressure.</p><div class="grid">${tiers.map((tier) => `<div class="card"><b>${escapeHtml(tier.name)}</b><span>${escapeHtml(tier.text)}</span><a class="button" href="${escapeHtml(ctaHref)}">Ask about ${escapeHtml(tier.name)}</a></div>`).join('')}</div><div class="panel"><b>What can affect the final price</b><p>Scope, timing, location, quantity, preparation, and the level of support can all change the recommendation. A short enquiry gives ${escapeHtml(business)} enough context to respond properly.</p></div></section>`;
 }
 
 function caseStudiesSection(id, { business, goal }) {
@@ -467,7 +473,7 @@ function coursesSection(id, { offer }) {
 }
 
 function faqSection(id, { business, offer }) {
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">FAQ</span><h2>Questions before contacting ${escapeHtml(business)}</h2><div class="grid"><div class="card"><b>What do you offer?</b><span>${escapeHtml(business)} helps with ${escapeHtml(offer)} and guides customers to the right next step.</span></div><div class="card"><b>How quickly do you reply?</b><span>Most enquiries receive a response within one working day.</span></div><div class="card"><b>What should I include?</b><span>Share what you need, your timeline, and any details that would help the team respond properly.</span></div></div></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">FAQ</span><h2>Questions before contacting ${escapeHtml(business)}</h2><div class="grid"><div class="card"><b>What do you offer?</b><span>${escapeHtml(business)} helps with ${escapeHtml(offer)} and guides customers toward the right option rather than leaving them to guess.</span></div><div class="card"><b>How quickly do you reply?</b><span>Most enquiries should receive a response within one working day, with any urgent timing flagged early.</span></div><div class="card"><b>What should I include?</b><span>Share what you need, preferred timing, location if relevant, budget range if useful, and any must-have details.</span></div><div class="card"><b>Can I ask before deciding?</b><span>Yes. The first message is used to understand fit, explain options, and recommend a practical next step.</span></div><div class="card"><b>What happens after I enquire?</b><span>The team reviews the details, asks any missing questions, then confirms the recommended route and next action.</span></div><div class="card"><b>Do you offer different levels?</b><span>Where useful, ${escapeHtml(business)} can present a lighter, standard, or complete route so customers can choose the support level that fits.</span></div></div></section>`;
 }
 
 function bookingSection(id, context) {
@@ -476,15 +482,49 @@ function bookingSection(id, context) {
 
 function contactSection(id, context) {
   const { examples } = context;
-  return `<section class="section contact" id="${escapeHtml(id)}"><div><span class="page-kicker">Contact</span><h2>${escapeHtml(examples.contactTitle)}</h2><p>${escapeHtml(examples.contactText)}</p></div>${contactForm(context)}</section>`;
+  return `<section class="section contact" id="${escapeHtml(id)}"><div><span class="page-kicker">Contact</span><h2>${escapeHtml(examples.contactTitle)}</h2><p>${escapeHtml(examples.contactText)}</p><div class="steps"><div class="step">Send the essentials in the form.</div><div class="step">Receive a clear response with any follow-up questions.</div><div class="step">Choose the next step when the fit is clear.</div></div></div>${contactForm(context)}</section>`;
 }
 
 function genericPageSection(id, page, { business, offer, ctaHref }) {
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(page)} for ${escapeHtml(business)}</h2><p>${escapeHtml(offer)} is explained here in practical terms so visitors can understand the value and choose the next step.</p><a class="button secondary" href="${escapeHtml(ctaHref)}">Contact us</a></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(page)} for ${escapeHtml(business)}</h2><p>${escapeHtml(offer)} is explained here in practical terms so visitors can understand the value and choose the next step.</p><div class="grid"><div class="card"><b>What visitors need to know</b><span>Explain the offer, who it suits, and the most important details in plain language.</span></div><div class="card"><b>Why it matters</b><span>Connect the page to the customer problem, desired result, and proof that the business can help.</span></div><div class="card"><b>Next step</b><span>Give visitors one clear action so they do not have to work out what to do next.</span></div></div><a class="button secondary" href="${escapeHtml(ctaHref)}">Contact us</a></section>`;
 }
 
 function contactForm({ business }) {
   return `<form class="form" aria-label="Contact ${escapeHtml(business)}"><input class="input" placeholder="Name"><input class="input" placeholder="Email"><textarea class="input" rows="4" placeholder="Tell us what you need"></textarea><a class="button" href="#">Send enquiry</a></form>`;
+}
+
+function serviceCardsFor({ business, industry, audience, offer }) {
+  const text = `${business} ${industry} ${audience} ${offer}`.toLowerCase();
+  if (/wedding|bridal|bride|groom/.test(text)) {
+    return [
+      { title: 'Wedding planning and coordination', text: `${business} can help couples organise the moving parts of the day, from early planning to timeline checks and supplier coordination.`, cta: 'Plan the day' },
+      { title: 'Styling and guest experience', text: 'Show the look, flow, and moments that matter, including setup, atmosphere, arrivals, and the details guests remember.', cta: 'Discuss the style' },
+      { title: 'On-the-day support', text: 'Explain how practical support keeps the day moving, handles small issues, and gives couples a calmer route through the event.', cta: 'Check availability' },
+      { title: 'Packages for different needs', text: 'Present lighter guidance, fuller coordination, and complete support so visitors can compare the right level before enquiring.', cta: 'Compare support' },
+    ];
+  }
+  if (/restaurant|cafe|bar|food|menu|venue/.test(text)) {
+    return [
+      { title: 'Signature menu highlights', text: 'Feature the dishes, drinks, or experiences visitors should remember first, with clear descriptions and seasonal notes.', cta: 'View highlights' },
+      { title: 'Bookings and occasions', text: 'Explain table bookings, group visits, private events, and the atmosphere different customers can expect.', cta: 'Make a booking' },
+      { title: 'Location and visit details', text: 'Make opening times, location, accessibility, and practical visit information easy to find on mobile.', cta: 'Plan a visit' },
+      { title: 'Special offers', text: 'Use this space for current menus, set options, tasting events, or time-limited reasons to visit.', cta: 'Ask what is on' },
+    ];
+  }
+  if (/software|saas|app|platform|tool/.test(text)) {
+    return [
+      { title: 'Product workflow', text: `Explain how ${offer} fits into the customer day, what task it improves, and what happens after signup or demo request.`, cta: 'See workflow' },
+      { title: 'Outcome-led features', text: 'Group features by the result they create, so visitors understand value before technical detail.', cta: 'Compare features' },
+      { title: 'Implementation path', text: 'Show setup, onboarding, support, and what a new customer needs to get started.', cta: 'Plan rollout' },
+      { title: 'Pricing confidence', text: 'Connect plan options to team size, usage, support level, and the best next action.', cta: 'Check plans' },
+    ];
+  }
+  return [
+    { title: `Core ${offer}`, text: `Explain exactly what ${business} provides, who it suits, what is included, and what customers receive after they enquire.`, cta: 'Ask about this' },
+    { title: 'Tailored recommendation', text: `Help ${audience} choose the right route by asking about timing, priorities, budget, and the level of support needed.`, cta: 'Get guidance' },
+    { title: 'Clear delivery process', text: 'Show how the work is planned, confirmed, delivered, reviewed, and supported so there are fewer surprises.', cta: 'See the process' },
+    { title: 'Proof and reassurance', text: 'Add testimonials, response expectations, guarantees, common questions, or practical proof that reduces hesitation.', cta: 'Talk to the team' },
+  ];
 }
 
 function exampleContentFor(layout, context) {

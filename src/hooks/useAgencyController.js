@@ -517,6 +517,57 @@ export function useAgencyController() {
     return output;
   }, [addQuest, buildContext, log, speak, update]);
 
+  const producePageContent = useCallback(async () => {
+    const current = stateRef.current;
+    if (current.outputs.PageContent) return current.outputs.PageContent;
+
+    const employee = employees.design;
+    const pages = contentPagesForState(current);
+    addQuest('Page content pack', employee.id, 'working');
+    update((stateNow) => ({
+      ...stateNow,
+      activeEmployee: employee.id,
+      progress: Math.max(stateNow.progress, 57),
+      progressTask: 'Page content pack',
+    }));
+    speak(employee.id, 'I am writing a detailed content brief for each approved page before the site is built.');
+    log(employee.name, `Started: Page content pack (${pages.join(', ')})`);
+
+    const pageOutputs = [];
+    for (const page of pages) {
+      let pageContent = '';
+      try {
+        pageContent = await callModelInBackground({
+          employee,
+          task: pageContentTask(page, pages, current),
+          context: buildContext(['Plan', 'TaskBoard', 'SelectedDesign', 'DesignDirection']),
+          settings: current.settings,
+          state: current,
+          signal: aborter.current?.signal,
+          complex: current.projectPackage !== 'launch',
+        });
+      } catch (error) {
+        if (aborter.current?.signal?.aborted) throw error;
+        log(employee.name, `${page} content fallback used after model error: ${error?.message || error}`);
+      }
+      const cleaned = String(pageContent || '').trim();
+      pageOutputs.push(`## ${page}\n${hasUsefulPageContent(cleaned) ? cleaned : fallbackPageContent(page, current)}`);
+    }
+
+    const output = pageOutputs.join('\n\n---\n\n');
+    addQuest('Page content pack', employee.id, 'done');
+    update((stateNow) => ({
+      ...stateNow,
+      outputs: { ...stateNow.outputs, PageContent: output },
+      activeOutput: 'PageContent',
+      progress: Math.max(stateNow.progress, 62),
+      progressTask: 'Page content pack complete',
+    }));
+    log(employee.name, 'Finished: Page content pack');
+    await sleep(250);
+    return output;
+  }, [addQuest, buildContext, log, speak, update]);
+
   const handleRunError = useCallback((error) => {
     const message = error?.message || String(error || 'Unknown error');
     update((current) => ({
@@ -532,7 +583,10 @@ export function useAgencyController() {
   }, [log, speak, update]);
 
   const produceUntilPreview = useCallback(async () => {
-    for (const step of previewSteps) await runStep(step);
+    for (const step of previewSteps) {
+      if (step.key === 'WebsiteHTML') await producePageContent();
+      await runStep(step);
+    }
     update((current) => ({
       ...current,
       phase: 'approval',
@@ -545,7 +599,7 @@ export function useAgencyController() {
     speak('dev', 'The first website preview is ready. Review it, then approve or request changes.', ['openPreview', 'approve']);
     addConvo('Nova', 'Preview ready. Chat is open for approval or change requests only.');
     setModal('websitePreview');
-  }, [addConvo, log, runStep, speak, update]);
+  }, [addConvo, log, producePageContent, runStep, speak, update]);
 
   const startAgency = useCallback(async () => {
     const current = stateRef.current;
@@ -955,6 +1009,163 @@ function stepSpeech(id, quest) {
   return lines[id] || `Working on ${quest}...`;
 }
 
+function contentPagesForState(state) {
+  if (state.projectPackage === 'launch') {
+    const sections = (state.selectedSiteSections?.length ? state.selectedSiteSections : ['Services', 'About', 'FAQ', 'Contact details', 'Final CTA'])
+      .filter((item) => !/^hero$/i.test(String(item || '')));
+    return uniqueStateItems(['Home', ...sections]).slice(0, 10);
+  }
+  const pages = state.selectedSitePages?.length
+    ? state.selectedSitePages
+    : ['Home', 'Services', 'About', 'FAQ', 'Contact'];
+  return uniqueStateItems(['Home', ...pages]).slice(0, 8);
+}
+
+function pageContentTask(page, pages, state) {
+  const brief = state.brief || state.clientDetails || '';
+  const packageLabel = state.projectPackage === 'launch' ? 'Launch Site' : state.projectPackage === 'signature' ? 'Signature Site' : 'Growth Site';
+  return [
+    `Write production-ready website content for the "${page}" page only.`,
+    `Package: ${packageLabel}.`,
+    `Approved site map: ${pages.join(', ')}.`,
+    `Client brief: ${brief || 'The brief is thin. Use sensible common industry information and polished dummy production copy.'}`,
+    'Return markdown only. Include: page objective, visitor intent, hero headline, hero support copy, 3 to 6 detailed content blocks with headings and body copy, trust/proof ideas, CTA copy, and any form fields or practical details needed.',
+    'Do not use agency-facing labels such as example, sample, concept, preview, customer website, visual direction, design direction, placeholder packages, or final content.',
+    'Make it specific enough that a developer can build a real production page, not a generic card list.',
+  ].join('\n');
+}
+
+function hasUsefulPageContent(text) {
+  const value = String(text || '').trim();
+  return value.length > 650 && /headline|objective|block|cta|proof|trust|copy|section/i.test(value);
+}
+
+function fallbackPageContent(page, state) {
+  const brief = parseStateBrief(state.brief || state.clientDetails || '');
+  const business = brief.businessName || state.projectName || 'the business';
+  const industry = brief.industry || 'the service';
+  const audience = brief.audience || 'customers';
+  const offer = brief.offer || industry;
+  const goal = brief.goal || 'make an enquiry';
+  const lower = String(page || '').toLowerCase();
+  const blocks = pageBlocksFor(lower, { business, industry, audience, offer, goal });
+
+  return [
+    `Page objective: Help ${audience} understand ${offer} and move confidently toward ${goal}.`,
+    `Visitor intent: The visitor wants plain-language information, reassurance, and a clear next action from ${business}.`,
+    `Hero headline: ${heroHeadlineForPage(lower, business, offer, goal)}`,
+    `Hero support copy: ${business} explains ${offer} clearly, answers the practical questions ${audience} usually have, and makes the next step easy.`,
+    '',
+    ...blocks.map((block, index) => [
+      `Content block ${index + 1}: ${block.title}`,
+      block.body,
+      `CTA idea: ${block.cta}`,
+    ].join('\n')),
+    '',
+    `Trust and proof: Add short testimonials, common customer questions, process reassurance, clear response times, and practical signals that ${business} is credible.`,
+    `Primary CTA: ${ctaForGoal(goal)}`,
+  ].join('\n');
+}
+
+function pageBlocksFor(page, context) {
+  const { business, industry, audience, offer, goal } = context;
+  if (page.includes('service')) {
+    return serviceBlocks(context);
+  }
+  if (page.includes('about')) {
+    return [
+      { title: `Why ${business} exists`, body: `${business} focuses on ${offer} for ${audience}. This section should explain the practical problem the business solves, the standard it works to, and the kind of customer it is best suited for.`, cta: 'See how we can help' },
+      { title: 'How we work', body: 'Explain the working style in simple stages: first conversation, recommendation, delivery, review, and support. Keep it concrete so visitors know what happens after they enquire.', cta: 'Start with a quick enquiry' },
+      { title: 'What customers can expect', body: `Set expectations around communication, quality, timing, and the details ${audience} should prepare before contacting ${business}.`, cta: 'Ask a question' },
+    ];
+  }
+  if (page.includes('pricing')) {
+    return [
+      { title: 'Simple starting options', body: `Present a starter, standard, and complete route for ${offer}. Each option should explain who it suits, what is included, and what affects the final price.`, cta: 'Request the right option' },
+      { title: 'What changes the quote', body: `Mention scope, timing, location, quantity, support level, and any choices that commonly change the cost in ${industry}.`, cta: 'Send your details' },
+      { title: 'No-pressure next step', body: 'Reassure visitors that an enquiry is used to understand the request and recommend the right route, not to force an immediate purchase.', cta: 'Get a clear recommendation' },
+    ];
+  }
+  if (page.includes('case')) {
+    return [
+      { title: 'Typical customer challenge', body: `Describe a common situation ${audience} face before choosing ${business}: uncertainty, comparison, timing pressure, or needing confidence before committing.`, cta: 'Talk through your situation' },
+      { title: 'What changed', body: `Show how clearer information, better structure, and focused ${offer} helped the customer decide what to do next.`, cta: 'See if this fits' },
+      { title: 'Result and lesson', body: `Connect the outcome to ${goal}, using believable dummy metrics or qualitative results where the brief does not provide real data.`, cta: 'Start your enquiry' },
+    ];
+  }
+  if (page.includes('faq')) {
+    return [
+      { title: 'Before you enquire', body: `Answer what ${business} offers, who it is for, how quickly the team replies, and what information helps the first response.`, cta: 'Send the essentials' },
+      { title: 'Choosing the right option', body: `Explain how ${audience} can compare options, understand fit, and avoid paying for more than they need.`, cta: 'Ask for guidance' },
+      { title: 'Timings and practical details', body: 'Cover lead times, availability, preparation, and what happens after the first message.', cta: 'Check availability' },
+    ];
+  }
+  if (page.includes('contact') || page.includes('book')) {
+    return [
+      { title: 'What to send', body: `Ask for name, email, what the customer needs, approximate timing, location if relevant, and any important preferences for ${offer}.`, cta: 'Send enquiry' },
+      { title: 'What happens next', body: `${business} reviews the message, asks any missing questions, and replies with the clearest recommended next step.`, cta: 'Start the conversation' },
+      { title: 'Reassurance', body: 'Make response expectations clear and keep the form short enough to complete on mobile.', cta: 'Contact us today' },
+    ];
+  }
+  return [
+    { title: `What ${business} offers`, body: `${business} helps ${audience} with ${offer}. The page should explain the offer in plain language, show who it is best for, and connect it to ${goal}.`, cta: 'Find the right next step' },
+    { title: 'Why it matters', body: `Explain the customer problem, the practical benefit, and the outcome visitors can expect from a good ${industry} provider.`, cta: 'Compare the options' },
+    { title: 'How to get started', body: 'Give a short process from first enquiry to recommendation, delivery, and follow-up.', cta: 'Start an enquiry' },
+  ];
+}
+
+function serviceBlocks({ business, industry, audience, offer, goal }) {
+  const wedding = /wedding|bride|bridal|groom|venue|event/i.test(`${industry} ${audience} ${offer}`);
+  if (wedding) {
+    return [
+      { title: 'Wedding planning and coordination', body: `${business} can explain planning support, supplier coordination, timelines, and how the team keeps the day organised for couples and families.`, cta: 'Plan the day' },
+      { title: 'Styling, setup, and guest experience', body: 'Describe how the service can cover the look, feel, arrival experience, key moments, and details that guests notice throughout the day.', cta: 'Discuss the style' },
+      { title: 'Packages for different levels of support', body: 'Show a light-touch planning option, a fuller coordination option, and a complete support route so brides can choose the level that fits.', cta: 'Compare options' },
+      { title: 'Clear next steps', body: `Guide visitors toward ${goal} with a short enquiry form asking for date, venue, guest count, style, and what support they need.`, cta: 'Check availability' },
+    ];
+  }
+  return [
+    { title: `Core ${offer} support`, body: `${business} should explain the main service clearly: what is included, who it suits, what problem it solves, and what the customer receives.`, cta: 'Ask about this service' },
+    { title: 'Tailored recommendation', body: `Give ${audience} a way to understand which option fits their situation, budget, timeline, and level of support needed.`, cta: 'Get a recommendation' },
+    { title: 'Delivery and communication', body: 'Explain how the work is planned, confirmed, delivered, and checked so customers know what will happen after they enquire.', cta: 'Start the process' },
+    { title: 'Aftercare and confidence', body: `Add reassurance around response times, support, guarantees, FAQs, or proof that makes ${business} feel dependable.`, cta: 'Contact the team' },
+  ];
+}
+
+function heroHeadlineForPage(page, business, offer, goal) {
+  if (page.includes('service')) return `${offer} from ${business}, explained clearly`;
+  if (page.includes('about')) return `A clearer way to choose ${business}`;
+  if (page.includes('pricing')) return `Choose the right level of support`;
+  if (page.includes('case')) return `Real situations, clear outcomes`;
+  if (page.includes('faq')) return `Questions answered before you enquire`;
+  if (page.includes('contact') || page.includes('book')) return `Start with a simple enquiry`;
+  return `${business} built to help you ${goal}`;
+}
+
+function ctaForGoal(goal) {
+  return /book|call|appointment/i.test(goal) ? 'Book a call' : /buy|order|shop/i.test(goal) ? 'Start an order' : 'Start an enquiry';
+}
+
+function parseStateBrief(text) {
+  const fields = {};
+  String(text || '').split('\n').forEach((line) => {
+    const match = line.match(/^([^:]+):\s*(.+)$/);
+    if (!match) return;
+    const key = match[1].toLowerCase();
+    const value = match[2].trim();
+    if (key.includes('business') || key.includes('client name')) fields.businessName = value;
+    else if (key.includes('industry')) fields.industry = value;
+    else if (key.includes('audience') || key.includes('customer')) fields.audience = value;
+    else if (key.includes('goal')) fields.goal = value;
+    else if (key.includes('offer') || key.includes('service')) fields.offer = value;
+  });
+  return fields;
+}
+
+function uniqueStateItems(items) {
+  return [...new Set((items || []).map((item) => String(item || '').trim()).filter(Boolean))];
+}
+
 function fallbackWebsiteHtml(state) {
   const layout = siteLayouts.find((item) => item.id === state.selectedDesignStyle) || siteLayouts[0];
   const palette = state.selectedDesignPalette?.length ? state.selectedDesignPalette : layout.palette;
@@ -984,7 +1195,7 @@ function fallbackDesignDirection(state) {
     palette.map((color, index) => `- Colour ${index + 1}: ${color}`).join('\n'),
     '',
     '## Approved Structure',
-    `Package: ${state.projectPackage === 'launch' ? 'Launch Site, one-page section-based site' : 'Multi-section customer website'}`,
+    `Package: ${state.projectPackage === 'launch' ? 'Launch Site, one-page section-based site' : 'Multi-page customer website with routed page views'}`,
     `Pages: ${pages.join(', ')}`,
     `Sections: ${sections.join(', ')}`,
     '',
