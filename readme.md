@@ -50,11 +50,21 @@ https://github.com/fahimc/ai-web-agency-game
 
 ## Design System And Templates
 
-The design picker is powered by `src/data/siteBlueprints.js`.
+The design picker is powered by `src/data/siteBlueprints.js`, and the reusable static layout engine lives in:
+
+```text
+public/static-site-engine/
+```
 
 It contains:
 
-- `MicroAgency Blocks` component library notes.
+- `Bootstrap 5.3 + MicroAgency Layout Engine` component and layout notes.
+- A section-based architecture: `Page -> Sections -> Layouts -> Components -> Content`.
+- A working static engine with `renderPage(pageData)`, `renderSection(section)`, `renderLayout(layout, content)`, `renderComponent(component)`, `getLayoutClass(layout)`, and `applyTheme(theme)`.
+- CSS tokens for spacing, container widths, type scale, radius, shadows, colours, breakpoints, gaps, buttons, cards, and themes.
+- Layout primitives including single-column, wide single-column, two-column ratios, asymmetric, sidebar, three-column, responsive card grid, bento grid, split hero, centered hero, full-width media, masonry, horizontal scroller, stack, cluster, cover, and CTA band.
+- Reusable components including header, footer, hero text, button groups, service/feature/pricing/testimonial/portfolio/blog/team cards, FAQ accordion, contact/newsletter forms, gallery, stats, process steps, logo strip, map/location, and notices.
+- Page templates for homepage, about, services, service detail, contact, pricing, portfolio, case study, blog listing, blog article, landing page, local business, location, team, FAQ, testimonials, gallery, product overview/detail, booking, legal pages, thank you, and 404.
 - Common layout directions such as local service, SaaS product, premium editorial, portfolio, restaurant/venue, wellness, event, marketplace, nonprofit, and education.
 - Brief-aware recommendations for design direction.
 - Colour palette recommendations.
@@ -63,6 +73,14 @@ It contains:
 - Preview HTML generation for example client sites.
 
 Selected design choices are saved into the `SelectedDesign` output and passed into the final design/build prompts.
+
+The static engine can be opened locally after `npm run dev` at:
+
+```text
+http://127.0.0.1:5173/static-site-engine/index.html
+```
+
+Small-model editing rule: add new pages or sections by changing `public/static-site-engine/assets/js/site-data.js`; only add new renderers in `components.js` when an existing component cannot express the content.
 
 ## Placeholder Images
 
@@ -101,6 +119,12 @@ netlify/
     paypal-create-order.cjs
 public/
   placeholders/
+  static-site-engine/
+    index.html
+    pages/
+    assets/
+      css/
+      js/
 src/
   App.jsx
   main.jsx

@@ -4,9 +4,11 @@ const BOOTSTRAP_CSS = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/boo
 const BOOTSTRAP_JS = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js';
 
 export const componentLibrary = {
-  name: 'Bootstrap 5.3 + MicroAgency Blocks',
+  name: 'Bootstrap 5.3 + MicroAgency Layout Engine',
   principles: [
     'Use Bootstrap 5.3 components for navigation, forms, buttons, cards, accordions, modals, carousels, offcanvas menus, and responsive grid behaviour.',
+    'Compose pages as Page -> Sections -> Layouts -> Components -> Content so small models can edit structured data instead of hand-coding every page.',
+    'Choose layout primitives such as single-column, two-column, asymmetric, sidebar, card-grid, bento, split hero, centered hero, masonry, horizontal scroller, stack, cluster, cover, and CTA band.',
     'Every generated site header must use a Bootstrap responsive navbar with a visible hamburger toggler on mobile.',
     'Use semantic sections with clear h2 headings and one primary CTA per viewport.',
     'Keep all layouts mobile-first with CSS grid, flexible cards, and visible focus states.',
