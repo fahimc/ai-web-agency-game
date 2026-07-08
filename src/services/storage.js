@@ -17,7 +17,7 @@ export const defaultSettings = {
 export function restoreDraft() {
   try {
     const raw = localStorage.getItem(LS.draft);
-    return raw ? JSON.parse(raw) : null;
+    return raw ? normalizeStoredSession(JSON.parse(raw)) : null;
   } catch {
     return null;
   }
@@ -64,7 +64,7 @@ export function saveDraft(state) {
     selectedSiteSections: state.selectedSiteSections,
     designRecommendations: state.designRecommendations || [],
     designRecommendationStatus: state.designRecommendationStatus || 'idle',
-    reviewAssets: state.reviewAssets || [],
+    reviewAssets: compactReviewAssets(state.reviewAssets || []),
     paid: state.paid,
     paymentEstimate: state.paymentEstimate,
     phase: state.phase,
@@ -87,12 +87,12 @@ export function saveDraft(state) {
     revisionCount: state.revisionCount,
     lastSaved: new Date().toLocaleString(),
   };
-  localStorage.setItem(LS.draft, JSON.stringify(snapshot));
+  safeSetItem(LS.draft, JSON.stringify(snapshot));
   if (snapshot.email && persistableProject) {
-    localStorage.setItem(projectSessionKey(snapshot.email, projectId), JSON.stringify(snapshot));
-    localStorage.setItem(sessionKey(snapshot.email), JSON.stringify(snapshot));
+    safeSetItem(projectSessionKey(snapshot.email, projectId), JSON.stringify(snapshot));
+    safeSetItem(sessionKey(snapshot.email), JSON.stringify(snapshot));
     upsertProjectIndex(snapshot.email, snapshot);
-    localStorage.setItem(LS.last, snapshot.email);
+    safeSetItem(LS.last, snapshot.email);
   }
   return snapshot;
 }
@@ -100,7 +100,7 @@ export function saveDraft(state) {
 export function loadSession(email, projectId = '') {
   try {
     const raw = localStorage.getItem(projectId ? projectSessionKey(email, projectId) : sessionKey(email));
-    return raw ? JSON.parse(raw) : null;
+    return raw ? normalizeStoredSession(JSON.parse(raw)) : null;
   } catch {
     return null;
   }
@@ -118,7 +118,7 @@ export function deleteProject(email, projectId) {
   const legacy = loadSession(email);
   localStorage.removeItem(projectSessionKey(email, projectId));
   if ((legacy?.projectId || 'legacy') === projectId) localStorage.removeItem(sessionKey(email));
-  localStorage.setItem(projectIndexKey(email), JSON.stringify(nextProjects));
+  safeSetItem(projectIndexKey(email), JSON.stringify(nextProjects));
   return Boolean(project || projects.length !== nextProjects.length);
 }
 
@@ -157,7 +157,47 @@ function upsertProjectIndex(email, snapshot) {
   const projects = readProjectIndex(email);
   const summary = projectSummary(snapshot);
   const next = [summary, ...projects.filter((project) => project.projectId !== summary.projectId)].slice(0, 30);
-  localStorage.setItem(projectIndexKey(email), JSON.stringify(next));
+  safeSetItem(projectIndexKey(email), JSON.stringify(next));
+}
+
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    if (!/quota|storage/i.test(error?.name || error?.message || '')) return false;
+    try {
+      localStorage.removeItem(key);
+      localStorage.removeItem(LS.draft);
+      localStorage.setItem(key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+function compactReviewAssets(assets = []) {
+  return assets.slice(-12).map((asset) => {
+    const dataUrl = String(asset.dataUrl || '');
+    return {
+      id: asset.id,
+      name: asset.name,
+      type: asset.type || 'application/octet-stream',
+      size: asset.size || 0,
+      dataUrl: dataUrl.length <= 750000 ? dataUrl : '',
+      text: String(asset.text || '').slice(0, 12000),
+      addedAt: asset.addedAt,
+    };
+  });
+}
+
+function normalizeStoredSession(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') return snapshot;
+  return {
+    ...snapshot,
+    reviewAssets: compactReviewAssets(snapshot.reviewAssets || []),
+  };
 }
 
 function projectSummary(snapshot) {

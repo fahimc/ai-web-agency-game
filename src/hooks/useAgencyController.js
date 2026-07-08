@@ -473,7 +473,7 @@ export function useAgencyController() {
         task: designRecommendationsTask(current),
         context: buildContext(['Plan', 'TaskBoard']),
         settings: current.settings,
-        state: current,
+        state: modelSafeState(current),
         complex: true,
       });
       const recommendations = normalizeDesignRecommendations(raw, current, 4);
@@ -596,7 +596,7 @@ export function useAgencyController() {
         task: step.task,
         context: buildContext(step.contextKeys || []),
         settings: current.settings,
-        state: current,
+        state: modelSafeState(current),
         signal: aborter.current?.signal,
         complex: Boolean(step.complex),
       });
@@ -660,7 +660,7 @@ export function useAgencyController() {
           task: pageContentTask(page, pages, current),
           context: buildContext(['Plan', 'TaskBoard', 'SelectedDesign', 'DesignDirection']),
           settings: current.settings,
-          state: current,
+          state: modelSafeState(current),
           signal: aborter.current?.signal,
           complex: current.projectPackage !== 'launch',
         });
@@ -944,7 +944,7 @@ export function useAgencyController() {
 
   const addReviewAssets = useCallback((assets = []) => {
     const cleanAssets = assets
-      .filter((asset) => asset?.name && (asset.dataUrl || asset.text))
+      .filter((asset) => asset?.name)
       .map((asset) => ({
         id: asset.id || `asset_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
         name: asset.name,
@@ -1491,6 +1491,17 @@ function replaceImageInWebsiteOutput(output, asset, fileName, scope) {
     return createSitePackageString(files, sitePackage.entry);
   }
   return replaceFirstImageSource(output, asset);
+}
+
+function modelSafeState(state) {
+  return {
+    ...state,
+    reviewAssets: (state.reviewAssets || []).map((asset) => ({
+      ...asset,
+      dataUrl: '',
+      text: String(asset.text || '').slice(0, 12000),
+    })),
+  };
 }
 
 function replaceFirstImageSource(html, asset) {

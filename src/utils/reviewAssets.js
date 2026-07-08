@@ -1,5 +1,7 @@
 export async function readReviewFile(file) {
-  const dataUrl = await readAsDataUrl(file);
+  const type = file.type || fileTypeFromName(file.name);
+  const isImage = String(type).startsWith('image/');
+  const dataUrl = isImage ? await readImageDataUrl(file) : '';
   let text = '';
   if (isTextFile(file)) text = await readAsText(file);
   else if (/\.docx$/i.test(file.name)) text = await readDocxText(file);
@@ -7,7 +9,7 @@ export async function readReviewFile(file) {
   return {
     id: `asset_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
     name: file.name,
-    type: file.type || fileTypeFromName(file.name),
+    type,
     size: file.size,
     dataUrl,
     text,
@@ -29,6 +31,40 @@ function readAsDataUrl(file) {
     reader.onload = () => resolve(String(reader.result || ''));
     reader.onerror = () => reject(reader.error || new Error('Could not read file.'));
     reader.readAsDataURL(file);
+  });
+}
+
+async function readImageDataUrl(file) {
+  if (/svg/i.test(file.type || file.name)) {
+    return file.size <= 350000 ? readAsDataUrl(file) : '';
+  }
+  try {
+    const original = await readAsDataUrl(file);
+    const image = await loadImage(original);
+    const max = 1400;
+    const scale = Math.min(1, max / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+    const width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+    const height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+    const compressed = canvas.toDataURL('image/jpeg', 0.78);
+    return compressed.length < original.length || original.length > 700000 ? compressed : original;
+  } catch {
+    return file.size <= 700000 ? readAsDataUrl(file) : '';
+  }
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Could not read image.'));
+    image.src = src;
   });
 }
 
@@ -54,7 +90,7 @@ async function readDocxText(file) {
 
 async function readPdfLooseText(file) {
   try {
-    const bytes = new Uint8Array(await file.arrayBuffer());
+    const bytes = new Uint8Array(await file.slice(0, 1200000).arrayBuffer());
     const decoded = new TextDecoder('latin1').decode(bytes);
     return decoded.replace(/[^\x20-\x7E\n\r]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 8000);
   } catch {
