@@ -11,7 +11,8 @@ export function OutputsModal({ state, actions }) {
       <nav className="modal-tabs">
         {outputOrder.map((outputKey) => (
           <button type="button" className={`modal-tab ${key === outputKey ? 'active' : ''}`} key={outputKey} onClick={() => actions.setActiveOutput(outputKey)}>
-            {state.outputs[outputKey] ? 'OK ' : ''}{outputNames[outputKey]}
+            <span>{outputNames[outputKey]}</span>
+            <small className={`output-status ${state.outputs[outputKey] ? 'ready' : ''}`}>{state.outputs[outputKey] ? 'Ready' : 'Pending'}</small>
           </button>
         ))}
       </nav>
@@ -42,6 +43,7 @@ function TextOutput({ outputKey, state, actions }) {
 function Website({ state, actions }) {
   const html = state.outputs.WebsiteHTML || '';
   const [showRevision, setShowRevision] = useState(false);
+  const [fullScreen, setFullScreen] = useState(false);
   const [revision, setRevision] = useState('');
   const revisionsRemaining = Math.max(0, MAX_REVISIONS - (state.revisionCount || 0));
   function submitRevision(event) {
@@ -62,6 +64,7 @@ function Website({ state, actions }) {
         <p className="muted">This is the real HTML output from Kai. Review it here, approve it, or request a revision.</p>
         <p className="small"><b>{revisionsRemaining}</b> of {MAX_REVISIONS} revisions remaining.</p>
         <div className="stack">
+          <button type="button" className="green" disabled={!html} onClick={() => setFullScreen(true)}>View full screen</button>
           <button type="button" onClick={actions.copyCurrentOutput}>Copy HTML</button>
           <button type="button" className="secondary" onClick={actions.downloadCurrentOutput}>Download HTML</button>
           {state.phase === 'approval' && <button type="button" className="green" onClick={actions.approve}>Approve preview</button>}
@@ -77,6 +80,22 @@ function Website({ state, actions }) {
         )}
       </aside>
       <div className="card">{html ? <iframe className="preview-frame" sandbox="allow-same-origin" title="Generated website preview" srcDoc={html} /> : <div className="empty">Website preview is not ready yet.</div>}</div>
+      {fullScreen && (
+        <div className="site-fullscreen" role="dialog" aria-modal="true" aria-label="Full screen website preview">
+          <div className="site-fullscreen-bar">
+            <div>
+              <b>Website preview</b>
+              <span>Review the customer site at full size.</span>
+            </div>
+            <div className="stack">
+              {state.phase === 'approval' && <button type="button" className="green" onClick={actions.approve}>Approve preview</button>}
+              <button type="button" className="secondary" onClick={actions.downloadCurrentOutput}>Download HTML</button>
+              <button type="button" className="secondary" onClick={() => setFullScreen(false)}>Close</button>
+            </div>
+          </div>
+          <iframe className="site-fullscreen-frame" sandbox="allow-same-origin" title="Full screen generated website preview" srcDoc={html} />
+        </div>
+      )}
     </div>
   );
 }
