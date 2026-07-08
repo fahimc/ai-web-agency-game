@@ -142,7 +142,7 @@ function Website({ state, actions, previewOnly = false }) {
               <div className="asset-list">
                 {state.reviewAssets.map((asset) => (
                   <div className="asset-item" key={asset.id}>
-                    {String(asset.type || '').startsWith('image/') && asset.dataUrl ? <img src={asset.dataUrl} alt="" /> : <span className="asset-doc">DOC</span>}
+                    {String(asset.type || '').startsWith('image/') && asset.dataUrl ? <img src={asset.dataUrl} alt="" /> : <span className="asset-doc">{String(asset.type || '').startsWith('image/') ? 'IMG' : 'DOC'}</span>}
                     <div><b>{asset.name}</b><small>{asset.type || 'file'} - {Math.round((asset.size || 0) / 1024)} KB</small></div>
                     {String(asset.type || '').startsWith('image/') && <button type="button" className="secondary" onClick={() => actions.replaceWebsiteImage(asset.id, currentFile, 'page')}>Use here</button>}
                     {String(asset.type || '').startsWith('image/') && <button type="button" className="secondary" onClick={() => actions.replaceWebsiteImage(asset.id, currentFile, 'site')}>Use all</button>}

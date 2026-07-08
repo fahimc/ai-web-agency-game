@@ -84,6 +84,17 @@ label input, label textarea, label select { margin-top: 6px; }
 .check input { width: auto; margin: 0; }
 
 .app { min-height: 100svh; display: grid; grid-template-rows: auto 1fr; }
+
+.app-fallback {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.app-fallback .card {
+  width: min(520px, 100%);
+}
 .hud {
   position: sticky;
   top: 0;

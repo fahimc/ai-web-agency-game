@@ -6,6 +6,9 @@ export async function readReviewFile(file) {
   if (isTextFile(file)) text = await readAsText(file);
   else if (/\.docx$/i.test(file.name)) text = await readDocxText(file);
   else if (/\.pdf$/i.test(file.name)) text = await readPdfLooseText(file);
+  if (isImage && !dataUrl) {
+    text = `Large image uploaded as reference only. File name: ${file.name}. Original size: ${Math.round(file.size / 1024)} KB. Ask the client for a smaller/compressed image if this exact file must be embedded.`;
+  }
   return {
     id: `asset_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
     name: file.name,
@@ -35,6 +38,7 @@ function readAsDataUrl(file) {
 }
 
 async function readImageDataUrl(file) {
+  if (file.size > 3000000) return '';
   if (/svg/i.test(file.type || file.name)) {
     return file.size <= 350000 ? readAsDataUrl(file) : '';
   }
