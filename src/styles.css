@@ -308,6 +308,86 @@ label input, label textarea, label select { margin-top: 6px; }
 .approval-card strong { font-size: 18px; }
 .revision-form, .deploy-panel, .voucher-form { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
 .revision-form textarea { min-height: 130px; }
+.review-tools {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.review-tools b,
+.review-tools p {
+  margin: 0;
+}
+.upload-drop {
+  border: 2px dashed rgba(17, 103, 241, .32);
+  background: rgba(17, 103, 241, .06);
+  border-radius: 16px;
+  padding: 12px;
+  text-align: center;
+  font-weight: 900;
+  color: var(--accent);
+  cursor: pointer;
+}
+.upload-drop input {
+  display: none;
+}
+.page-html-editor {
+  display: grid;
+  gap: 8px;
+}
+.page-html-editor textarea {
+  min-height: 260px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.asset-list {
+  display: grid;
+  gap: 8px;
+  max-height: 280px;
+  overflow: auto;
+}
+.asset-item {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 8px;
+}
+.asset-item img,
+.asset-doc {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 950;
+}
+.asset-item b,
+.asset-item small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.asset-item small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.asset-item button {
+  grid-column: span 2;
+  min-height: 34px;
+  padding: 7px 9px;
+  font-size: 12px;
+}
 .empty { padding: 28px; text-align: center; color: var(--muted); border: 2px dashed var(--line); border-radius: 18px; background: #fff9ed; }
 .details-modal { width: min(880px, 100%); }
 .details-form { display: grid; gap: 14px; }

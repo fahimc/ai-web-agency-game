@@ -55,13 +55,19 @@ function Website({ state, actions, previewOnly = false }) {
   const sitePackage = useMemo(() => parseSitePackage(output), [output]);
   const [currentFile, setCurrentFile] = useState(sitePackage?.entry || 'index.html');
   const [showRevision, setShowRevision] = useState(false);
+  const [showReviewTools, setShowReviewTools] = useState(false);
+  const [showPageEditor, setShowPageEditor] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
   const [revision, setRevision] = useState('');
+  const [pageDraft, setPageDraft] = useState('');
   const html = sitePackage ? (sitePackage.files[currentFile] || sitePackage.files[sitePackage.entry] || '') : output;
   const revisionsRemaining = Math.max(0, MAX_REVISIONS - (state.revisionCount || 0));
   useEffect(() => {
     setCurrentFile(sitePackage?.entry || 'index.html');
   }, [sitePackage?.entry, output]);
+  useEffect(() => {
+    setPageDraft(html);
+  }, [html, currentFile]);
   function handleFrameLoad(event) {
     if (!sitePackage) return;
     const doc = event.currentTarget.contentDocument;
@@ -88,6 +94,22 @@ function Website({ state, actions, previewOnly = false }) {
     setRevision('');
     setShowRevision(false);
   }
+  async function handleFiles(event) {
+    const files = Array.from(event.target.files || []);
+    event.target.value = '';
+    if (!files.length) return;
+    try {
+      const assets = await Promise.all(files.map(readReviewFile));
+      actions.addReviewAssets(assets);
+    } catch (error) {
+      actions.notify(`File upload failed: ${error?.message || error}`);
+    }
+  }
+  function savePageDraft() {
+    actions.updateWebsitePageHtml(currentFile, pageDraft);
+    setShowPageEditor(false);
+  }
+  const imageAssets = (state.reviewAssets || []).filter((asset) => String(asset.type || '').startsWith('image/') && asset.dataUrl);
   return (
     <div className={`split-preview ${previewOnly ? 'preview-only' : ''}`}>
       <aside className="approval-card">
@@ -99,6 +121,7 @@ function Website({ state, actions, previewOnly = false }) {
           <button type="button" className="green" disabled={!html} onClick={() => setFullScreen(true)}>View full screen</button>
           {!previewOnly && <button type="button" onClick={actions.copyCurrentOutput}>{sitePackage ? 'Copy package' : 'Copy HTML'}</button>}
           {!previewOnly && <button type="button" className="secondary" onClick={actions.downloadCurrentOutput}>{sitePackage ? 'Download site .zip' : 'Download HTML'}</button>}
+          {state.phase === 'approval' && <button type="button" className="secondary" onClick={() => setShowReviewTools((value) => !value)}>Edit content/images</button>}
           {state.phase === 'approval' && <button type="button" className="green" onClick={actions.approve}>Approve preview</button>}
           {state.phase === 'approval' && <button type="button" className="secondary" disabled={revisionsRemaining <= 0} onClick={() => setShowRevision((value) => !value)}>Request revision</button>}
         </div>
@@ -111,10 +134,45 @@ function Website({ state, actions, previewOnly = false }) {
             ))}
           </div>
         )}
+        {showReviewTools && (
+          <div className="review-tools">
+            <div>
+              <b>Content and assets</b>
+              <p className="small muted">Upload images or docs, edit this page directly, or use uploaded images in the site.</p>
+            </div>
+            <label className="upload-drop">Upload images/docs
+              <input type="file" multiple accept="image/*,.txt,.md,.csv,.json,.pdf,.docx,.doc" onChange={handleFiles} />
+            </label>
+            <div className="stack">
+              <button type="button" className="secondary" onClick={() => setShowPageEditor((value) => !value)}>{showPageEditor ? 'Hide HTML editor' : 'Edit current page HTML'}</button>
+            </div>
+            {showPageEditor && (
+              <div className="page-html-editor">
+                <textarea value={pageDraft} onChange={(event) => setPageDraft(event.target.value)} aria-label="Current page HTML" />
+                <button type="button" onClick={savePageDraft}>Save page HTML</button>
+              </div>
+            )}
+            {state.reviewAssets?.length > 0 && (
+              <div className="asset-list">
+                {state.reviewAssets.map((asset) => (
+                  <div className="asset-item" key={asset.id}>
+                    {String(asset.type || '').startsWith('image/') && asset.dataUrl ? <img src={asset.dataUrl} alt="" /> : <span className="asset-doc">DOC</span>}
+                    <div><b>{asset.name}</b><small>{asset.type || 'file'} · {Math.round((asset.size || 0) / 1024)} KB</small></div>
+                    {String(asset.type || '').startsWith('image/') && <button type="button" className="secondary" onClick={() => actions.replaceWebsiteImage(asset.id, currentFile, 'page')}>Use here</button>}
+                    {String(asset.type || '').startsWith('image/') && <button type="button" className="secondary" onClick={() => actions.replaceWebsiteImage(asset.id, currentFile, 'site')}>Use all</button>}
+                    <button type="button" className="secondary" onClick={() => actions.removeReviewAsset(asset.id)}>Remove</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!state.reviewAssets?.length && <p className="small muted">No uploaded files yet.</p>}
+            {imageAssets.length > 0 && <p className="small muted">Uploaded images can be applied immediately. Uploaded docs are passed into revision context where text can be extracted.</p>}
+          </div>
+        )}
         {showRevision && (
           <form className="revision-form" onSubmit={submitRevision}>
             <label>Revision request
-              <textarea value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="Tell Mira what should change in the design, layout, copy, or sections..." />
+              <textarea value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="Tell Mira what should change in the content, images, design, layout, or sections. Uploaded docs/images will be included as context." />
             </label>
             <button type="submit">Send to designer</button>
           </form>
@@ -139,6 +197,72 @@ function Website({ state, actions, previewOnly = false }) {
       )}
     </div>
   );
+}
+
+async function readReviewFile(file) {
+  const dataUrl = await readAsDataUrl(file);
+  let text = '';
+  if (isTextFile(file)) text = await readAsText(file);
+  else if (/\.docx$/i.test(file.name)) text = await readDocxText(file);
+  else if (/\.pdf$/i.test(file.name)) text = await readPdfLooseText(file);
+  return {
+    id: `asset_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    name: file.name,
+    type: file.type || fileTypeFromName(file.name),
+    size: file.size,
+    dataUrl,
+    text,
+  };
+}
+
+function readAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error || new Error('Could not read file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function readAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || '').slice(0, 12000));
+    reader.onerror = () => reject(reader.error || new Error('Could not read file text.'));
+    reader.readAsText(file);
+  });
+}
+
+async function readDocxText(file) {
+  try {
+    const { default: JSZip } = await import('jszip');
+    const zip = await JSZip.loadAsync(await file.arrayBuffer());
+    const xml = await zip.file('word/document.xml')?.async('string');
+    return String(xml || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 12000);
+  } catch {
+    return '';
+  }
+}
+
+async function readPdfLooseText(file) {
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const decoded = new TextDecoder('latin1').decode(bytes);
+    return decoded.replace(/[^\x20-\x7E\n\r]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 8000);
+  } catch {
+    return '';
+  }
+}
+
+function isTextFile(file) {
+  return /^text\//i.test(file.type || '') || /\.(txt|md|csv|json)$/i.test(file.name);
+}
+
+function fileTypeFromName(name) {
+  if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(name)) return 'image/*';
+  if (/\.pdf$/i.test(name)) return 'application/pdf';
+  if (/\.docx?$/i.test(name)) return 'application/msword';
+  return 'application/octet-stream';
 }
 
 function ProjectPdf({ state, actions }) {

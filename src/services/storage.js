@@ -64,6 +64,7 @@ export function saveDraft(state) {
     selectedSiteSections: state.selectedSiteSections,
     designRecommendations: state.designRecommendations || [],
     designRecommendationStatus: state.designRecommendationStatus || 'idle',
+    reviewAssets: state.reviewAssets || [],
     paid: state.paid,
     paymentEstimate: state.paymentEstimate,
     phase: state.phase,

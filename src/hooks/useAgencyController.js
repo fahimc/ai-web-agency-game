@@ -40,6 +40,7 @@ const emptyState = {
   selectedSiteSections: [],
   designRecommendations: [],
   designRecommendationStatus: 'idle',
+  reviewAssets: [],
   paid: false,
   paymentEstimate: null,
   availableProjects: [],
@@ -97,6 +98,7 @@ export function useAgencyController() {
       selectedSiteSections: saved.selectedSiteSections || next.selectedSiteSections,
       designRecommendations: saved.designRecommendations || next.designRecommendations,
       designRecommendationStatus: saved.designRecommendationStatus || next.designRecommendationStatus,
+      reviewAssets: saved.reviewAssets || next.reviewAssets,
         paid: saved.paid ?? next.paid,
         paymentEstimate: saved.paymentEstimate || next.paymentEstimate,
         lastSaved: saved.lastSaved,
@@ -194,6 +196,7 @@ export function useAgencyController() {
       selectedSiteSections: [],
       designRecommendations: [],
       designRecommendationStatus: 'idle',
+      reviewAssets: [],
       paid: false,
       paymentEstimate: null,
       availableProjects: [],
@@ -282,6 +285,7 @@ export function useAgencyController() {
       selectedSiteSections: loaded.selectedSiteSections || [],
       designRecommendations: loaded.designRecommendations || [],
       designRecommendationStatus: loaded.designRecommendationStatus || 'idle',
+      reviewAssets: loaded.reviewAssets || [],
       paid: Boolean(loaded.paid),
       paymentEstimate: loaded.paymentEstimate || null,
       availableProjects: listProjects(email),
@@ -332,6 +336,7 @@ export function useAgencyController() {
       selectedSiteSections: [],
       designRecommendations: [],
       designRecommendationStatus: 'idle',
+      reviewAssets: [],
       paid: false,
       paymentEstimate: null,
       availableProjects: listProjects(email),
@@ -365,7 +370,7 @@ export function useAgencyController() {
       speak('reception', 'That does not look like an email address. Try again.');
       return;
     }
-    update((current) => ({ ...current, email, projectId: current.projectId || createProjectId(), projectName: current.projectName || 'Static website project', projectModel: current.projectModel || current.settings.selectedModel || 'gpt-5.4-mini', projectPackage: current.projectPackage || packageForModel(current.projectModel || current.settings.selectedModel || 'gpt-5.4-mini').id, paid: false, paymentEstimate: null, availableProjects: listProjects(email), phase: 'new_details' }));
+    update((current) => ({ ...current, email, projectId: current.projectId || createProjectId(), projectName: current.projectName || 'Static website project', projectModel: current.projectModel || current.settings.selectedModel || 'gpt-5.4-mini', projectPackage: current.projectPackage || packageForModel(current.projectModel || current.settings.selectedModel || 'gpt-5.4-mini').id, paid: false, paymentEstimate: null, reviewAssets: [], availableProjects: listProjects(email), phase: 'new_details' }));
     speak('reception', `Thanks, ${stateRef.current.userName || 'there'}. Please fill in this form and the team will treat it as the full brief.`, ['openDetails']);
     addConvo('Nova', 'Email saved. Please complete the project form.');
     window.setTimeout(() => setModal('details'), 120);
@@ -384,6 +389,7 @@ export function useAgencyController() {
       paymentEstimate: null,
       designRecommendations: [],
       designRecommendationStatus: 'idle',
+      reviewAssets: [],
       phase: 'packages',
       progress: 2,
       progressTask: 'Package selection',
@@ -411,6 +417,7 @@ export function useAgencyController() {
       progressTask: 'Payment required',
       designRecommendations: [],
       designRecommendationStatus: 'idle',
+      reviewAssets: [],
     }));
     addConvo('Nova', `${selectedPackage.name} selected. Payment is required before the team starts.`);
     speak('reception', `${selectedPackage.name} selected. I will take you to secure checkout now.`);
@@ -807,6 +814,7 @@ export function useAgencyController() {
     speak('design', 'Got it. I am taking the revision back through design first, then Kai will rebuild the preview.');
     try {
       aborter.current = new AbortController();
+      const assetContext = reviewAssetsContext(stateRef.current.reviewAssets || []);
       await runStep({
         key: 'DesignDirection',
         employee: 'design',
@@ -814,7 +822,7 @@ export function useAgencyController() {
         quest: `Design revision ${revisionCount}`,
         replace: true,
         contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'WebsiteHTML'],
-        task: `Revise the design direction using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across the whole site: ${revisionPalette.join(', ')}.` : ''} Return a concise updated design direction with layout, visual, content, and responsive instructions for the developer. Keep strong existing choices that still fit.`,
+        task: `Revise the design direction using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across the whole site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn a concise updated design direction with layout, visual, content, and responsive instructions for the developer. Keep strong existing choices that still fit.`,
       });
       const revisedOutput = await runStep({
         key: 'WebsiteHTML',
@@ -825,8 +833,8 @@ export function useAgencyController() {
         replace: true,
         contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'PageContent', 'WebsiteHTML'],
         task: stateRef.current.projectPackage === 'launch'
-          ? `Revise the existing website HTML using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across the whole site: ${revisionPalette.join(', ')}.` : ''} Return only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts, improve the requested parts, and ensure responsive accessible markup.`
-          : `Revise the existing multi-page website package using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across every file in the site: ${revisionPalette.join(', ')}.` : ''} Return JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes.`,
+          ? `Revise the existing website HTML using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across the whole site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts, improve the requested parts, and ensure responsive accessible markup.`
+          : `Revise the existing multi-page website package using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across every file in the site: ${revisionPalette.join(', ')}.` : ''}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}\n\nReturn JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes.`,
       });
       if (revisionPalette) {
         const paletteOutput = applyPaletteToWebsiteOutput(revisedOutput, revisionPalette);
@@ -902,6 +910,66 @@ export function useAgencyController() {
   const saveClientEdits = useCallback((client) => {
     update((current) => ({ ...current, ...client, brief: client.clientDetails || client.brief || current.brief }));
     notify('Client info saved.');
+  }, [notify, update]);
+
+  const addReviewAssets = useCallback((assets = []) => {
+    const cleanAssets = assets
+      .filter((asset) => asset?.name && (asset.dataUrl || asset.text))
+      .map((asset) => ({
+        id: asset.id || `asset_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+        name: asset.name,
+        type: asset.type || 'application/octet-stream',
+        size: asset.size || 0,
+        dataUrl: asset.dataUrl || '',
+        text: asset.text || '',
+        addedAt: new Date().toISOString(),
+      }));
+    if (!cleanAssets.length) return;
+    update((current) => ({
+      ...current,
+      reviewAssets: [...(current.reviewAssets || []), ...cleanAssets].slice(-30),
+    }));
+    notify(`${cleanAssets.length} file${cleanAssets.length === 1 ? '' : 's'} added.`);
+  }, [notify, update]);
+
+  const removeReviewAsset = useCallback((assetId) => {
+    update((current) => ({
+      ...current,
+      reviewAssets: (current.reviewAssets || []).filter((asset) => asset.id !== assetId),
+    }));
+    notify('File removed.');
+  }, [notify, update]);
+
+  const updateWebsitePageHtml = useCallback((fileName, html) => {
+    update((current) => ({
+      ...current,
+      outputs: {
+        ...current.outputs,
+        WebsiteHTML: updateWebsiteOutputFile(current.outputs.WebsiteHTML || '', fileName, html),
+      },
+      activeOutput: 'WebsiteHTML',
+      approved: false,
+    }));
+    notify('Page updated.');
+  }, [notify, update]);
+
+  const replaceWebsiteImage = useCallback((assetId, fileName = 'index.html', scope = 'page') => {
+    const current = stateRef.current;
+    const asset = (current.reviewAssets || []).find((item) => item.id === assetId);
+    if (!asset?.dataUrl || !String(asset.type || '').startsWith('image/')) {
+      notify('Choose an uploaded image first.');
+      return;
+    }
+    update((stateNow) => ({
+      ...stateNow,
+      outputs: {
+        ...stateNow.outputs,
+        WebsiteHTML: replaceImageInWebsiteOutput(stateNow.outputs.WebsiteHTML || '', asset, fileName, scope),
+      },
+      activeOutput: 'WebsiteHTML',
+      approved: false,
+    }));
+    notify(scope === 'site' ? 'Image applied across site.' : 'Image applied to page.');
   }, [notify, update]);
 
   const stopRun = useCallback(() => {
@@ -1077,6 +1145,10 @@ export function useAgencyController() {
     setMenuTab,
     setActiveOutput: (key) => update((current) => ({ ...current, activeOutput: key })),
     saveClientEdits,
+    addReviewAssets,
+    removeReviewAsset,
+    updateWebsitePageHtml,
+    replaceWebsiteImage,
     stopRun,
     copyCurrentOutput,
     downloadCurrentOutput,
@@ -1097,7 +1169,10 @@ export function useAgencyController() {
     notify,
     openOutputs,
     openWebsitePreview,
+    addReviewAssets,
     processApproval,
+    removeReviewAsset,
+    replaceWebsiteImage,
     requestRevision,
     resetToChoice,
     startFresh,
@@ -1112,6 +1187,7 @@ export function useAgencyController() {
     selectPackage,
     openDesignOptions,
     selectDesignStyle,
+    updateWebsitePageHtml,
     processCustomerChoice,
     processProjectChoice,
     loadProject,
@@ -1327,6 +1403,49 @@ function applyPaletteToHtml(html, palette) {
   const override = `:root{--ink:${ink};--accent:${accent};--bg:${bg};--secondary:${secondary};--card:${surface};--muted:#5f6368;--line:rgba(10,10,10,.14)}body{background:var(--bg)!important;color:var(--ink)!important}.button{background:var(--accent)!important}.button.secondary{background:var(--ink)!important}.card,.panel,.tag,.input{background:var(--card)!important}.page-kicker,.eyebrow{color:var(--accent)!important}`;
   if (/<\/style>/i.test(value)) return value.replace(/<\/style>/i, `${override}</style>`);
   return value.replace(/<\/head>/i, `<style>${override}</style></head>`);
+}
+
+function updateWebsiteOutputFile(output, fileName, html) {
+  const sitePackage = parseSitePackage(output);
+  if (sitePackage) {
+    const targetFile = sitePackage.files[fileName] ? fileName : sitePackage.entry;
+    return createSitePackageString({ ...sitePackage.files, [targetFile]: html }, sitePackage.entry);
+  }
+  return html;
+}
+
+function replaceImageInWebsiteOutput(output, asset, fileName, scope) {
+  const sitePackage = parseSitePackage(output);
+  if (sitePackage) {
+    const files = Object.fromEntries(Object.entries(sitePackage.files).map(([name, html]) => {
+      if (scope !== 'site' && name !== fileName) return [name, html];
+      return [name, replaceFirstImageSource(html, asset)];
+    }));
+    return createSitePackageString(files, sitePackage.entry);
+  }
+  return replaceFirstImageSource(output, asset);
+}
+
+function replaceFirstImageSource(html, asset) {
+  const alt = asset.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
+  const replacement = `<img src="${asset.dataUrl}" alt="${escapeHtmlAttr(alt)}">`;
+  if (/<img\b[^>]*>/i.test(html)) {
+    return String(html || '').replace(/<img\b[^>]*>/i, replacement);
+  }
+  return String(html || '').replace(/<\/main>/i, `<section class="section"><img src="${asset.dataUrl}" alt="${escapeHtmlAttr(alt)}" style="width:100%;border-radius:20px"></section></main>`);
+}
+
+function reviewAssetsContext(assets = []) {
+  return assets.slice(-12).map((asset, index) => {
+    const kind = String(asset.type || '').startsWith('image/') ? 'Image' : 'Document';
+    const text = asset.text ? `\nNotes/text excerpt: ${String(asset.text).slice(0, 1200)}` : '';
+    const imageNote = kind === 'Image' ? '\nUse this image as available site imagery when relevant. The app can embed the uploaded image data directly.' : '';
+    return `${index + 1}. ${kind}: ${asset.name} (${asset.type || 'unknown'}, ${Math.round((asset.size || 0) / 1024)} KB)${imageNote}${text}`;
+  }).join('\n\n');
+}
+
+function escapeHtmlAttr(value) {
+  return String(value || '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 }
 
 function fallbackWebsiteHtml(state) {
