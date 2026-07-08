@@ -7,6 +7,7 @@ import {
   buildExampleSite,
   designRecommendationsTask,
   fallbackDesignRecommendations,
+  normalizePalette,
   normalizeDesignRecommendations,
 } from '../data/siteBlueprints.js';
 import { completionSteps, previewSteps } from '../data/steps.js';
@@ -23,7 +24,7 @@ import {
   saveDraft,
 } from '../services/storage.js';
 import { cleanHTML, downloadText, extractEmail, phaseLabel, safeFileName } from '../utils/text.js';
-import { fileNameForPage, parseSitePackage } from '../utils/sitePackage.js';
+import { createSitePackageString, fileNameForPage, parseSitePackage } from '../utils/sitePackage.js';
 import { createProjectPdf } from '../utils/pdf.js';
 import { MAX_REVISIONS, estimateAiCost, packageForModel, packageOption } from '../utils/pricing.js';
 
@@ -791,12 +792,14 @@ export function useAgencyController() {
       return;
     }
     const revisionCount = stateRef.current.revisionCount + 1;
+    const revisionPalette = paletteFromRevision(changeText);
     update((current) => ({
       ...current,
       phase: 'running',
       running: true,
       approved: false,
       revisionCount,
+      selectedDesignPalette: revisionPalette || current.selectedDesignPalette,
       activeEmployee: 'design',
       progressTask: 'Design revision',
     }));
@@ -811,20 +814,29 @@ export function useAgencyController() {
         quest: `Design revision ${revisionCount}`,
         replace: true,
         contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'WebsiteHTML'],
-        task: `Revise the design direction using this client change request: "${changeText}". Return a concise updated design direction with layout, visual, content, and responsive instructions for the developer. Keep strong existing choices that still fit.`,
+        task: `Revise the design direction using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across the whole site: ${revisionPalette.join(', ')}.` : ''} Return a concise updated design direction with layout, visual, content, and responsive instructions for the developer. Keep strong existing choices that still fit.`,
       });
-      await runStep({
+      const revisedOutput = await runStep({
         key: 'WebsiteHTML',
         employee: 'dev',
         progress: 70,
         quest: `Preview revision ${revisionCount}`,
         complex: true,
         replace: true,
-        contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'WebsiteHTML'],
+        contextKeys: ['Plan', 'TaskBoard', 'DesignDirection', 'PageContent', 'WebsiteHTML'],
         task: stateRef.current.projectPackage === 'launch'
-          ? `Revise the existing website HTML using this client change request: "${changeText}". Return only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts, improve the requested parts, and ensure responsive accessible markup.`
-          : `Revise the existing multi-page website package using this client change request: "${changeText}". Return JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes.`,
+          ? `Revise the existing website HTML using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across the whole site: ${revisionPalette.join(', ')}.` : ''} Return only the complete corrected single-file HTML starting with <!doctype html>. Keep previous good parts, improve the requested parts, and ensure responsive accessible markup.`
+          : `Revise the existing multi-page website package using this client change request: "${changeText}". ${revisionPalette ? `Apply this palette across every file in the site: ${revisionPalette.join(', ')}.` : ''} Return JSON only with kind "microagency-site-package-v1", entry "index.html", and a files object containing one separate full HTML document per approved page. Keep normal file links such as href="about.html" and href="contact.html"; do not use hash routes or #/ routes.`,
       });
+      if (revisionPalette) {
+        const paletteOutput = applyPaletteToWebsiteOutput(revisedOutput, revisionPalette);
+        update((current) => ({
+          ...current,
+          outputs: { ...current.outputs, WebsiteHTML: paletteOutput },
+          activeOutput: 'WebsiteHTML',
+          selectedDesignPalette: revisionPalette,
+        }));
+      }
       update((current) => ({ ...current, phase: 'approval', running: false, progress: 70, progressTask: 'Preview approval' }));
       speak('dev', 'Updated preview is ready. Check it, then approve or request another change.', ['openPreview', 'approve']);
       addConvo('Nova', 'Updated preview ready for approval.');
@@ -1277,6 +1289,44 @@ function parseStateBrief(text) {
 
 function uniqueStateItems(items) {
   return [...new Set((items || []).map((item) => String(item || '').trim()).filter(Boolean))];
+}
+
+function paletteFromRevision(text) {
+  const value = String(text || '').toLowerCase();
+  if (/(black\s*(and|&|\+)\s*white|white\s*(and|&|\+)\s*black|monochrome|grayscale|greyscale)/i.test(value)) {
+    return normalizePalette(['#0a0a0a', '#111111', '#ffffff', '#404040', '#f7f7f7']);
+  }
+  const hexColors = String(text || '').match(/#[0-9a-f]{6}\b/ig);
+  if (hexColors?.length >= 2) return normalizePalette(hexColors);
+  return null;
+}
+
+function applyPaletteToWebsiteOutput(output, palette) {
+  const colors = normalizePalette(palette);
+  const sitePackage = parseSitePackage(output);
+  if (sitePackage) {
+    const files = Object.fromEntries(Object.entries(sitePackage.files).map(([fileName, html]) => [fileName, applyPaletteToHtml(html, colors)]));
+    return createSitePackageString(files, sitePackage.entry);
+  }
+  return applyPaletteToHtml(output, colors);
+}
+
+function applyPaletteToHtml(html, palette) {
+  const [ink, accent, bg, secondary, surface] = normalizePalette(palette);
+  let value = String(html || '');
+  const replacements = [
+    ['--ink', ink],
+    ['--accent', accent],
+    ['--bg', bg],
+    ['--secondary', secondary],
+    ['--card', surface],
+  ];
+  replacements.forEach(([name, color]) => {
+    value = value.replace(new RegExp(`${name}:\\s*#[0-9a-f]{3,6}`, 'ig'), `${name}:${color}`);
+  });
+  const override = `:root{--ink:${ink};--accent:${accent};--bg:${bg};--secondary:${secondary};--card:${surface};--muted:#5f6368;--line:rgba(10,10,10,.14)}body{background:var(--bg)!important;color:var(--ink)!important}.button{background:var(--accent)!important}.button.secondary{background:var(--ink)!important}.card,.panel,.tag,.input{background:var(--card)!important}.page-kicker,.eyebrow{color:var(--accent)!important}`;
+  if (/<\/style>/i.test(value)) return value.replace(/<\/style>/i, `${override}</style>`);
+  return value.replace(/<\/head>/i, `<style>${override}</style></head>`);
 }
 
 function fallbackWebsiteHtml(state) {

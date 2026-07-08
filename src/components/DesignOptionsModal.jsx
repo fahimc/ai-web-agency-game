@@ -41,7 +41,7 @@ export function DesignOptionsModal({ state, actions }) {
       colors: normalizePalette(activeOption?.palette || activeLayout.palette),
     };
     const presets = paletteOptionsForLayout(activeLayout, state);
-    return [modelPalette, ...presets.filter((option) => normalizePalette(option.colors).join('|') !== modelPalette.colors.join('|'))].slice(0, 4);
+    return [modelPalette, ...presets.filter((option) => normalizePalette(option.colors).join('|') !== modelPalette.colors.join('|'))].slice(0, 5);
   }, [activeLayout, activeOption, state]);
   const structureRecommendation = useMemo(() => ({
     pages: activeOption?.pages?.length ? activeOption.pages : ['Home', 'Services', 'About', 'FAQ', 'Contact'],
@@ -295,6 +295,10 @@ function PaletteChooser({
         <h3>Colour palette</h3>
         <p className="small muted">Use up to {MAX_PALETTE_COLORS} colours: text, primary, background, accent, and surface.</p>
       </div>
+      <div className="palette-mode-toggle" aria-label="Palette mode">
+        <button type="button" className={paletteMode === 'preset' ? 'active' : ''} onClick={() => setPaletteMode('preset')}>Presets</button>
+        <button type="button" className={paletteMode === 'custom' ? 'active' : ''} onClick={() => setPaletteMode('custom')}>User colours</button>
+      </div>
       <div className="palette-options">
         {paletteOptions.map((option, index) => (
           <button
@@ -318,8 +322,11 @@ function PaletteChooser({
       {paletteMode === 'custom' && (
         <div className="custom-palette-grid">
           {normalizePalette(customColors).map((color, index) => (
-            <label key={index}>Colour {index + 1}
-              <input type="color" value={color} onChange={(event) => updateCustomColor(index, event.target.value)} />
+            <label className="custom-colour-tile" key={index}>
+              <span>{PALETTE_ROLES[index] || `Colour ${index + 1}`}</span>
+              <i style={{ background: color }} />
+              <small>{color.toUpperCase()}</small>
+              <input aria-label={`Pick ${PALETTE_ROLES[index] || `colour ${index + 1}`}`} type="color" value={color} onChange={(event) => updateCustomColor(index, event.target.value)} />
             </label>
           ))}
         </div>

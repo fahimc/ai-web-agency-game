@@ -157,6 +157,8 @@ export function designRecommendationsTask(state) {
     'Available base layouts:',
     layoutList,
     '',
+    'Palette guidance for 2026-style recommendations: use modern monochrome for corporate/luxury restraint; earthy vibrancy for organic, community, nature and grounded brands; moody botanical greens for local trust and sustainability; electric indigo/cyan for SaaS and technical products; soft editorial neutrals for weddings, fashion, beauty and lifestyle; warm venue tones for restaurants and hospitality; wellness mist tones for health, care and calm services.',
+    '',
     'JSON shape:',
     '{"recommendations":[{"layoutId":"local-service","name":"Trust-led Local Booking","tone":"Friendly, reassuring, polished","rationale":"Why this direction fits the brief.","paletteName":"Fresh trust","palette":["#173d35","#18a058","#fff7ed","#eab308","#ffffff"],"pages":["Home","Services","About","FAQ","Contact"],"sections":["Hero","Trust / proof bar","Services","Benefits","Process","Testimonials","FAQ","Lead capture form"]}]}',
     '',
@@ -167,25 +169,40 @@ export function designRecommendationsTask(state) {
 export function paletteOptionsForLayout(layout, state) {
   const base = normalizePalette(layout.palette);
   const brief = `${state?.brief || ''}\n${state?.clientDetails || ''}`.toLowerCase();
-  const calm = normalizePalette(['#12343b', '#2bb3a3', '#f3fbf9', '#f7c948', '#ffffff']);
-  const premium = normalizePalette(['#111827', '#b7791f', '#faf7f0', '#6b7280', '#ffffff']);
-  const energetic = normalizePalette(['#1e1b4b', '#ef4444', '#fff7ed', '#f59e0b', '#ffffff']);
-  const local = normalizePalette(['#173d35', '#18a058', '#fff7ed', '#eab308', '#ffffff']);
-  const clean = normalizePalette(['#08111f', '#0ea5e9', '#eef6ff', '#22c55e', '#ffffff']);
-  const soft = normalizePalette(['#164e63', '#14b8a6', '#f0fdfa', '#f4a261', '#ffffff']);
-  const recommended = brief.match(/health|wellness|therapy|care|calm|yoga/) ? soft
-    : brief.match(/event|launch|bold|energy|festival/) ? energetic
-    : brief.match(/local|service|trade|repair|salon/) ? local
-    : brief.match(/premium|luxury|boutique|brand/) ? premium
-    : brief.match(/software|saas|app|platform|tool/) ? clean
+  const palettes = modernPaletteSet();
+  const recommended = brief.match(/health|wellness|therapy|care|calm|yoga|skincare/) ? palettes.wellness
+    : brief.match(/event|launch|bold|energy|festival/) ? palettes.electric
+    : brief.match(/restaurant|cafe|bar|venue|food|menu/) ? palettes.warmVenue
+    : brief.match(/wedding|bridal|bride|beauty|fashion|editorial/) ? palettes.softEditorial
+    : brief.match(/local|service|trade|repair|salon/) ? palettes.botanical
+    : brief.match(/premium|luxury|boutique|brand|jewellery/) ? palettes.luxury
+    : brief.match(/software|saas|app|platform|tool|tech/) ? palettes.saas
+    : brief.match(/nonprofit|community|sustainable|nature/) ? palettes.earthy
     : base;
   return uniquePalettes([
     { id: 'recommended', name: 'Mira recommended', colors: recommended },
-    { id: 'clean', name: 'Clean trust', colors: clean },
-    { id: 'premium', name: 'Premium contrast', colors: premium },
-    { id: 'warm', name: 'Warm local', colors: local },
-    { id: 'calm', name: 'Calm support', colors: calm },
-  ]).slice(0, 4);
+    { id: 'modern-mono', name: 'Modern mono', colors: palettes.mono },
+    { id: 'earthy-vibrancy', name: 'Earthy vibrancy', colors: palettes.earthy },
+    { id: 'moody-botanical', name: 'Moody botanical', colors: palettes.botanical },
+    { id: 'electric-saas', name: 'Electric SaaS', colors: palettes.saas },
+    { id: 'soft-editorial', name: 'Soft editorial', colors: palettes.softEditorial },
+    { id: 'wellness-mist', name: 'Wellness mist', colors: palettes.wellness },
+    { id: 'luxury-neutral', name: 'Luxury neutral', colors: palettes.luxury },
+    { id: 'warm-venue', name: 'Warm venue', colors: palettes.warmVenue },
+  ]).slice(0, 6);
+}
+
+function modernPaletteSet() {
+  return {
+    mono: normalizePalette(['#0a0a0a', '#111111', '#ffffff', '#6b7280', '#f7f7f7']),
+    earthy: normalizePalette(['#2f3a23', '#b7791f', '#f4e7d3', '#8b3a2b', '#ffffff']),
+    botanical: normalizePalette(['#123524', '#2f6f5b', '#f7f3ea', '#c7a76c', '#ffffff']),
+    saas: normalizePalette(['#08111f', '#4f46e5', '#f8fafc', '#22d3ee', '#ffffff']),
+    softEditorial: normalizePalette(['#111111', '#efe9e1', '#d8c3ad', '#8a6a4f', '#ffffff']),
+    wellness: normalizePalette(['#164e63', '#2bb3a3', '#f3fbf9', '#f4a261', '#ffffff']),
+    luxury: normalizePalette(['#1f130f', '#6b3f2a', '#f7efe5', '#b08d57', '#ffffff']),
+    warmVenue: normalizePalette(['#2f1b12', '#c2410c', '#fff7ed', '#f59e0b', '#ffffff']),
+  };
 }
 
 export function recommendedStructure(layout, state) {
@@ -331,6 +348,24 @@ export function paletteLabel(color) {
     '#f7c948': 'Sun yellow',
     '#1e1b4b': 'Indigo',
     '#ef4444': 'Signal red',
+    '#0a0a0a': 'Black',
+    '#f7f7f7': 'Soft white',
+    '#2f3a23': 'Earth olive',
+    '#f4e7d3': 'Clay linen',
+    '#8b3a2b': 'Terracotta',
+    '#2f6f5b': 'Jade green',
+    '#f7f3ea': 'Warm ivory',
+    '#c7a76c': 'Muted gold',
+    '#4f46e5': 'Electric indigo',
+    '#22d3ee': 'Bright cyan',
+    '#efe9e1': 'Editorial cream',
+    '#d8c3ad': 'Soft taupe',
+    '#8a6a4f': 'Walnut',
+    '#1f130f': 'Espresso black',
+    '#6b3f2a': 'Rich brown',
+    '#f7efe5': 'Warm porcelain',
+    '#b08d57': 'Champagne',
+    '#c2410c': 'Burnt orange',
   };
   return names[value] || value.toUpperCase();
 }
