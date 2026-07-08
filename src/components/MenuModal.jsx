@@ -29,7 +29,7 @@ export function MenuModal({ state, actions, menuTab, phaseLabel }) {
 }
 
 function Projects({ state, actions }) {
-  const projects = useMemo(() => listProjects(state.email), [state.email, state.lastSaved, state.projectId]);
+  const projects = useMemo(() => listProjects(state.email), [state.email, state.lastSaved, state.projectId, state.availableProjects]);
   if (!state.email) return <div className="empty">Enter an email first, then saved projects for that customer will appear here.</div>;
   return (
     <div className="modal-grid">
@@ -58,11 +58,13 @@ function Projects({ state, actions }) {
                   {project.complete ? 'Complete' : `${Math.round(project.progress || 0)}% complete`} {project.lastSaved ? `- saved ${project.lastSaved}` : ''}
                 </span>
               </div>
-              <div className="stack">
+              <div className="stack project-actions">
                 {isCurrent && <span className="project-pill">Current</span>}
                 <button type="button" className={incomplete ? 'green' : 'secondary'} onClick={() => actions.loadProject(state.email, project.projectId)}>
                   {incomplete ? 'Resume' : 'Open'}
                 </button>
+                <button type="button" className="secondary" onClick={() => actions.exportSavedProject(state.email, project.projectId)}>Export</button>
+                <button type="button" className="red" onClick={() => actions.deleteSavedProject(state.email, project.projectId)}>Delete</button>
               </div>
             </div>
           );

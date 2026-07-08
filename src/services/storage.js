@@ -101,6 +101,22 @@ export function loadSession(email, projectId = '') {
   }
 }
 
+export function exportProject(email, projectId) {
+  return loadSession(email, projectId) || loadSession(email);
+}
+
+export function deleteProject(email, projectId) {
+  if (!email || !projectId) return false;
+  const projects = readProjectIndex(email);
+  const nextProjects = projects.filter((project) => project.projectId !== projectId);
+  const project = loadSession(email, projectId);
+  const legacy = loadSession(email);
+  localStorage.removeItem(projectSessionKey(email, projectId));
+  if ((legacy?.projectId || 'legacy') === projectId) localStorage.removeItem(sessionKey(email));
+  localStorage.setItem(projectIndexKey(email), JSON.stringify(nextProjects));
+  return Boolean(project || projects.length !== nextProjects.length);
+}
+
 export function listProjects(email) {
   const projects = readProjectIndex(email);
   const legacy = loadSession(email);

@@ -8,6 +8,8 @@ import {
   clearDraft,
   createProjectId,
   defaultSettings,
+  deleteProject,
+  exportProject,
   listProjects,
   loadSession,
   restoreSettings,
@@ -62,6 +64,7 @@ export function useAgencyController() {
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState('');
   const aborter = useRef(null);
+  const startAgencyRef = useRef(null);
   const stateRef = useRef(state);
 
   const update = useCallback((updater, persist = true) => {
@@ -261,25 +264,30 @@ export function useAgencyController() {
       running: false,
     };
     update(next);
+    setModal(null);
     if (next.error) {
       speak(next.activeEmployee || 'reception', 'Welcome back. This project was paused, so press Resume work to continue.', ['resume']);
+      window.setTimeout(() => setModal('pause'), 120);
     } else if (next.phase === 'complete') {
       speak('reception', 'Welcome back. This project is complete. Open Outputs whenever you want to review it.', ['openPreview']);
+      window.setTimeout(() => setModal('outputs'), 120);
     } else if (next.outputs.WebsiteHTML && !next.approved) {
       update((current) => ({ ...current, phase: 'approval' }));
       speak('dev', 'Welcome back. Your preview is ready for approval. Open Outputs when you want to review it.', ['openPreview', 'approve']);
+      window.setTimeout(() => setModal('outputs'), 120);
     } else if (next.paid && next.brief && !next.selectedDesignStyle) {
       update((current) => ({ ...current, phase: 'design_options', activeEmployee: 'design' }));
       speak('design', 'Welcome back. Payment is complete. Choose a design direction so the team can start production.', ['openDesignOptions']);
+      window.setTimeout(() => setModal('designOptions'), 120);
     } else if (next.brief) {
       update((current) => ({ ...current, phase: ['running', 'brief'].includes(current.phase) ? current.phase : 'running' }));
-      speak('reception', 'Welcome back. I found the project in progress. Press Resume work to continue where it left off.', ['resume']);
+      speak('reception', 'Welcome back. I found the project in progress and I am resuming it now.');
+      window.setTimeout(() => startAgencyRef.current?.(), 120);
     } else {
       update((current) => ({ ...current, phase: 'new_details' }));
       speak('reception', 'Welcome back. This project still needs the project form before the team can work.', ['openDetails']);
+      window.setTimeout(() => setModal('details'), 120);
     }
-    setMenuTab('projects');
-    setModal('menu');
     addConvo('Nova', 'Saved project loaded.');
   }, [addConvo, speak, update]);
 
@@ -562,6 +570,10 @@ export function useAgencyController() {
     }
   }, [addConvo, handleRunError, log, produceUntilPreview, speak, update]);
 
+  useEffect(() => {
+    startAgencyRef.current = startAgency;
+  }, [startAgency]);
+
   const processBrief = useCallback((text) => {
     if (text.length < 20) {
       speak('reception', 'The team needs a proper brief. Add goals, pages or sections, tone, audience, and any constraints.');
@@ -739,6 +751,47 @@ export function useAgencyController() {
     downloadText(`${safeFileName(stateRef.current.email || 'tiny-office-session')}.json`, JSON.stringify(stateRef.current, null, 2));
   }, []);
 
+  const exportSavedProject = useCallback((email, projectId) => {
+    const project = exportProject(email, projectId);
+    if (!project) {
+      notify('Project export failed.');
+      return;
+    }
+    const name = safeFileName(project.projectName || project.email || projectId || 'project');
+    downloadText(`${name}.json`, JSON.stringify(project, null, 2));
+  }, [notify]);
+
+  const deleteSavedProject = useCallback((email, projectId) => {
+    const project = exportProject(email, projectId);
+    const label = project?.projectName || 'this project';
+    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return;
+    const removed = deleteProject(email, projectId);
+    if (!removed) {
+      notify('Project delete failed.');
+      return;
+    }
+    notify('Project deleted.');
+    update((current) => {
+      const availableProjects = listProjects(current.email);
+      if (current.email === email && current.projectId === projectId) {
+        return {
+          ...emptyState,
+          settings: current.settings,
+          userName: current.userName,
+          email,
+          availableProjects,
+          phase: 'choice',
+          speech: {
+            employeeId: 'reception',
+            text: 'That project was deleted. You can start a new project or choose another saved one.',
+            actions: ['new', 'returning'],
+          },
+        };
+      }
+      return { ...current, availableProjects };
+    });
+  }, [notify, update]);
+
   const openCurrentStep = useCallback(() => {
     const current = stateRef.current;
     if (['new_details', 'brief'].includes(current.phase)) {
@@ -807,6 +860,8 @@ export function useAgencyController() {
     copyCurrentOutput,
     downloadCurrentOutput,
     exportJSON,
+    exportSavedProject,
+    deleteSavedProject,
     openCurrentStep,
     approve: () => processApproval('approve'),
     notify,
@@ -814,6 +869,8 @@ export function useAgencyController() {
     copyCurrentOutput,
     downloadCurrentOutput,
     exportJSON,
+    exportSavedProject,
+    deleteSavedProject,
     openCurrentStep,
     newCustomer,
     notify,
