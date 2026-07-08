@@ -10,6 +10,10 @@ Page -> Sections -> Layouts -> Components -> Content
 
 A small LLM should add or edit pages by changing `assets/js/site-data.js`. It should prefer JSON-like page objects over hand-coding HTML.
 
+For new section-library pages, use `MicroAgencySections.renderPage(page)` or create sections with a `type` field. The legacy layout engine delegates `type` sections to the section registry automatically.
+
+Full section authoring docs live at `docs/section-library.md` in the project root.
+
 ## Files
 
 ```text
@@ -21,11 +25,15 @@ assets/css/tokens.css
 assets/css/base.css
 assets/css/layouts.css
 assets/css/components.css
+assets/css/sections.css
 assets/css/theme.css
 assets/js/site-data.js
 assets/js/layout-engine.js
 assets/js/components.js
 assets/js/main.js
+assets/js/sections/section-registry.js
+assets/js/sections/*-sections.js
+assets/js/examples/*.js
 assets/js/theme/color-convert.js
 assets/js/theme/contrast.js
 assets/js/theme/scale-generator.js

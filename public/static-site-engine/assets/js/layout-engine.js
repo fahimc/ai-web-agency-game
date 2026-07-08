@@ -74,6 +74,7 @@ window.MicroAgencyLayoutEngine = (() => {
     return `<div class="${containerClass(nextLayout)}">${intro}<div class="${getLayoutClass(nextLayout)}"${styleFor(nextLayout)}>${body}</div></div>`;
   }
   function renderSection(section = {}) {
+    if (section.type && window.MicroAgencySections?.renderSection) return window.MicroAgencySections.renderSection(section);
     const spacing = section.spacing || 'md';
     const bg = section.background || 'default';
     const content = { ...(section.content || {}), kind: section.kind };

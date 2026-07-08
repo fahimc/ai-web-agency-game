@@ -63,6 +63,7 @@ It contains:
 - A working static engine with `renderPage(pageData)`, `renderSection(section)`, `renderLayout(layout, content)`, `renderComponent(component)`, `getLayoutClass(layout)`, and `applyTheme(theme)`.
 - CSS tokens for spacing, container widths, type scale, radius, shadows, colours, breakpoints, gaps, buttons, cards, and themes.
 - An accessible colour palette and typography theme generator with semantic tokens, WCAG contrast validation, repair, 30 palette presets, font presets, CSS variable export, and local theme save/load.
+- A section library with registry-driven website sections, Bootstrap behaviour mapping, 36 production section renderers, placeholder stubs for the wider section catalogue, and example page data for common site types.
 - Layout primitives including single-column, wide single-column, two-column ratios, asymmetric, sidebar, three-column, responsive card grid, bento grid, split hero, centered hero, full-width media, masonry, horizontal scroller, stack, cluster, cover, and CTA band.
 - Reusable components including header, footer, hero text, button groups, service/feature/pricing/testimonial/portfolio/blog/team cards, FAQ accordion, contact/newsletter forms, gallery, stats, process steps, logo strip, map/location, and notices.
 - Page templates for homepage, about, services, service detail, contact, pricing, portfolio, case study, blog listing, blog article, landing page, local business, location, team, FAQ, testimonials, gallery, product overview/detail, booking, legal pages, thank you, and 404.
@@ -126,6 +127,8 @@ public/
     assets/
       css/
       js/
+docs/
+  section-library.md
 src/
   App.jsx
   main.jsx

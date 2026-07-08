@@ -11,6 +11,8 @@ export const componentLibrary = {
     'Choose layout primitives such as single-column, two-column, asymmetric, sidebar, card-grid, bento, split hero, centered hero, masonry, horizontal scroller, stack, cluster, cover, and CTA band.',
     'Use semantic theme roles from the validated theme generator: background, foreground, surface, card, primary, secondary, accent, muted, border, success, warning, and danger with their matching foreground tokens.',
     'Never invent arbitrary foreground/background component pairs; choose semantic roles from a validated WCAG AA theme and repair unsafe pairs before output.',
+    'Build pages from reusable website sections in the MicroAgency section library before falling back to smaller components. Prefer section type + variant + layout + content over hand-coded page-specific blocks.',
+    'Use registered section types such as hero-split, services-grid, features-bento, pricing-cards, faq-accordion, contact-form-split, and cta-band when planning or building static sites.',
     'Every generated site header must use a Bootstrap responsive navbar with a visible hamburger toggler on mobile.',
     'Use semantic sections with clear h2 headings and one primary CTA per viewport.',
     'Keep all layouts mobile-first with CSS grid, flexible cards, and visible focus states.',
