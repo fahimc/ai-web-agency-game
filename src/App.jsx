@@ -11,12 +11,17 @@ import { OutputsModal } from './components/OutputsModal.jsx';
 import { PackageModal } from './components/PackageModal.jsx';
 import { PauseModal } from './components/PauseModal.jsx';
 import { PaymentModal } from './components/PaymentModal.jsx';
+import { TemplateReviewPage } from './components/TemplateReviewPage.jsx';
 import { Toast } from './components/Toast.jsx';
 import { WorkerModal } from './components/WorkerModal.jsx';
 import { useAgencyController } from './hooks/useAgencyController.js';
 import { needsChat } from './utils/text.js';
 
 export function App() {
+  if (window.location.pathname === '/templates') {
+    return <TemplateReviewPage />;
+  }
+
   const { state, actions, modal, menuTab, toast, phaseLabel } = useAgencyController();
   const chatOpen = needsChat(state);
 

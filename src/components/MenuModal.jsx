@@ -124,6 +124,11 @@ function Help() {
     <div className="modal-grid">
       <div className="card"><h3>Flow</h3><p>Enter your name, save your email, complete the project form, then review the website preview.</p></div>
       <div className="card"><h3>Real outputs</h3><p>The agency creates strategy, design direction, website HTML, QA notes, and a project handover PDF.</p></div>
+      <div className="card">
+        <h3>Template library</h3>
+        <p>Review the reference templates available to the builder.</p>
+        <a className="button" href="/templates">Open template library</a>
+      </div>
     </div>
   );
 }
