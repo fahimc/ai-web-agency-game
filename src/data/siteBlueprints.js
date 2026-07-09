@@ -1,5 +1,5 @@
 import { createSitePackageString, fileNameForPage } from '../utils/sitePackage.js';
-import { downloadedTemplateSummary } from './templateLibrary.js';
+import { downloadedTemplateLibrary, downloadedTemplateSummary } from './templateLibrary.js';
 import { siteMotionCss, siteMotionScript, siteMotionSummary } from './siteMotion.js';
 
 const BOOTSTRAP_CSS = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
@@ -190,15 +190,20 @@ export function recommendedDesignLayouts(state, count = 4) {
 }
 
 export function fallbackDesignRecommendations(state, count = 4) {
+  const templateCandidates = recommendedTemplateReferences(state, 6);
   return recommendedDesignLayouts(state, count).map((layout, index) => {
     const structure = recommendedStructure(layout, state);
     const palette = normalizePalette(layout.palette);
+    const template = templateForLayout(layout, templateCandidates, index);
     return {
       id: `fallback-${layout.id}`,
       layoutId: layout.id,
       name: layout.name,
       tone: layout.tone,
       rationale: directionSummary(layout),
+      baseTemplateId: template?.id || '',
+      baseTemplateName: template?.name || '',
+      templateReason: template ? `Use ${template.name} as the composition reference for ${template.useCases.join(', ')} patterns.` : '',
       palette,
       paletteName: index === 0 ? 'Recommended palette' : `${layout.name} palette`,
       pages: state?.projectPackage === 'launch' ? ['Home'] : structure.pages,
@@ -222,6 +227,14 @@ export function designRecommendationsTask(state) {
     : state?.projectPackage === 'signature' ? 'Signature Site multi-page package'
     : 'Growth Site multi-page package';
   const layoutList = siteLayouts.map((layout) => `${layout.id}: ${layout.name} - ${layout.model} - ${layout.tone}`).join('\n');
+  const templateCandidates = recommendedTemplateReferences(state, 10);
+  const templateList = templateCandidates.map((template) => [
+    `${template.id}: ${template.name}`,
+    `Use cases: ${(template.useCases || []).join(', ')}`,
+    `Sections: ${(template.sectionPatterns || []).join(', ')}`,
+    `Motion: ${(template.motionPatterns || []).join(', ') || 'none detected'}`,
+    `Guidance: ${template.llmGuidance}`,
+  ].join('. ')).join('\n');
   const pageInstruction = state?.projectPackage === 'launch'
     ? 'Launch Site must recommend Home only for pages and put About, Services, Contact, FAQ, Pricing, etc. into sections.'
     : 'Growth Site and Signature Site should recommend multiple pages where useful, normally 4 to 6 pages.';
@@ -232,17 +245,124 @@ export function designRecommendationsTask(state) {
     `Package: ${packageName}. ${pageInstruction}`,
     'Choose 3 or 4 recommendations. They should be meaningfully different directions, not duplicates.',
     'Each recommendation must use one of the available base layout ids so the builder can render the direction.',
+    'Each recommendation must also choose one baseTemplateId from the relevant template candidates. Use the template as the composition base/reference for section order, visual rhythm, Bootstrap behaviours, and motion patterns. Rebuild it through MicroAgency sections and original client copy; do not copy demo content.',
     '',
     'Available base layouts:',
     layoutList,
     '',
+    'Relevant template candidates selected from intake:',
+    templateList || downloadedTemplateSummary(12),
+    '',
     'Palette guidance for 2026-style recommendations: use modern monochrome for corporate/luxury restraint; earthy vibrancy for organic, community, nature and grounded brands; moody botanical greens for local trust and sustainability; electric indigo/cyan for SaaS and technical products; soft editorial neutrals for weddings, fashion, beauty and lifestyle; warm venue tones for restaurants and hospitality; wellness mist tones for health, care and calm services.',
     '',
     'JSON shape:',
-    '{"recommendations":[{"layoutId":"local-service","name":"Trust-led Local Booking","tone":"Friendly, reassuring, polished","rationale":"Why this direction fits the brief.","paletteName":"Fresh trust","palette":["#173d35","#18a058","#fff7ed","#eab308","#ffffff"],"pages":["Home","Services","About","FAQ","Contact"],"sections":["Hero","Trust / proof bar","Services","Benefits","Process","Testimonials","FAQ","Lead capture form"]}]}',
+    '{"recommendations":[{"layoutId":"local-service","baseTemplateId":"startbootstrap-small-business","baseTemplateName":"Small Business","templateReason":"Why this template is the best base for the intake.","name":"Trust-led Local Booking","tone":"Friendly, reassuring, polished","rationale":"Why this direction fits the brief.","paletteName":"Fresh trust","palette":["#173d35","#18a058","#fff7ed","#eab308","#ffffff"],"pages":["Home","Services","About","FAQ","Contact"],"sections":["Hero","Trust / proof bar","Services","Benefits","Process","Testimonials","FAQ","Lead capture form"]}]}',
     '',
-    'Rules: palette must contain 3 to 5 real hex colours; pages and sections must be concrete customer-site structure; avoid agency words like example, sample, preview, customer website, visual direction, design direction in names/rationale.',
+    'Rules: baseTemplateId must be an exact id from the template candidates; palette must contain 3 to 5 real hex colours; pages and sections must be concrete customer-site structure; avoid agency words like example, sample, preview, customer website, visual direction, design direction in names/rationale.',
   ].join('\n');
+}
+
+export function recommendedTemplateReferences(state, limit = 8) {
+  const text = `${state?.brief || ''}\n${state?.clientDetails || ''}`.toLowerCase();
+  const desired = templatePreferenceFromText(text);
+  const scored = downloadedTemplateLibrary.map((template, index) => {
+    const haystack = [
+      template.id,
+      template.name,
+      ...(template.useCases || []),
+      ...(template.sectionPatterns || []),
+      template.description,
+      template.llmGuidance,
+    ].join(' ').toLowerCase();
+    let score = template.priority === 'high' ? 4 : template.priority === 'medium' ? 2 : 0;
+    if (desired && haystack.includes(desired)) score += 12;
+    for (const keyword of templateKeywordsForText(text)) {
+      if (haystack.includes(keyword)) score += 5;
+    }
+    if (/portfolio|photography|gallery|creative|work/.test(text) && template.hasPortfolioGrid) score += 6;
+    if (/blog|article|insight|news|content/.test(text) && template.hasBlog) score += 6;
+    if (/shop|ecommerce|product|catalogue|store|sell products/.test(text) && template.hasShop) score += 6;
+    if (/booking|contact|enquir|lead/.test(text) && template.hasContactForm) score += 3;
+    if (/timeline|process|story|about/.test(text) && template.hasTimeline) score += 3;
+    if (/animation|motion|rich|parallax|dynamic/.test(text) && template.hasScrollAnimation) score += 3;
+    return { template, score, index };
+  });
+  return scored
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, Math.max(3, Math.min(limit, 12)))
+    .map((item) => item.template);
+}
+
+export function selectedTemplateReference(state = {}) {
+  const selected = String(state.selectedTemplateId || '').trim();
+  if (selected) {
+    const direct = downloadedTemplateLibrary.find((template) => template.id === selected);
+    if (direct) return direct;
+  }
+  return recommendedTemplateReferences(state, 1)[0] || null;
+}
+
+function templatePreferenceFromText(text) {
+  const match = String(text || '').match(/template starting point:\s*([^\n]+)/i);
+  const value = match?.[1]?.toLowerCase() || '';
+  if (!value || /designer choose|recommend|not sure/.test(value)) return '';
+  if (/portfolio|gallery|visual/.test(value)) return 'portfolio';
+  if (/restaurant|menu|venue/.test(value)) return 'restaurant';
+  if (/shop|store|catalogue|product/.test(value)) return 'shop';
+  if (/blog|article|content/.test(value)) return 'blog';
+  if (/landing|campaign|launch/.test(value)) return 'landing';
+  if (/agency|service|business/.test(value)) return 'business';
+  if (/resume|personal/.test(value)) return 'resume';
+  return value;
+}
+
+function templateKeywordsForText(text) {
+  const value = String(text || '').toLowerCase();
+  const keywords = [];
+  if (/restaurant|food|menu|cafe|bar|venue/.test(value)) keywords.push('restaurant', 'menu', 'business');
+  if (/portfolio|photography|creative|designer|artist|gallery/.test(value)) keywords.push('portfolio', 'gallery', 'visual landing');
+  if (/blog|article|insight|news|content/.test(value)) keywords.push('blog', 'article', 'content');
+  if (/shop|ecommerce|product|catalogue|store/.test(value)) keywords.push('shop', 'product', 'catalogue');
+  if (/agency|consultant|service|professional|local|trade/.test(value)) keywords.push('agency', 'business', 'landing page');
+  if (/event|launch|campaign|webinar|conference/.test(value)) keywords.push('landing page', 'event');
+  if (/resume|personal|cv/.test(value)) keywords.push('resume', 'portfolio');
+  return keywords;
+}
+
+function templateForLayout(layout, candidates, index = 0) {
+  const layoutHints = {
+    'portfolio-studio': ['portfolio', 'gallery'],
+    'restaurant-venue': ['restaurant', 'business'],
+    'saas-product': ['landing page', 'business'],
+    'local-service': ['business', 'agency'],
+    'consultant-authority': ['agency', 'business'],
+    'event-launch': ['landing page'],
+    'education-course': ['blog', 'business'],
+    'marketplace-directory': ['portfolio', 'business'],
+  }[layout.id] || ['business'];
+  return candidates.find((template) => {
+    const useCases = (template.useCases || []).join(' ').toLowerCase();
+    return layoutHints.some((hint) => useCases.includes(hint));
+  }) || candidates[index % Math.max(1, candidates.length)] || null;
+}
+
+function sectionsFromTemplate(template) {
+  if (!template) return [];
+  const patterns = [
+    ...(template.sectionPatterns || []),
+    ...(template.useCases || []),
+  ].join(' ').toLowerCase();
+  const sections = [];
+  if (/hero/.test(patterns)) sections.push('Hero');
+  if (/services/.test(patterns)) sections.push('Services');
+  if (/features/.test(patterns)) sections.push('Benefits');
+  if (/portfolio|gallery|case/.test(patterns)) sections.push('Gallery');
+  if (/process|timeline/.test(patterns)) sections.push('Process');
+  if (/pricing/.test(patterns)) sections.push('Pricing');
+  if (/blog|article/.test(patterns)) sections.push('Blog');
+  if (/contact|lead form|form/.test(patterns)) sections.push('Lead capture form');
+  if (/footer/.test(patterns)) sections.push('Final CTA');
+  return uniqueItems(sections);
 }
 
 export function paletteOptionsForLayout(layout, state) {
@@ -425,6 +545,8 @@ function normalizeRecommendation(item, state, index) {
   if (!item || typeof item !== 'object') return null;
   const layout = layoutFromRecommendation(item);
   if (!layout) return null;
+  const templateCandidates = recommendedTemplateReferences(state, 10);
+  const template = templateFromRecommendation(item, templateCandidates) || templateForLayout(layout, templateCandidates, index);
   const structure = recommendedStructure(layout, state);
   const palette = normalizePalette(Array.isArray(item.palette) ? item.palette : layout.palette);
   const isOnePagePackage = state?.projectPackage === 'launch';
@@ -441,12 +563,23 @@ function normalizeRecommendation(item, state, index) {
     name,
     tone,
     rationale,
+    baseTemplateId: template?.id || '',
+    baseTemplateName: cleanRecommendationText(item.baseTemplateName || item.templateName || template?.name || '', template?.name || ''),
+    templateReason: cleanRecommendationText(item.templateReason || item.baseTemplateReason || (template ? `Uses ${template.name} as the composition reference.` : ''), template ? `Uses ${template.name} as the composition reference.` : ''),
     palette,
     paletteName: cleanRecommendationText(item.paletteName || 'Recommended palette', 'Recommended palette'),
     pages,
     sections,
     source: 'llm',
   };
+}
+
+function templateFromRecommendation(item, candidates) {
+  const requested = String(item.baseTemplateId || item.templateId || item.template || '').trim().toLowerCase();
+  if (!requested) return null;
+  return candidates.find((template) => template.id.toLowerCase() === requested)
+    || downloadedTemplateLibrary.find((template) => template.id.toLowerCase() === requested)
+    || null;
 }
 
 function layoutFromRecommendation(item) {
@@ -556,10 +689,18 @@ export function buildDesignSelectionMarkdown(layout, palette = layout.palette, s
   const pages = uniqueItems(structure.pages || []);
   const sections = uniqueItems(structure.sections || []);
   const image = placeholderForLayout(layout);
+  const baseTemplate = structure.recommendation?.baseTemplateId
+    ? downloadedTemplateLibrary.find((template) => template.id === structure.recommendation.baseTemplateId)
+    : null;
   return [
     `Selected layout: ${layout.name}`,
     `Layout model: ${layout.model}`,
     `Tone: ${layout.tone}`,
+    baseTemplate ? `Base template reference: ${baseTemplate.name} (${baseTemplate.id})` : '',
+    structure.recommendation?.templateReason ? `Base template reason: ${structure.recommendation.templateReason}` : '',
+    baseTemplate ? `Base template patterns: ${(baseTemplate.sectionPatterns || []).join(', ')}` : '',
+    baseTemplate ? `Base template motion: ${(baseTemplate.motionPatterns || []).join(', ') || 'none detected'}` : '',
+    baseTemplate ? `Base template guidance: ${baseTemplate.llmGuidance}` : '',
     `Palette: ${colors.join(', ')}`,
     `Palette max: ${MAX_PALETTE_COLORS} colours. Use them as text, primary, background, accent, and surface colours.`,
     `Recommended pages: ${pages.length ? pages.join(', ') : 'Home, Contact'}`,
@@ -572,8 +713,8 @@ export function buildDesignSelectionMarkdown(layout, palette = layout.palette, s
     'Component library:',
     ...componentLibrary.components.map((item) => `- ${item}`),
     '',
-    'Developer instruction: build the final site from this selected design direction, colour palette, pages, sections, and local placeholder image. Use local /placeholders assets where imagery is needed. Preserve the client brief, but adapt section order, copy density, and CTAs to this direction.',
-  ].join('\n');
+    'Developer instruction: build the final site from this selected design direction, base template reference, colour palette, pages, sections, and local placeholder image. Use the chosen base template as the composition reference for section order, rhythm, Bootstrap behaviours, and motion, but rebuild with MicroAgency sections, validated theme tokens, original client-specific copy, and local /placeholders assets where imagery is needed.',
+  ].filter(Boolean).join('\n');
 }
 
 function pageContentMapFromState(state = {}) {
@@ -654,13 +795,14 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
   const image = placeholderForLayout(layout, state);
   const examples = exampleContentFor(layout, { business, industry, audience, goal, offer });
   const pageCopy = pageContentMapFromState(state);
+  const baseTemplate = selectedTemplateReference(state);
   const structure = recommendedStructure(layout, state);
   const isOnePagePackage = state?.projectPackage === 'launch';
-  const sections = uniqueItems(state?.selectedSiteSections?.length ? state.selectedSiteSections : structure.sections).slice(0, 10);
+  const sections = uniqueItems([...(state?.selectedSiteSections?.length ? state.selectedSiteSections : structure.sections), ...sectionsFromTemplate(baseTemplate)]).slice(0, 10);
   const pages = isOnePagePackage ? ['Home'] : normalizePages(state?.selectedSitePages?.length ? state.selectedSitePages : structure.pages);
   const onePageSections = isOnePagePackage ? normalizeOnePageSections(sections, structure.pages) : [];
   if (!isOnePagePackage && !options.preview) {
-    return buildMultiPageSitePackage({ layout, state, business, industry, audience, goal, offer, image, examples, pages, sections, theme, pageCopy });
+    return buildMultiPageSitePackage({ layout, state, business, industry, audience, goal, offer, image, examples, pages, sections, theme, pageCopy, baseTemplate });
   }
   const isMultiPage = !isOnePagePackage;
   const isPreview = Boolean(options.preview);
@@ -745,7 +887,7 @@ document.addEventListener('click', function(event) {
 </html>`;
 }
 
-function buildMultiPageSitePackage({ layout, business, industry, audience, goal, offer, image, examples, pages, sections, theme, pageCopy = {} }) {
+function buildMultiPageSitePackage({ layout, business, industry, audience, goal, offer, image, examples, pages, sections, theme, pageCopy = {}, baseTemplate = null }) {
   const navItems = normalizePages(pages);
   const ctaPage = navItems.find((item) => /contact|book/i.test(item)) || 'Contact';
   const ctaHref = fileNameForPage(ctaPage);
@@ -768,23 +910,27 @@ function buildMultiPageSitePackage({ layout, business, industry, audience, goal,
       navLinks,
       css,
       body,
+      baseTemplate,
     });
   });
   return createSitePackageString(files, 'index.html');
 }
 
-function siteDocument({ title, business, navLinks, css, body }) {
+function siteDocument({ title, business, navLinks, css, body, baseTemplate = null }) {
+  const templateMeta = baseTemplate ? `<meta name="microagency-template-base" content="${escapeHtml(`${baseTemplate.name} (${baseTemplate.id})`)}">` : '';
+  const templateComment = baseTemplate ? `<!-- MicroAgency template base: ${escapeHtml(baseTemplate.name)} (${escapeHtml(baseTemplate.id)}). Rebuilt with MicroAgency sections and original customer content. -->\n` : '';
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
+${templateMeta}
 <link href="${BOOTSTRAP_CSS}" rel="stylesheet">
 <style>${css}</style>
 </head>
 <body>
-<div class="shell">
+${templateComment}<div class="shell">
 <nav class="navbar navbar-expand-md site-nav" aria-label="Main navigation"><a class="navbar-brand" href="index.html">${escapeHtml(business)}</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="siteNavbar"><ul class="navbar-nav ms-auto align-items-md-center gap-md-2">${navLinks}</ul></div></nav>
 <main>${body}</main>
 </div>

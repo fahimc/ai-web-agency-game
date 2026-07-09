@@ -4,6 +4,7 @@ import {
   directionSummary,
   normalizePalette,
   recommendedStructure,
+  selectedTemplateReference,
   siteLayouts,
 } from '../data/siteBlueprints.js';
 import { evaluateWebsiteQuality } from '../utils/siteQuality.js';
@@ -138,8 +139,17 @@ function buildScriptedDesignDirection(state) {
   const layout = selectedLayout(state);
   const palette = normalizePalette(state.selectedDesignPalette?.length ? state.selectedDesignPalette : layout.palette);
   const structure = approvedStructure(state, layout);
+  const template = selectedTemplateReference(state);
   return [
     buildDesignSelectionMarkdown(layout, palette, structure),
+    '',
+    '## Base Template Reference',
+    template ? `Use ${template.name} (${template.id}) as the composition base.` : 'Use the closest matching downloaded template as the composition base.',
+    template ? `Template use cases: ${(template.useCases || []).join(', ')}.` : '',
+    template ? `Template section patterns: ${(template.sectionPatterns || []).join(', ')}.` : '',
+    template ? `Template motion patterns: ${(template.motionPatterns || []).join(', ') || 'none detected'}.` : '',
+    template ? `Template guidance: ${template.llmGuidance}` : '',
+    'Rebuild the template through MicroAgency sections, Bootstrap 5.3 markup, validated theme tokens, original client copy, and local/client imagery. Do not copy demo text.',
     '',
     '## Production Build Direction',
     `Use ${layout.name} as the source route. The site should feel ${layout.tone.toLowerCase()}, with strong mobile hierarchy and clear CTAs.`,
@@ -153,7 +163,7 @@ function buildScriptedDesignDirection(state) {
     '## Accessibility',
     '- Use visible focus states, labels on form fields, alt text on images, and semantic headings.',
     '- Use semantic theme tokens and readable foreground/background pairs.',
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 function buildScriptedWebsite(state) {

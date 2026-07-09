@@ -56,6 +56,17 @@ const TONE_OPTIONS = [
   'Creative and expressive',
 ];
 
+const TEMPLATE_START_OPTIONS = [
+  'Let the designer recommend',
+  'Service business / agency style',
+  'Visual portfolio / gallery style',
+  'Restaurant / venue style',
+  'Product / shop style',
+  'Blog / article style',
+  'Landing page / campaign style',
+  'Minimal custom build',
+];
+
 const PAGE_OPTIONS = [
   'Home',
   'Services',
@@ -118,6 +129,7 @@ export function DetailsModal({ state, actions }) {
       `Project goal: ${goal}`,
       form.offer ? `Main offer / service: ${form.offer}` : '',
       form.tone ? `Tone / style: ${form.tone}` : '',
+      `Template starting point: ${form.templateStart || 'Let the designer recommend'}`,
       `Pages: ${pages.join(', ')}`,
       form.extraNotes ? `Useful notes: ${form.extraNotes}` : '',
     ].filter(Boolean).join('\n');
@@ -203,6 +215,11 @@ export function DetailsModal({ state, actions }) {
               <select value={form.tone} onChange={(event) => setField('tone', event.target.value)}>
                 <option value="">Let the designer recommend</option>
                 {TONE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
+              </select>
+            </label>
+            <label>Template starting point
+              <select value={form.templateStart} onChange={(event) => setField('templateStart', event.target.value)}>
+                {TEMPLATE_START_OPTIONS.map((option) => <option key={option}>{option}</option>)}
               </select>
             </label>
           </section>
@@ -300,6 +317,7 @@ function parseStoredClientDetails(details, selectedSitePages = []) {
     goalOther: '',
     offer: '',
     tone: '',
+    templateStart: 'Let the designer recommend',
     pages: ensureHomePage(selectedSitePages.length ? selectedSitePages : DEFAULT_PAGES),
     extraNotes: '',
   };
@@ -316,6 +334,7 @@ function parseStoredClientDetails(details, selectedSitePages = []) {
     else if (key.includes('goal')) assignSelectValue(out, 'goal', value, GOAL_OPTIONS);
     else if (key === 'pages' || key.includes('pages')) out.pages = ensureHomePage(value.split(',').map((item) => item.trim()));
     else if (key.includes('tone') || key.includes('style')) out.tone = value;
+    else if (key.includes('template starting')) out.templateStart = TEMPLATE_START_OPTIONS.includes(value) ? value : 'Let the designer recommend';
     else if (key.includes('notes') || key.includes('else') || key.includes('must')) out.extraNotes = value;
   });
   return out;

@@ -145,6 +145,9 @@ export function DesignOptionsModal({ state, actions }) {
                 <div className="design-count">Option {optionNumber} of {designOptions.length}</div>
                 <h3>{activeOption.name || activeLayout.name}</h3>
                 <p className="muted">{activeOption.rationale || directionSummary(activeLayout)}</p>
+                {activeOption.baseTemplateName && (
+                  <p className="muted"><b>Base template:</b> {activeOption.baseTemplateName}</p>
+                )}
                 <PaletteSwatches colors={selectedPalette} compact />
                 <div className="design-carousel-actions">
                   <button type="button" className="secondary" onClick={showPrevious}>Previous</button>
@@ -188,6 +191,7 @@ export function DesignOptionsModal({ state, actions }) {
                 <div>
                   <h3>{activeOption.name || activeLayout.name}</h3>
                   <p className="muted">{activeOption.tone || activeLayout.tone}</p>
+                  {activeOption.baseTemplateName && <p className="muted">Base template: {activeOption.baseTemplateName}</p>}
                 </div>
                 <div className="stack">
                   <button type="button" className="secondary" onClick={() => setFullScreen(true)}>Full screen</button>

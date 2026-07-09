@@ -84,7 +84,7 @@ try {
   await page.locator('.details-form').waitFor();
 
   assert.equal(await page.locator('.details-form textarea').count(), 1, 'intake should only have one optional textarea');
-  assert.ok(await page.locator('.details-form select').count() >= 4, 'intake should use dropdowns for common answers');
+  assert.ok(await page.locator('.details-form select').count() >= 5, 'intake should use dropdowns for common answers and template starting point');
   assert.equal(await page.getByRole('heading', { name: 'Pages' }).isVisible(), true, 'page selector should be labelled Pages');
 
   await page.getByLabel('Business name *').fill('Kaaz Studio');
@@ -92,6 +92,7 @@ try {
   await page.getByLabel('Main offer or service').fill('Wedding photography');
   await page.getByLabel('Ideal customers *').selectOption('Couples');
   await page.getByLabel('Main goal *').selectOption('Show portfolio / work');
+  await page.getByLabel('Template starting point').selectOption('Visual portfolio / gallery style');
   await page.getByRole('button', { name: /Pricing/i }).click();
   await page.getByRole('button', { name: /Blog/i }).click();
   await page.getByRole('button', { name: /FAQ/i }).click();
@@ -102,6 +103,7 @@ try {
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('tiny_office_draft_v2')));
   assert.deepEqual(stored.selectedSitePages, ['Home', 'About', 'Contact', 'Pricing', 'Blog', 'FAQ']);
   assert.match(stored.clientDetails, /^Pages: Home, About, Contact, Pricing, Blog, FAQ$/m);
+  assert.match(stored.clientDetails, /^Template starting point: Visual portfolio \/ gallery style$/m);
   console.log('Intake form regression tests passed.');
 } finally {
   if (browser) await browser.close();

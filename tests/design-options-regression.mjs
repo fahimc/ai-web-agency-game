@@ -8,7 +8,9 @@ import {
   buildExampleSite,
   contrastRatio,
   fallbackDesignRecommendations,
+  normalizeDesignRecommendations,
   normalizePalette,
+  recommendedTemplateReferences,
   siteLayouts,
 } from '../src/data/siteBlueprints.js';
 import { evaluateWebsiteQuality } from '../src/utils/siteQuality.js';
@@ -260,6 +262,79 @@ function testRestaurantRecommendationsDoNotMatchAppInsideWords() {
   assert.equal(recommendation.palette.includes('#2563eb'), false, 'restaurant fallback palette should not be padded with unrelated default blue');
 }
 
+function testTemplateBaseSelectionFromIntake() {
+  const state = {
+    projectPackage: 'growth',
+    brief: [
+      'Business / client name: Photo Bride',
+      'Industry: Creative / portfolio',
+      'Ideal customers / audience: Couples',
+      'Project goal: Show portfolio / work',
+      'Main offer / service: Wedding photography',
+      'Template starting point: Visual portfolio / gallery style',
+      'Pages: Home, Gallery, About, Contact',
+    ].join('\n'),
+  };
+  const candidates = recommendedTemplateReferences(state, 4);
+  assert.ok(candidates.some((template) => /portfolio/i.test(`${template.name} ${(template.useCases || []).join(' ')}`)), 'portfolio intake should rank portfolio templates');
+
+  const raw = JSON.stringify({
+    recommendations: [
+    {
+      layoutId: 'portfolio-studio',
+      baseTemplateId: candidates[0].id,
+      baseTemplateName: candidates[0].name,
+      templateReason: 'Matches the portfolio-first intake and gallery-led page list.',
+      name: 'Gallery-led Studio',
+      tone: 'Editorial and selective',
+      rationale: 'Puts the work first and keeps enquiries simple.',
+      paletteName: 'Editorial mono',
+      palette: ['#111111', '#efe9e1', '#fffaf5', '#8a6a4f', '#ffffff'],
+      pages: ['Home', 'Gallery', 'About', 'Contact'],
+      sections: ['Hero', 'Gallery', 'Services', 'Testimonials', 'Lead capture form'],
+    },
+    {
+      layoutId: 'premium-editorial',
+      baseTemplateId: candidates[1]?.id || candidates[0].id,
+      baseTemplateName: candidates[1]?.name || candidates[0].name,
+      templateReason: 'Supports an editorial service story.',
+      name: 'Editorial Story',
+      tone: 'Premium and calm',
+      rationale: 'Balances imagery and trust.',
+      paletteName: 'Soft editorial',
+      palette: ['#111111', '#8a6a4f', '#fffaf5', '#d8c3ad', '#ffffff'],
+      pages: ['Home', 'Gallery', 'About', 'Contact'],
+      sections: ['Hero', 'Gallery', 'Process', 'Testimonials', 'Lead capture form'],
+    },
+    {
+      layoutId: 'conversion-classic',
+      baseTemplateId: candidates[2]?.id || candidates[0].id,
+      baseTemplateName: candidates[2]?.name || candidates[0].name,
+      templateReason: 'Keeps the enquiry path direct.',
+      name: 'Conversion Portfolio',
+      tone: 'Clear and practical',
+      rationale: 'Makes the offer easy to compare.',
+      paletteName: 'Clean contrast',
+      palette: ['#0f172a', '#2563eb', '#f8fafc', '#0f766e', '#ffffff'],
+      pages: ['Home', 'Gallery', 'About', 'Contact'],
+      sections: ['Hero', 'Gallery', 'Services', 'FAQ', 'Lead capture form'],
+    }],
+  });
+  const normalized = normalizeDesignRecommendations(raw, state, 4);
+  assert.equal(normalized[0].baseTemplateId, candidates[0].id);
+  assert.equal(normalized[0].baseTemplateName, candidates[0].name);
+
+  const html = buildExampleSite(siteLayouts.find((layout) => layout.id === 'portfolio-studio'), {
+    ...state,
+    selectedTemplateId: normalized[0].baseTemplateId,
+    selectedSitePages: normalized[0].pages,
+    selectedSiteSections: normalized[0].sections,
+    outputs: {},
+  }, normalized[0].palette);
+  assert.match(html, /microagency-template-base/i, 'generated package should record the template base in each HTML file');
+  assert.match(html, new RegExp(normalized[0].baseTemplateId), 'generated package should include the selected template id');
+}
+
 async function testPendingDraftAutoResume(browser) {
   const session = baseSession({
     phase: 'running',
@@ -315,6 +390,8 @@ try {
   testFallbackWebsiteQuality();
   console.log('Running recommendation fit regression...');
   testRestaurantRecommendationsDoNotMatchAppInsideWords();
+  console.log('Running template base selection regression...');
+  testTemplateBaseSelectionFromIntake();
   console.log('Running pending-draft auto-resume regression...');
   await testPendingDraftAutoResume(browser);
   console.log('Design options regression tests passed.');
