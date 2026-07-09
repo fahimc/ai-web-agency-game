@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-simple-sidebar",
+  "name": "Simple Sidebar",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-simple-sidebar",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "dashboard",
+    "documentation",
+    "app shell"
+  ],
+  "priority": "low",
+  "repo": "StartBootstrap/startbootstrap-simple-sidebar",
+  "downloadedAt": "2026-07-09T06:26:44.808Z",
+  "verifiedLicense": "MIT"
+}

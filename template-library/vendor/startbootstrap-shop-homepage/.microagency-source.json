@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-shop-homepage",
+  "name": "Shop Homepage",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-shop-homepage",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "ecommerce",
+    "product grid",
+    "catalogue"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-shop-homepage",
+  "downloadedAt": "2026-07-09T06:26:33.621Z",
+  "verifiedLicense": "MIT"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-new-age",
+  "name": "New Age",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-new-age",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "app landing",
+    "SaaS",
+    "product launch"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-new-age",
+  "downloadedAt": "2026-07-09T06:26:32.605Z",
+  "verifiedLicense": "MIT"
+}

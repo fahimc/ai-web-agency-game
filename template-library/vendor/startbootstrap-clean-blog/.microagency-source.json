@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-clean-blog",
+  "name": "Clean Blog",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-clean-blog",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "blog",
+    "editorial",
+    "article"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-clean-blog",
+  "downloadedAt": "2026-07-09T06:26:35.797Z",
+  "verifiedLicense": "MIT"
+}

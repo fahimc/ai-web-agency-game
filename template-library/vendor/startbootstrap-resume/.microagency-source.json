@@ -1,0 +1,18 @@
+{
+  "id": "startbootstrap-resume",
+  "name": "Resume",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-resume",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "personal",
+    "consultant",
+    "CV",
+    "profile"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-resume",
+  "downloadedAt": "2026-07-09T06:26:30.437Z",
+  "verifiedLicense": "MIT"
+}

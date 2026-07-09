@@ -1,0 +1,18 @@
+{
+  "id": "startbootstrap-grayscale",
+  "name": "Grayscale",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-grayscale",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "premium landing",
+    "event",
+    "destination",
+    "launch"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-grayscale",
+  "downloadedAt": "2026-07-09T06:26:27.114Z",
+  "verifiedLicense": "MIT"
+}

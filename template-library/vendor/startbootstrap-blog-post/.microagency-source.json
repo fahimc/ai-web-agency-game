@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-blog-post",
+  "name": "Blog Post",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-blog-post",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "article",
+    "case study",
+    "long-form content"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-blog-post",
+  "downloadedAt": "2026-07-09T06:26:37.760Z",
+  "verifiedLicense": "MIT"
+}

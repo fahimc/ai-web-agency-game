@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-business-frontpage",
+  "name": "Business Frontpage",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-business-frontpage",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "business homepage",
+    "local business",
+    "service business"
+  ],
+  "priority": "high",
+  "repo": "StartBootstrap/startbootstrap-business-frontpage",
+  "downloadedAt": "2026-07-09T06:26:19.900Z",
+  "verifiedLicense": "MIT"
+}

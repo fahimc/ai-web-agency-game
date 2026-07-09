@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-heroic-features",
+  "name": "Heroic Features",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-heroic-features",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "feature grid",
+    "SaaS",
+    "services"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-heroic-features",
+  "downloadedAt": "2026-07-09T06:26:40.896Z",
+  "verifiedLicense": "MIT"
+}

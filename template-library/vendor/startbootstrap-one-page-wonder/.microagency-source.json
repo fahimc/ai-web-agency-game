@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-one-page-wonder",
+  "name": "One Page Wonder",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-one-page-wonder",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "one-page",
+    "campaign",
+    "simple landing"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-one-page-wonder",
+  "downloadedAt": "2026-07-09T06:26:25.999Z",
+  "verifiedLicense": "MIT"
+}

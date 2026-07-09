@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-stylish-portfolio",
+  "name": "Stylish Portfolio",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-stylish-portfolio",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "portfolio",
+    "agency",
+    "visual landing"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-stylish-portfolio",
+  "downloadedAt": "2026-07-09T06:26:29.412Z",
+  "verifiedLicense": "MIT"
+}

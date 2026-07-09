@@ -1,0 +1,18 @@
+{
+  "id": "startbootstrap-modern-business",
+  "name": "Modern Business",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-modern-business",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "multi-page business",
+    "portfolio",
+    "services",
+    "blog"
+  ],
+  "priority": "high",
+  "repo": "StartBootstrap/startbootstrap-modern-business",
+  "downloadedAt": "2026-07-09T06:26:20.943Z",
+  "verifiedLicense": "MIT"
+}

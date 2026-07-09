@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-creative",
+  "name": "Creative",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-creative",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "creative",
+    "portfolio",
+    "service landing"
+  ],
+  "priority": "high",
+  "repo": "StartBootstrap/startbootstrap-creative",
+  "downloadedAt": "2026-07-09T06:26:23.134Z",
+  "verifiedLicense": "MIT"
+}

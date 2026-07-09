@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-small-business",
+  "name": "Small Business",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-small-business",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "small business",
+    "service business",
+    "local"
+  ],
+  "priority": "high",
+  "repo": "StartBootstrap/startbootstrap-small-business",
+  "downloadedAt": "2026-07-09T06:26:39.905Z",
+  "verifiedLicense": "MIT"
+}

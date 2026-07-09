@@ -73,6 +73,9 @@ It contains:
 - Page presets such as `Home`, `Services`, `Pricing`, `Gallery`, `FAQ`, and `Contact`.
 - Section presets such as `Hero`, `Services`, `Process`, `Testimonials`, `Pricing`, `Lead capture form`, and `Final CTA`.
 - Preview HTML generation for example client sites.
+- A licensed template reference library generated from 25 MIT Start Bootstrap repositories.
+- A compact LLM knowledge file at `src/data/templateLibrary.js` describing available templates, use cases, section patterns, Bootstrap components, and motion patterns.
+- A reusable generated-site motion layer at `src/data/siteMotion.js` for scroll reveal, staggered cards, parallax media, floating panels, and reduced-motion fallbacks.
 
 Selected design choices are saved into the `SelectedDesign` output and passed into the final design/build prompts.
 
@@ -83,6 +86,32 @@ http://127.0.0.1:5173/static-site-engine/index.html
 ```
 
 Small-model editing rule: add new pages or sections by changing `public/static-site-engine/assets/js/site-data.js`; only add new renderers in `components.js` when an existing component cannot express the content.
+
+## Licensed Template Library
+
+The project includes a local reference library of license-checked website templates:
+
+```text
+template-library/
+  templates.json
+  vendor/
+src/data/templateLibrary.js
+tools/template-source-manifest.json
+tools/audit-template-sources.mjs
+tools/download-template-library.mjs
+tools/generate-template-knowledge.mjs
+```
+
+Use these scripts to audit, download, and regenerate the LLM catalogue:
+
+```bash
+npm run templates:audit
+npm run templates:download
+npm run templates:generate
+npm run templates:sync
+```
+
+The downloaded templates are reference material for composition, section patterns, Bootstrap behaviours, and motion ideas. Generated customer sites should still be rebuilt through MicroAgency sections, validated theme tokens, accessible Bootstrap markup, local placeholder/client imagery, and original client-specific copy.
 
 ## Placeholder Images
 
@@ -129,6 +158,10 @@ public/
       js/
 docs/
   section-library.md
+  template-library.md
+template-library/
+  templates.json
+  vendor/
 src/
   App.jsx
   main.jsx
@@ -150,7 +183,9 @@ src/
   data/
     employees.js
     outputs.js
+    siteMotion.js
     siteBlueprints.js
+    templateLibrary.js
     steps.js
   game/
     OfficeCanvasEngine.js

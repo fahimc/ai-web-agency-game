@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-scrolling-nav",
+  "name": "Scrolling Nav",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-scrolling-nav",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "one-page navigation",
+    "landing page",
+    "smooth scroll"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-scrolling-nav",
+  "downloadedAt": "2026-07-09T06:26:42.819Z",
+  "verifiedLicense": "MIT"
+}

@@ -1,0 +1,1658 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-09T06:26:46.758Z",
+  "count": 25,
+  "licensePolicy": "Only license-verified templates are included. Treat them as pattern references for MicroAgency section output.",
+  "templates": [
+    {
+      "id": "startbootstrap-agency",
+      "name": "Agency",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-agency",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "agency",
+        "portfolio",
+        "landing page",
+        "timeline"
+      ],
+      "priority": "high",
+      "description": "Agency is a Bootstrap 5 template for agency, portfolio, landing page, timeline. Useful patterns: portfolio presentation, timeline storytelling. Readme title: Agency](https://startbootstrap.com/theme/agency)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": true,
+      "hasPortfolioGrid": true,
+      "hasTimeline": true,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": true,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "modal",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "hero",
+        "services",
+        "portfolio",
+        "process/timeline",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction",
+        "modal overlays"
+      ],
+      "llmGuidance": "use for strong visual case-study or gallery sections; adapt timeline into process or company story; use product grid/detail patterns for catalogues and service menus. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-bare",
+      "name": "Bare",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-bare",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "minimal scaffold",
+        "custom build"
+      ],
+      "priority": "low",
+      "description": "Bare is a Bootstrap 5 template for minimal scaffold, custom build. Readme title: Bare](https://startbootstrap.com/template/bare/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": false,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "dropdown",
+        "collapse",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "portfolio",
+        "process/timeline",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use as a minimal scaffold composition reference. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-blog-home",
+      "name": "Blog Home",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-blog-home",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "blog listing",
+        "content marketing",
+        "news"
+      ],
+      "priority": "medium",
+      "description": "Blog Home is a Bootstrap 5 template for blog listing, content marketing, news. Useful patterns: content publishing. Readme title: Blog Home](https://startbootstrap.com/template/blog-home/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": true,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "card",
+        "btn",
+        "pagination",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "features",
+        "portfolio",
+        "process/timeline",
+        "blog/articles",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use article/listing structure for insights or case studies. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-blog-post",
+      "name": "Blog Post",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-blog-post",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "article",
+        "case study",
+        "long-form content"
+      ],
+      "priority": "medium",
+      "description": "Blog Post is a Bootstrap 5 template for article, case study, long-form content. Useful patterns: content publishing. Readme title: Blog Post](https://startbootstrap.com/template/blog-post/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": true,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "card",
+        "btn",
+        "badge",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "features",
+        "portfolio",
+        "process/timeline",
+        "testimonials",
+        "blog/articles",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use article/listing structure for insights or case studies. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-business-casual",
+      "name": "Business Casual",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-business-casual",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "restaurant",
+        "cafe",
+        "venue",
+        "local business"
+      ],
+      "priority": "high",
+      "description": "Business Casual is a Bootstrap 5 template for restaurant, cafe, venue, local business. Readme title: Business Casual](https://startbootstrap.com/theme/business-casual/)\r.",
+      "htmlFiles": [
+        "dist/about.html",
+        "dist/index.html",
+        "dist/products.html",
+        "dist/store.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": false,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": true,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "services",
+        "features",
+        "process/timeline",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use product grid/detail patterns for catalogues and service menus. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-business-frontpage",
+      "name": "Business Frontpage",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-business-frontpage",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "business homepage",
+        "local business",
+        "service business"
+      ],
+      "priority": "high",
+      "description": "Business Frontpage is a Bootstrap 5 template for business homepage, local business, service business. Useful patterns: pricing comparison. Readme title: Business Frontpage](https://startbootstrap.com/template/business-frontpage/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": true,
+      "hasBlog": false,
+      "hasShop": true,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "card",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "services",
+        "features",
+        "portfolio",
+        "process/timeline",
+        "testimonials",
+        "pricing",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use product grid/detail patterns for catalogues and service menus. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-clean-blog",
+      "name": "Clean Blog",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-clean-blog",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "blog",
+        "editorial",
+        "article"
+      ],
+      "priority": "medium",
+      "description": "Clean Blog is a Bootstrap 5 template for blog, editorial, article. Useful patterns: content publishing. Readme title: Clean Blog](https://startbootstrap.com/theme/clean-blog/)\r.",
+      "htmlFiles": [
+        "dist/about.html",
+        "dist/contact.html",
+        "dist/index.html",
+        "dist/post.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": false,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": true,
+      "hasShop": true,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "hero",
+        "process/timeline",
+        "testimonials",
+        "blog/articles",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use article/listing structure for insights or case studies; use product grid/detail patterns for catalogues and service menus. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-creative",
+      "name": "Creative",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-creative",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "creative",
+        "portfolio",
+        "service landing"
+      ],
+      "priority": "high",
+      "description": "Creative is a Bootstrap 5 template for creative, portfolio, service landing. Useful patterns: portfolio presentation. Readme title: Creative](https://startbootstrap.com/theme/creative/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "hero",
+        "services",
+        "portfolio",
+        "process/timeline",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use for strong visual case-study or gallery sections. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-freelancer",
+      "name": "Freelancer",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-freelancer",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "portfolio",
+        "creative",
+        "personal brand"
+      ],
+      "priority": "high",
+      "description": "Freelancer is a Bootstrap 5 template for portfolio, creative, personal brand. Useful patterns: portfolio presentation. Readme title: Freelancer](https://startbootstrap.com/theme/freelancer/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": true,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "modal",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "hero",
+        "portfolio",
+        "process/timeline",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction",
+        "modal overlays"
+      ],
+      "llmGuidance": "use for strong visual case-study or gallery sections. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-full-width-pics",
+      "name": "Full Width Pics",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-full-width-pics",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "visual landing",
+        "portfolio",
+        "venue",
+        "photography"
+      ],
+      "priority": "medium",
+      "description": "Full Width Pics is a Bootstrap 5 template for visual landing, portfolio, venue, photography. Readme title: Full Width Pics](https://startbootstrap.com/template/full-width-pics/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "portfolio",
+        "process/timeline",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use as a visual landing composition reference. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-grayscale",
+      "name": "Grayscale",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-grayscale",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "premium landing",
+        "event",
+        "destination",
+        "launch"
+      ],
+      "priority": "medium",
+      "description": "Grayscale is a Bootstrap 5 template for premium landing, event, destination, launch. Readme title: Grayscale](https://startbootstrap.com/theme/grayscale/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "card",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "hero",
+        "features",
+        "portfolio",
+        "process/timeline",
+        "testimonials",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use as a premium landing composition reference. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-heroic-features",
+      "name": "Heroic Features",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-heroic-features",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "feature grid",
+        "SaaS",
+        "services"
+      ],
+      "priority": "medium",
+      "description": "Heroic Features is a Bootstrap 5 template for feature grid, SaaS, services. Readme title: Heroic Features](https://startbootstrap.com/template/heroic-features/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "card",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "hero",
+        "features",
+        "portfolio",
+        "process/timeline",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use as a feature grid composition reference. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-landing-page",
+      "name": "Landing Page",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-landing-page",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "lead generation",
+        "SaaS",
+        "app",
+        "signup"
+      ],
+      "priority": "high",
+      "description": "Landing Page is a Bootstrap 5 template for lead generation, SaaS, app, signup. Readme title: Landing Page](https://startbootstrap.com/theme/landing-page/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "hero",
+        "features",
+        "portfolio",
+        "process/timeline",
+        "testimonials",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use as a lead generation composition reference. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-modern-business",
+      "name": "Modern Business",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-modern-business",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "multi-page business",
+        "portfolio",
+        "services",
+        "blog"
+      ],
+      "priority": "high",
+      "description": "Modern Business is a Bootstrap 5 template for multi-page business, portfolio, services, blog. Useful patterns: portfolio presentation, pricing comparison, content publishing. Readme title: Modern Business](https://startbootstrap.com/template/modern-business/)\r.",
+      "htmlFiles": [
+        "dist/about.html",
+        "dist/blog-home.html",
+        "dist/blog-post.html",
+        "dist/contact.html",
+        "dist/faq.html",
+        "dist/index.html",
+        "dist/portfolio-item.html",
+        "dist/portfolio-overview.html",
+        "dist/pricing.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": true,
+      "hasBlog": true,
+      "hasShop": true,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": true,
+      "bootstrapComponents": [
+        "navbar",
+        "dropdown",
+        "collapse",
+        "accordion",
+        "card",
+        "btn",
+        "badge",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "services",
+        "features",
+        "portfolio",
+        "process/timeline",
+        "testimonials",
+        "pricing",
+        "blog/articles",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use for strong visual case-study or gallery sections; use article/listing structure for insights or case studies; use product grid/detail patterns for catalogues and service menus. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-new-age",
+      "name": "New Age",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-new-age",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "app landing",
+        "SaaS",
+        "product launch"
+      ],
+      "priority": "medium",
+      "description": "New Age is a Bootstrap 5 template for app landing, SaaS, product launch. Readme title: New Age](https://startbootstrap.com/theme/new-age/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": true,
+      "hasPortfolioGrid": false,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": true,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": true,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "modal",
+        "btn",
+        "badge",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "hero",
+        "features",
+        "process/timeline",
+        "testimonials",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction",
+        "modal overlays"
+      ],
+      "llmGuidance": "use product grid/detail patterns for catalogues and service menus. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-one-page-wonder",
+      "name": "One Page Wonder",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-one-page-wonder",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "one-page",
+        "campaign",
+        "simple landing"
+      ],
+      "priority": "medium",
+      "description": "One Page Wonder is a Bootstrap 5 template for one-page, campaign, simple landing. Readme title: One Page Wonder](https://startbootstrap.com/theme/one-page-wonder/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": false,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "hero",
+        "portfolio",
+        "process/timeline",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use as a one-page composition reference. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-portfolio-item",
+      "name": "Portfolio Item",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-portfolio-item",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "case study",
+        "portfolio detail",
+        "project page"
+      ],
+      "priority": "medium",
+      "description": "Portfolio Item is a Bootstrap 5 template for case study, portfolio detail, project page. Useful patterns: portfolio presentation, carousel-led proof or media. Readme title: Portfolio Item](https://startbootstrap.com/template-overviews/portfolio-item/)\r.",
+      "htmlFiles": [
+        "index.html"
+      ],
+      "cssFiles": [
+        "css/portfolio-item.css",
+        "vendor/bootstrap/css/bootstrap-grid.css",
+        "vendor/bootstrap/css/bootstrap-grid.min.css",
+        "vendor/bootstrap/css/bootstrap-reboot.css",
+        "vendor/bootstrap/css/bootstrap-reboot.min.css",
+        "vendor/bootstrap/css/bootstrap.css",
+        "vendor/bootstrap/css/bootstrap.min.css"
+      ],
+      "jsFiles": [
+        "gulpfile.js",
+        "vendor/bootstrap/js/bootstrap.bundle.js",
+        "vendor/bootstrap/js/bootstrap.bundle.min.js",
+        "vendor/bootstrap/js/bootstrap.js",
+        "vendor/bootstrap/js/bootstrap.min.js",
+        "vendor/jquery/jquery.js",
+        "vendor/jquery/jquery.min.js",
+        "vendor/jquery/jquery.slim.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": true,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "carousel",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "services",
+        "portfolio",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "carousel motion",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use for strong visual case-study or gallery sections; use carousels sparingly for testimonials or featured work. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-resume",
+      "name": "Resume",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-resume",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "personal",
+        "consultant",
+        "CV",
+        "profile"
+      ],
+      "priority": "medium",
+      "description": "Resume is a Bootstrap 5 template for personal, consultant, CV, profile. Readme title: Resume](https://startbootstrap.com/theme/resume/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": false,
+      "hasTimeline": false,
+      "hasContactForm": false,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": true,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "process/timeline",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use product grid/detail patterns for catalogues and service menus. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-sb-admin",
+      "name": "SB Admin",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-sb-admin",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "admin dashboard",
+        "data app",
+        "portal"
+      ],
+      "priority": "low",
+      "description": "SB Admin is a Bootstrap 5 template for admin dashboard, data app, portal. Readme title: SB Admin](https://startbootstrap.com/template/sb-admin/)\r.",
+      "htmlFiles": [
+        "dist/401.html",
+        "dist/404.html",
+        "dist/500.html",
+        "dist/charts.html",
+        "dist/index.html",
+        "dist/layout-sidenav-light.html",
+        "dist/layout-static.html",
+        "dist/login.html",
+        "dist/password.html",
+        "dist/register.html",
+        "dist/tables.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/assets/demo/chart-area-demo.js",
+        "dist/assets/demo/chart-bar-demo.js",
+        "dist/assets/demo/chart-pie-demo.js",
+        "dist/assets/demo/datatables-demo.js",
+        "dist/js/datatables-simple-demo.js",
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": false,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "dropdown",
+        "collapse",
+        "accordion",
+        "card",
+        "btn",
+        "breadcrumb",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use as a admin dashboard composition reference. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-scrolling-nav",
+      "name": "Scrolling Nav",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-scrolling-nav",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "one-page navigation",
+        "landing page",
+        "smooth scroll"
+      ],
+      "priority": "medium",
+      "description": "Scrolling Nav is a Bootstrap 5 template for one-page navigation, landing page, smooth scroll. Readme title: Scrolling Nav](https://startbootstrap.com/template/scrolling-nav/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": false,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "services",
+        "features",
+        "process/timeline",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use as a one-page navigation composition reference. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-shop-homepage",
+      "name": "Shop Homepage",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-shop-homepage",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "ecommerce",
+        "product grid",
+        "catalogue"
+      ],
+      "priority": "medium",
+      "description": "Shop Homepage is a Bootstrap 5 template for ecommerce, product grid, catalogue. Readme title: Shop Homepage](https://startbootstrap.com/template/shop-homepage/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": true,
+      "hasBlog": false,
+      "hasShop": true,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "dropdown",
+        "collapse",
+        "card",
+        "btn",
+        "badge",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "portfolio",
+        "process/timeline",
+        "testimonials",
+        "pricing",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use product grid/detail patterns for catalogues and service menus. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-shop-item",
+      "name": "Shop Item",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-shop-item",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "product detail",
+        "ecommerce",
+        "enquiry"
+      ],
+      "priority": "medium",
+      "description": "Shop Item is a Bootstrap 5 template for product detail, ecommerce, enquiry. Readme title: Shop Item](https://startbootstrap.com/template/shop-item/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": true,
+      "hasBlog": false,
+      "hasShop": true,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "dropdown",
+        "collapse",
+        "card",
+        "btn",
+        "badge",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "portfolio",
+        "process/timeline",
+        "testimonials",
+        "pricing",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use product grid/detail patterns for catalogues and service menus. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-simple-sidebar",
+      "name": "Simple Sidebar",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-simple-sidebar",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "dashboard",
+        "documentation",
+        "app shell"
+      ],
+      "priority": "low",
+      "description": "Simple Sidebar is a Bootstrap 5 template for dashboard, documentation, app shell. Readme title: Simple Sidebar](https://startbootstrap.com/template/simple-sidebar/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": false,
+      "hasTimeline": false,
+      "hasContactForm": false,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "dropdown",
+        "collapse",
+        "btn",
+        "list-group",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "process/timeline",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use as a dashboard composition reference. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-small-business",
+      "name": "Small Business",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-small-business",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "small business",
+        "service business",
+        "local"
+      ],
+      "priority": "high",
+      "description": "Small Business is a Bootstrap 5 template for small business, service business, local. Readme title: Small Business](https://startbootstrap.com/template/small-business/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": false,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "navbar",
+        "collapse",
+        "card",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "services",
+        "portfolio",
+        "process/timeline",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use as a small business composition reference. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    },
+    {
+      "id": "startbootstrap-stylish-portfolio",
+      "name": "Stylish Portfolio",
+      "sourceUrl": "https://github.com/StartBootstrap/startbootstrap-stylish-portfolio",
+      "license": "MIT",
+      "framework": "Bootstrap",
+      "useCases": [
+        "portfolio",
+        "agency",
+        "visual landing"
+      ],
+      "priority": "medium",
+      "description": "Stylish Portfolio is a Bootstrap 5 template for portfolio, agency, visual landing. Useful patterns: portfolio presentation. Readme title: Stylish Portfolio](https://startbootstrap.com/theme/stylish-portfolio/)\r.",
+      "htmlFiles": [
+        "dist/index.html"
+      ],
+      "cssFiles": [
+        "dist/css/styles.css"
+      ],
+      "jsFiles": [
+        "dist/js/scripts.js",
+        "scripts/build-assets.js",
+        "scripts/build-pug.js",
+        "scripts/build-scripts.js",
+        "scripts/build-scss.js",
+        "scripts/clean.js",
+        "scripts/render-assets.js",
+        "scripts/render-pug.js"
+      ],
+      "hasImages": true,
+      "hasNavbar": true,
+      "hasCarousel": false,
+      "hasModal": false,
+      "hasPortfolioGrid": true,
+      "hasTimeline": false,
+      "hasContactForm": true,
+      "hasPricing": false,
+      "hasBlog": false,
+      "hasShop": false,
+      "hasParallax": false,
+      "hasScrollAnimation": true,
+      "hasVideo": false,
+      "bootstrapComponents": [
+        "collapse",
+        "btn",
+        "form",
+        "table"
+      ],
+      "sectionPatterns": [
+        "responsive header",
+        "hero",
+        "services",
+        "features",
+        "portfolio",
+        "process/timeline",
+        "contact/lead form",
+        "footer"
+      ],
+      "motionPatterns": [
+        "scroll navigation/reveal",
+        "expand/collapse interaction"
+      ],
+      "llmGuidance": "use for strong visual case-study or gallery sections. Rebuild with MicroAgency sections, validated theme tokens, accessible Bootstrap markup, and original client-specific copy."
+    }
+  ]
+}

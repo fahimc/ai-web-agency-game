@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-freelancer",
+  "name": "Freelancer",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-freelancer",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "portfolio",
+    "creative",
+    "personal brand"
+  ],
+  "priority": "high",
+  "repo": "StartBootstrap/startbootstrap-freelancer",
+  "downloadedAt": "2026-07-09T06:26:28.168Z",
+  "verifiedLicense": "MIT"
+}

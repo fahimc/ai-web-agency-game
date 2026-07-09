@@ -1,4 +1,6 @@
 import { createSitePackageString, fileNameForPage } from '../utils/sitePackage.js';
+import { downloadedTemplateSummary } from './templateLibrary.js';
+import { siteMotionCss, siteMotionScript, siteMotionSummary } from './siteMotion.js';
 
 const BOOTSTRAP_CSS = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
 const BOOTSTRAP_JS = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js';
@@ -13,6 +15,8 @@ export const componentLibrary = {
     'Never invent arbitrary foreground/background component pairs; choose semantic roles from a validated WCAG AA theme and repair unsafe pairs before output.',
     'Build pages from reusable website sections in the MicroAgency section library before falling back to smaller components. Prefer section type + variant + layout + content over hand-coded page-specific blocks.',
     'Use registered section types such as hero-split, services-grid, features-bento, pricing-cards, faq-accordion, contact-form-split, and cta-band when planning or building static sites.',
+    'Use downloaded MIT template references for composition ideas, then rebuild them through MicroAgency sections, Bootstrap markup, semantic theme tokens, and original client-specific content.',
+    'Use the MicroAgency motion system for rich sites: reveal, stagger, parallax media, floating panels, carousel motion where useful, and reduced-motion fallbacks.',
     'Every generated site header must use a Bootstrap responsive navbar with a visible hamburger toggler on mobile.',
     'Use semantic sections with clear h2 headings and one primary CTA per viewport.',
     'Keep all layouts mobile-first with CSS grid, flexible cards, and visible focus states.',
@@ -72,6 +76,12 @@ export function buildEngineCapabilityContext() {
   ].join(', '),
   '',
   'Bootstrap behaviours available through the behaviour object/data attributes: collapse, accordion, dropdown, modal, offcanvas, tabs, carousel, toast, tooltip, popover, scrollspy.',
+  '',
+  'Rich motion system available:',
+  siteMotionSummary(),
+  '',
+  'Downloaded MIT template reference library available to the LLM:',
+  downloadedTemplateSummary(),
   '',
   'Base design directions and palettes available:',
   siteLayouts.map((layout) => `${layout.id}: ${layout.name} (${layout.model}; ${layout.tone}; palette ${layout.palette.join(', ')})`).join('\n'),
@@ -593,6 +603,7 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
 <link href="${BOOTSTRAP_CSS}" rel="stylesheet">
 <style>
 ${siteCss(theme)}
+${siteMotionCss()}
 </style>
 </head>
 <body>
@@ -601,7 +612,7 @@ ${siteCss(theme)}
 <main>
 <section class="${homeClass}" id="home">
 <div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sections.slice(0, 5).map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">Start an enquiry</a></div>
-<aside class="panel image-card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(heroImageCaptionFor(business, offer))}</div></aside>
+<aside class="panel image-card parallax-media depth-panel float-card" data-parallax="0.12"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(heroImageCaptionFor(business, offer))}</div></aside>
 </section>
 ${pageSections}
 </main>
@@ -641,6 +652,7 @@ document.addEventListener('click', function(event) {
   if (window.history && window.history.replaceState) window.history.replaceState(null, '', '#' + id);
 });
 </script>
+<script>${siteMotionScript()}</script>
 <script src="${BOOTSTRAP_JS}"></script>
 </body>
 </html>`;
@@ -650,7 +662,7 @@ function buildMultiPageSitePackage({ layout, business, industry, audience, goal,
   const navItems = normalizePages(pages);
   const ctaPage = navItems.find((item) => /contact|book/i.test(item)) || 'Contact';
   const ctaHref = fileNameForPage(ctaPage);
-  const css = siteCss(theme);
+  const css = `${siteCss(theme)}\n${siteMotionCss()}`;
   const files = {};
   navItems.forEach((page) => {
     const fileName = fileNameForPage(page);
@@ -689,6 +701,7 @@ function siteDocument({ title, business, navLinks, css, body }) {
 <nav class="navbar navbar-expand-md site-nav" aria-label="Main navigation"><a class="navbar-brand" href="index.html">${escapeHtml(business)}</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="siteNavbar"><ul class="navbar-nav ms-auto align-items-md-center gap-md-2">${navLinks}</ul></div></nav>
 <main>${body}</main>
 </div>
+<script>${siteMotionScript()}</script>
 <script src="${BOOTSTRAP_JS}"></script>
 </body>
 </html>`;
@@ -701,7 +714,7 @@ function homePageBody({ layout, business, audience, goal, offer, image, examples
   const sectionTags = usefulSections.length ? usefulSections : ['Services', 'Process', 'Testimonials'];
   return `<section class="hero" id="home">
 <div><div class="eyebrow">${escapeHtml(business)}</div><h1>${escapeHtml(headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sectionTags.map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">Start an enquiry</a></div>
-<aside class="panel image-card"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(heroImageCaptionFor(business, offer))}</div></aside>
+<aside class="panel image-card parallax-media depth-panel float-card" data-parallax="0.12"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(heroImageCaptionFor(business, offer))}</div></aside>
 </section>
 <section class="section"><span class="page-kicker">Overview</span><h2>${escapeHtml(examples.servicesTitle)}</h2><p>${escapeHtml(examples.servicesLead)} The page gives visitors enough context to understand the offer, compare fit, and decide whether the next step is worth taking.</p><div class="grid">${examples.cards.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>
 <section class="section"><span class="page-kicker">Why it works</span><h2>Useful information before visitors commit</h2><p>Strong small-business websites answer the practical questions before asking for the enquiry: what is available, who it is for, what happens next, and why the business can be trusted.</p><div class="grid"><div class="card"><b>Plain-language offer</b><span>${escapeHtml(business)} explains what is included, who it suits, and what makes the service worth enquiring about.</span></div><div class="card"><b>Practical proof</b><span>Reviews, response expectations, process notes, and realistic outcomes sit close to the key decisions.</span></div><div class="card"><b>Mobile-first contact</b><span>Every page keeps the next action easy to find, with a short route to send details or ask a question.</span></div></div></section>

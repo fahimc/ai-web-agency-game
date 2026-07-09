@@ -1,0 +1,18 @@
+{
+  "id": "startbootstrap-agency",
+  "name": "Agency",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-agency",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "agency",
+    "portfolio",
+    "landing page",
+    "timeline"
+  ],
+  "priority": "high",
+  "repo": "StartBootstrap/startbootstrap-agency",
+  "downloadedAt": "2026-07-09T06:26:22.029Z",
+  "verifiedLicense": "MIT"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "startbootstrap-portfolio-item",
+  "name": "Portfolio Item",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-portfolio-item",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "case study",
+    "portfolio detail",
+    "project page"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-portfolio-item",
+  "downloadedAt": "2026-07-09T06:26:38.913Z",
+  "verifiedLicense": "MIT"
+}

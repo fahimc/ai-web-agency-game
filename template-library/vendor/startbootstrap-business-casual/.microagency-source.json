@@ -1,0 +1,18 @@
+{
+  "id": "startbootstrap-business-casual",
+  "name": "Business Casual",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-business-casual",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "restaurant",
+    "cafe",
+    "venue",
+    "local business"
+  ],
+  "priority": "high",
+  "repo": "StartBootstrap/startbootstrap-business-casual",
+  "downloadedAt": "2026-07-09T06:26:24.901Z",
+  "verifiedLicense": "MIT"
+}

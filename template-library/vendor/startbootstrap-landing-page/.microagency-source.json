@@ -1,0 +1,18 @@
+{
+  "id": "startbootstrap-landing-page",
+  "name": "Landing Page",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-landing-page",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "lead generation",
+    "SaaS",
+    "app",
+    "signup"
+  ],
+  "priority": "high",
+  "repo": "StartBootstrap/startbootstrap-landing-page",
+  "downloadedAt": "2026-07-09T06:26:31.543Z",
+  "verifiedLicense": "MIT"
+}

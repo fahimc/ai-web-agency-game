@@ -1,0 +1,18 @@
+{
+  "id": "startbootstrap-full-width-pics",
+  "name": "Full Width Pics",
+  "type": "repository",
+  "url": "https://github.com/StartBootstrap/startbootstrap-full-width-pics",
+  "license": "MIT",
+  "framework": "Bootstrap 5",
+  "useCases": [
+    "visual landing",
+    "portfolio",
+    "venue",
+    "photography"
+  ],
+  "priority": "medium",
+  "repo": "StartBootstrap/startbootstrap-full-width-pics",
+  "downloadedAt": "2026-07-09T06:26:41.856Z",
+  "verifiedLicense": "MIT"
+}

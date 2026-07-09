@@ -1,9 +1,9 @@
 {
-  "version": 1,
+  "version": 2,
   "policy": {
     "allowedLicenses": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "CC0-1.0"],
     "manualReviewRequired": true,
-    "rule": "Do not import arbitrary live websites. Only import templates with explicit compatible licences and attribution metadata."
+    "rule": "Do not import arbitrary live websites. Only import templates with explicit compatible licences and attribution metadata. Downloaded templates are source references and pattern libraries; generated customer sites should use MicroAgency section recipes and theme tokens."
   },
   "sources": [
     {
@@ -43,7 +43,7 @@
       "url": "https://github.com/StartBootstrap/startbootstrap-agency",
       "license": "MIT",
       "framework": "Bootstrap 5",
-      "useCases": ["agency", "portfolio", "landing page"],
+      "useCases": ["agency", "portfolio", "landing page", "timeline"],
       "priority": "high"
     },
     {
@@ -54,7 +54,217 @@
       "license": "MIT",
       "framework": "Bootstrap 5",
       "useCases": ["creative", "portfolio", "service landing"],
+      "priority": "high"
+    },
+    {
+      "id": "startbootstrap-business-casual",
+      "name": "Business Casual",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-business-casual",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["restaurant", "cafe", "venue", "local business"],
+      "priority": "high"
+    },
+    {
+      "id": "startbootstrap-one-page-wonder",
+      "name": "One Page Wonder",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-one-page-wonder",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["one-page", "campaign", "simple landing"],
       "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-grayscale",
+      "name": "Grayscale",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-grayscale",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["premium landing", "event", "destination", "launch"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-freelancer",
+      "name": "Freelancer",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-freelancer",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["portfolio", "creative", "personal brand"],
+      "priority": "high"
+    },
+    {
+      "id": "startbootstrap-stylish-portfolio",
+      "name": "Stylish Portfolio",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-stylish-portfolio",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["portfolio", "agency", "visual landing"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-resume",
+      "name": "Resume",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-resume",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["personal", "consultant", "CV", "profile"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-landing-page",
+      "name": "Landing Page",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-landing-page",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["lead generation", "SaaS", "app", "signup"],
+      "priority": "high"
+    },
+    {
+      "id": "startbootstrap-new-age",
+      "name": "New Age",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-new-age",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["app landing", "SaaS", "product launch"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-shop-homepage",
+      "name": "Shop Homepage",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-shop-homepage",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["ecommerce", "product grid", "catalogue"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-shop-item",
+      "name": "Shop Item",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-shop-item",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["product detail", "ecommerce", "enquiry"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-clean-blog",
+      "name": "Clean Blog",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-clean-blog",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["blog", "editorial", "article"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-blog-home",
+      "name": "Blog Home",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-blog-home",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["blog listing", "content marketing", "news"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-blog-post",
+      "name": "Blog Post",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-blog-post",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["article", "case study", "long-form content"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-portfolio-item",
+      "name": "Portfolio Item",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-portfolio-item",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["case study", "portfolio detail", "project page"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-small-business",
+      "name": "Small Business",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-small-business",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["small business", "service business", "local"],
+      "priority": "high"
+    },
+    {
+      "id": "startbootstrap-heroic-features",
+      "name": "Heroic Features",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-heroic-features",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["feature grid", "SaaS", "services"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-full-width-pics",
+      "name": "Full Width Pics",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-full-width-pics",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["visual landing", "portfolio", "venue", "photography"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-scrolling-nav",
+      "name": "Scrolling Nav",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-scrolling-nav",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["one-page navigation", "landing page", "smooth scroll"],
+      "priority": "medium"
+    },
+    {
+      "id": "startbootstrap-bare",
+      "name": "Bare",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-bare",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["minimal scaffold", "custom build"],
+      "priority": "low"
+    },
+    {
+      "id": "startbootstrap-simple-sidebar",
+      "name": "Simple Sidebar",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-simple-sidebar",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["dashboard", "documentation", "app shell"],
+      "priority": "low"
+    },
+    {
+      "id": "startbootstrap-sb-admin",
+      "name": "SB Admin",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-sb-admin",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["admin dashboard", "data app", "portal"],
+      "priority": "low"
     },
     {
       "id": "github-bootstrap-topic",
@@ -65,16 +275,6 @@
       "framework": "Bootstrap",
       "priority": "medium",
       "notes": "Use for candidate discovery only. Do not import without licence verification."
-    },
-    {
-      "id": "github-tailwind-topic",
-      "name": "GitHub tailwind-template topic",
-      "type": "discovery",
-      "url": "https://github.com/topics/tailwind-template?l=html",
-      "license": "verify-per-repository",
-      "framework": "Tailwind",
-      "priority": "low",
-      "notes": "Useful for design pattern extraction. Convert to MicroAgency section recipes rather than bundling Tailwind output by default."
     }
   ],
   "excludedExamples": [
