@@ -1,4 +1,10 @@
 import { createSitePackageString, fileNameForPage } from '../utils/sitePackage.js';
+import {
+  fallbackLogoConfig,
+  logoGeneratorSummary,
+  normalizeLogoConfig,
+  renderNavLogo,
+} from './logoGenerator.js';
 import { downloadedTemplateLibrary, downloadedTemplateSummary } from './templateLibrary.js';
 import { siteMotionCss, siteMotionScript, siteMotionSummary } from './siteMotion.js';
 
@@ -79,6 +85,8 @@ export function buildEngineCapabilityContext() {
   '',
   'Rich motion system available:',
   siteMotionSummary(),
+  '',
+  logoGeneratorSummary(),
   '',
   'Downloaded MIT template reference library available to the LLM:',
   downloadedTemplateSummary(),
@@ -195,6 +203,7 @@ export function fallbackDesignRecommendations(state, count = 4) {
     const structure = recommendedStructure(layout, state);
     const palette = normalizePalette(layout.palette);
     const template = templateForLayout(layout, templateCandidates, index);
+    const logo = fallbackLogoConfig(state, layout, palette);
     return {
       id: `fallback-${layout.id}`,
       layoutId: layout.id,
@@ -204,6 +213,7 @@ export function fallbackDesignRecommendations(state, count = 4) {
       baseTemplateId: template?.id || '',
       baseTemplateName: template?.name || '',
       templateReason: template ? `Use ${template.name} as the composition reference for ${template.useCases.join(', ')} patterns.` : '',
+      logo,
       palette,
       paletteName: index === 0 ? 'Recommended palette' : `${layout.name} palette`,
       pages: state?.projectPackage === 'launch' ? ['Home'] : structure.pages,
@@ -246,6 +256,7 @@ export function designRecommendationsTask(state) {
     'Choose 3 or 4 recommendations. They should be meaningfully different directions, not duplicates.',
     'Each recommendation must use one of the available base layout ids so the builder can render the direction.',
     'Each recommendation must also choose one baseTemplateId from the relevant template candidates. Use the template as the composition base/reference for section order, visual rhythm, Bootstrap behaviours, and motion patterns. Rebuild it through MicroAgency sections and original client copy; do not copy demo content.',
+    'Each recommendation must include a logo object. Decide the business logo elements from the brief: icon, layout, container, font, primary, secondary, textColor, tagline, iconSize, radius, weight, and tracking. Use the logo generator catalogue from the capability context.',
     '',
     'Available base layouts:',
     layoutList,
@@ -256,9 +267,9 @@ export function designRecommendationsTask(state) {
     'Palette guidance for 2026-style recommendations: use modern monochrome for corporate/luxury restraint; earthy vibrancy for organic, community, nature and grounded brands; moody botanical greens for local trust and sustainability; electric indigo/cyan for SaaS and technical products; soft editorial neutrals for weddings, fashion, beauty and lifestyle; warm venue tones for restaurants and hospitality; wellness mist tones for health, care and calm services.',
     '',
     'JSON shape:',
-    '{"recommendations":[{"layoutId":"local-service","baseTemplateId":"startbootstrap-small-business","baseTemplateName":"Small Business","templateReason":"Why this template is the best base for the intake.","name":"Trust-led Local Booking","tone":"Friendly, reassuring, polished","rationale":"Why this direction fits the brief.","paletteName":"Fresh trust","palette":["#173d35","#18a058","#fff7ed","#eab308","#ffffff"],"pages":["Home","Services","About","FAQ","Contact"],"sections":["Hero","Trust / proof bar","Services","Benefits","Process","Testimonials","FAQ","Lead capture form"]}]}',
+    '{"recommendations":[{"layoutId":"local-service","baseTemplateId":"startbootstrap-small-business","baseTemplateName":"Small Business","templateReason":"Why this template is the best base for the intake.","logo":{"icon":"shield","layout":"horizontal","container":"rounded","font":"Inter","primary":"#173d35","secondary":"#18a058","textColor":"#0f172a","tagline":"Reliable service, clearly explained.","iconSize":92,"radius":24,"weight":800,"tracking":-0.5},"name":"Trust-led Local Booking","tone":"Friendly, reassuring, polished","rationale":"Why this direction fits the brief.","paletteName":"Fresh trust","palette":["#173d35","#18a058","#fff7ed","#eab308","#ffffff"],"pages":["Home","Services","About","FAQ","Contact"],"sections":["Hero","Trust / proof bar","Services","Benefits","Process","Testimonials","FAQ","Lead capture form"]}]}',
     '',
-    'Rules: baseTemplateId must be an exact id from the template candidates; palette must contain 3 to 5 real hex colours; pages and sections must be concrete customer-site structure; avoid agency words like example, sample, preview, customer website, visual direction, design direction in names/rationale.',
+    'Rules: baseTemplateId must be an exact id from the template candidates; logo icon/layout/container/font must be valid generator options; palette must contain 3 to 5 real hex colours; pages and sections must be concrete customer-site structure; avoid agency words like example, sample, preview, customer website, visual direction, design direction in names/rationale.',
   ].join('\n');
 }
 
@@ -549,6 +560,9 @@ function normalizeRecommendation(item, state, index) {
   const template = templateFromRecommendation(item, templateCandidates) || templateForLayout(layout, templateCandidates, index);
   const structure = recommendedStructure(layout, state);
   const palette = normalizePalette(Array.isArray(item.palette) ? item.palette : layout.palette);
+  const logo = item.logo || item.brandLogo
+    ? normalizeLogoConfig(item.logo || item.brandLogo, { state, layout, palette })
+    : fallbackLogoConfig(state, layout, palette);
   const isOnePagePackage = state?.projectPackage === 'launch';
   const rawPages = uniqueItems(Array.isArray(item.pages) ? item.pages : structure.pages);
   const pages = isOnePagePackage ? ['Home'] : normalizePages(rawPages);
@@ -566,6 +580,7 @@ function normalizeRecommendation(item, state, index) {
     baseTemplateId: template?.id || '',
     baseTemplateName: cleanRecommendationText(item.baseTemplateName || item.templateName || template?.name || '', template?.name || ''),
     templateReason: cleanRecommendationText(item.templateReason || item.baseTemplateReason || (template ? `Uses ${template.name} as the composition reference.` : ''), template ? `Uses ${template.name} as the composition reference.` : ''),
+    logo,
     palette,
     paletteName: cleanRecommendationText(item.paletteName || 'Recommended palette', 'Recommended palette'),
     pages,
@@ -692,6 +707,7 @@ export function buildDesignSelectionMarkdown(layout, palette = layout.palette, s
   const baseTemplate = structure.recommendation?.baseTemplateId
     ? downloadedTemplateLibrary.find((template) => template.id === structure.recommendation.baseTemplateId)
     : null;
+  const logo = structure.recommendation?.logo ? normalizeLogoConfig(structure.recommendation.logo, { layout, palette: colors }) : null;
   return [
     `Selected layout: ${layout.name}`,
     `Layout model: ${layout.model}`,
@@ -701,6 +717,7 @@ export function buildDesignSelectionMarkdown(layout, palette = layout.palette, s
     baseTemplate ? `Base template patterns: ${(baseTemplate.sectionPatterns || []).join(', ')}` : '',
     baseTemplate ? `Base template motion: ${(baseTemplate.motionPatterns || []).join(', ') || 'none detected'}` : '',
     baseTemplate ? `Base template guidance: ${baseTemplate.llmGuidance}` : '',
+    logo ? `Generated logo: icon ${logo.icon}, layout ${logo.layout}, container ${logo.container}, font ${logo.font}, colours ${logo.primary}, ${logo.secondary}, ${logo.textColor}, tagline "${logo.tagline}".` : '',
     `Palette: ${colors.join(', ')}`,
     `Palette max: ${MAX_PALETTE_COLORS} colours. Use them as text, primary, background, accent, and surface colours.`,
     `Recommended pages: ${pages.length ? pages.join(', ') : 'Home, Contact'}`,
@@ -796,13 +813,14 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
   const examples = exampleContentFor(layout, { business, industry, audience, goal, offer });
   const pageCopy = pageContentMapFromState(state);
   const baseTemplate = selectedTemplateReference(state);
+  const logo = normalizeLogoConfig(state.selectedLogoConfig || fallbackLogoConfig(state, layout, palette), { state, layout, palette, company: business });
   const structure = recommendedStructure(layout, state);
   const isOnePagePackage = state?.projectPackage === 'launch';
   const sections = uniqueItems([...(state?.selectedSiteSections?.length ? state.selectedSiteSections : structure.sections), ...sectionsFromTemplate(baseTemplate)]).slice(0, 10);
   const pages = isOnePagePackage ? ['Home'] : normalizePages(state?.selectedSitePages?.length ? state.selectedSitePages : structure.pages);
   const onePageSections = isOnePagePackage ? normalizeOnePageSections(sections, structure.pages) : [];
   if (!isOnePagePackage && !options.preview) {
-    return buildMultiPageSitePackage({ layout, state, business, industry, audience, goal, offer, image, examples, pages, sections, theme, pageCopy, baseTemplate });
+    return buildMultiPageSitePackage({ layout, state, business, industry, audience, goal, offer, image, examples, pages, sections, theme, pageCopy, baseTemplate, logo });
   }
   const isMultiPage = !isOnePagePackage;
   const isPreview = Boolean(options.preview);
@@ -837,7 +855,7 @@ ${siteMotionCss()}
 </head>
 <body>
 <div class="shell">
-<nav class="navbar navbar-expand-md site-nav" aria-label="Main navigation"><a class="navbar-brand" href="${isMultiPage ? '#/home' : '#home'}">${escapeHtml(business)}</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="siteNavbar"><ul class="navbar-nav ms-auto align-items-md-center gap-md-2">${navLinks}</ul>${navLabel ? `<span class="nav-label ms-md-3">${escapeHtml(navLabel)}</span>` : ''}</div></nav>
+<nav class="navbar navbar-expand-md site-nav" aria-label="Main navigation"><a class="navbar-brand" href="${isMultiPage ? '#/home' : '#home'}">${renderNavLogo(logo, { idPrefix: `${business}-preview-logo`, title: `${business} logo` })}<span class="sr-only">${escapeHtml(business)}</span></a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="siteNavbar"><ul class="navbar-nav ms-auto align-items-md-center gap-md-2">${navLinks}</ul>${navLabel ? `<span class="nav-label ms-md-3">${escapeHtml(navLabel)}</span>` : ''}</div></nav>
 <main>
 <section class="${homeClass}" id="home">
 <div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(homeCopy?.headline || headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(homeCopy?.lead || copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sections.slice(0, 5).map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">${escapeHtml(homeCopy?.cta || 'Start an enquiry')}</a></div>
@@ -887,7 +905,7 @@ document.addEventListener('click', function(event) {
 </html>`;
 }
 
-function buildMultiPageSitePackage({ layout, business, industry, audience, goal, offer, image, examples, pages, sections, theme, pageCopy = {}, baseTemplate = null }) {
+function buildMultiPageSitePackage({ layout, business, industry, audience, goal, offer, image, examples, pages, sections, theme, pageCopy = {}, baseTemplate = null, logo = null }) {
   const navItems = normalizePages(pages);
   const ctaPage = navItems.find((item) => /contact|book/i.test(item)) || 'Contact';
   const ctaHref = fileNameForPage(ctaPage);
@@ -911,14 +929,16 @@ function buildMultiPageSitePackage({ layout, business, industry, audience, goal,
       css,
       body,
       baseTemplate,
+      logo,
     });
   });
   return createSitePackageString(files, 'index.html');
 }
 
-function siteDocument({ title, business, navLinks, css, body, baseTemplate = null }) {
+function siteDocument({ title, business, navLinks, css, body, baseTemplate = null, logo = null }) {
   const templateMeta = baseTemplate ? `<meta name="microagency-template-base" content="${escapeHtml(`${baseTemplate.name} (${baseTemplate.id})`)}">` : '';
   const templateComment = baseTemplate ? `<!-- MicroAgency template base: ${escapeHtml(baseTemplate.name)} (${escapeHtml(baseTemplate.id)}). Rebuilt with MicroAgency sections and original customer content. -->\n` : '';
+  const brandLogo = renderNavLogo(logo || { company: business }, { idPrefix: `${business}-logo`, title: `${business} logo` });
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -931,7 +951,7 @@ ${templateMeta}
 </head>
 <body>
 ${templateComment}<div class="shell">
-<nav class="navbar navbar-expand-md site-nav" aria-label="Main navigation"><a class="navbar-brand" href="index.html">${escapeHtml(business)}</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="siteNavbar"><ul class="navbar-nav ms-auto align-items-md-center gap-md-2">${navLinks}</ul></div></nav>
+<nav class="navbar navbar-expand-md site-nav" aria-label="Main navigation"><a class="navbar-brand" href="index.html">${brandLogo}<span class="sr-only">${escapeHtml(business)}</span></a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="siteNavbar"><ul class="navbar-nav ms-auto align-items-md-center gap-md-2">${navLinks}</ul></div></nav>
 <main>${body}</main>
 </div>
 <script>${siteMotionScript()}</script>
@@ -963,7 +983,7 @@ function homePageBody({ layout, business, audience, goal, offer, image, examples
 
 function siteCss(theme) {
   return `:root{--ink:${theme.ink};--accent:${theme.accent};--accent-ink:${theme.accentInk};--accent-text:${theme.accentText};--bg:${theme.bg};--secondary:${theme.secondary};--secondary-ink:${theme.secondaryInk};--secondary-text:${theme.secondaryText};--card:${theme.surface};--card-ink:${theme.cardInk};--muted:${theme.muted};--card-muted:${theme.cardMuted};--input-bg:${theme.inputBg};--input-ink:${theme.inputInk};--line:rgba(15,23,42,.14);--radius:20px;--space:clamp(18px,4vw,56px);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:var(--bg)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);line-height:1.5;color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}a{color:inherit}.shell{width:min(1120px,calc(100% - 32px));margin:auto}.site-nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,white);backdrop-filter:blur(14px);padding:12px 0;font-weight:800}.site-nav .navbar-brand{font-size:20px;font-weight:950;color:var(--ink)}.site-nav .nav-link{color:var(--muted);border:1px solid transparent;border-radius:999px;padding:8px 10px;font-size:14px;font-weight:850}.site-nav .nav-link:hover,.site-nav .nav-link.active{border-color:var(--line);color:var(--card-ink);background:var(--card)}.site-nav .navbar-toggler{border-color:var(--line);border-radius:14px;background:var(--card);color:var(--card-ink);box-shadow:none}.nav-label{color:var(--accent-text);font-weight:900}.hero{padding:var(--space) 0;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(20px,5vw,64px);align-items:center}.site-page{display:none}.site-page.active{display:grid}.section.site-page.active{display:block}.eyebrow{color:var(--accent-text);font-weight:900;text-transform:uppercase;font-size:12px;letter-spacing:0}.hero h1{font-size:clamp(34px,7vw,76px);line-height:.94;margin:10px 0 18px;letter-spacing:0}.hero p{font-size:clamp(16px,2vw,21px);color:var(--muted);max-width:62ch}.button{display:inline-flex;margin-top:14px;background:var(--accent);color:var(--accent-ink);text-decoration:none;border:0;border-radius:999px;padding:13px 18px;font-weight:900;cursor:pointer}.button.secondary{background:var(--secondary);color:var(--secondary-ink)}.button:focus-visible,.input:focus-visible,.nav-link:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 42%,white);outline-offset:3px}.panel{background:var(--card);color:var(--card-ink);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:0 24px 70px rgba(15,23,42,.12)}.metric{font-size:38px;font-weight:950;color:var(--secondary-text)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.card{background:var(--card);color:var(--card-ink);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.card b{display:block;margin-bottom:7px}.card span{color:var(--card-muted)}.section p{color:var(--muted)}.section{padding:54px 0;scroll-margin-top:86px;animation:section-in .55s ease both}.section h2{font-size:clamp(26px,4vw,44px);line-height:1;margin:0 0 14px}.page-kicker{color:var(--accent-text);font-weight:900;text-transform:uppercase;font-size:12px}.steps{counter-reset:step;display:grid;gap:12px}.step{counter-increment:step;display:flex;gap:14px;align-items:flex-start}.step:before{content:counter(step);background:var(--accent);color:var(--accent-ink);border-radius:50%;width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;font-weight:900}.contact{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.form{display:grid;gap:12px}.form label{display:grid;gap:6px;font-weight:850;color:var(--card-ink)}.input{width:100%;border:1px solid var(--line);border-radius:14px;padding:13px;background:var(--input-bg);color:var(--input-ink)}.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.tag{background:var(--accent);border:1px solid transparent;border-radius:999px;padding:8px 10px;font-weight:800;color:var(--accent-ink);font-size:13px}.image-card{position:relative;overflow:hidden;min-height:360px;padding:0}.image-card img{width:100%;height:100%;min-height:360px;object-fit:cover;display:block}.image-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.42))}.image-caption{position:absolute;left:18px;right:18px;bottom:18px;color:white;z-index:2;font-weight:900}.media-strip{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;align-items:stretch}.media-strip img{width:100%;height:260px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--line)}@keyframes section-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.section{animation:none}html{scroll-behavior:auto}}@media(max-width:760px){.hero,.contact,.grid,.media-strip{grid-template-columns:1fr}.hero h1{font-size:42px}.site-nav .navbar-collapse{padding-top:10px}.site-nav .navbar-nav{gap:6px}}`;
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);line-height:1.5;color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}a{color:inherit}.shell{width:min(1120px,calc(100% - 32px));margin:auto}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.site-nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,white);backdrop-filter:blur(14px);padding:12px 0;font-weight:800}.site-nav .navbar-brand{font-size:20px;font-weight:950;color:var(--ink);display:inline-flex;align-items:center;max-width:min(260px,62vw);padding:0}.brand-logo{display:block;width:min(240px,58vw);height:52px}.site-nav .nav-link{color:var(--muted);border:1px solid transparent;border-radius:999px;padding:8px 10px;font-size:14px;font-weight:850}.site-nav .nav-link:hover,.site-nav .nav-link.active{border-color:var(--line);color:var(--card-ink);background:var(--card)}.site-nav .navbar-toggler{border-color:var(--line);border-radius:14px;background:var(--card);color:var(--card-ink);box-shadow:none}.nav-label{color:var(--accent-text);font-weight:900}.hero{padding:var(--space) 0;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(20px,5vw,64px);align-items:center}.site-page{display:none}.site-page.active{display:grid}.section.site-page.active{display:block}.eyebrow{color:var(--accent-text);font-weight:900;text-transform:uppercase;font-size:12px;letter-spacing:0}.hero h1{font-size:clamp(34px,7vw,76px);line-height:.94;margin:10px 0 18px;letter-spacing:0}.hero p{font-size:clamp(16px,2vw,21px);color:var(--muted);max-width:62ch}.button{display:inline-flex;margin-top:14px;background:var(--accent);color:var(--accent-ink);text-decoration:none;border:0;border-radius:999px;padding:13px 18px;font-weight:900;cursor:pointer}.button.secondary{background:var(--secondary);color:var(--secondary-ink)}.button:focus-visible,.input:focus-visible,.nav-link:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 42%,white);outline-offset:3px}.panel{background:var(--card);color:var(--card-ink);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:0 24px 70px rgba(15,23,42,.12)}.metric{font-size:38px;font-weight:950;color:var(--secondary-text)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.card{background:var(--card);color:var(--card-ink);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.card b{display:block;margin-bottom:7px}.card span{color:var(--card-muted)}.section p{color:var(--muted)}.section{padding:54px 0;scroll-margin-top:86px;animation:section-in .55s ease both}.section h2{font-size:clamp(26px,4vw,44px);line-height:1;margin:0 0 14px}.page-kicker{color:var(--accent-text);font-weight:900;text-transform:uppercase;font-size:12px}.steps{counter-reset:step;display:grid;gap:12px}.step{counter-increment:step;display:flex;gap:14px;align-items:flex-start}.step:before{content:counter(step);background:var(--accent);color:var(--accent-ink);border-radius:50%;width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;font-weight:900}.contact{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.form{display:grid;gap:12px}.form label{display:grid;gap:6px;font-weight:850;color:var(--card-ink)}.input{width:100%;border:1px solid var(--line);border-radius:14px;padding:13px;background:var(--input-bg);color:var(--input-ink)}.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.tag{background:var(--accent);border:1px solid transparent;border-radius:999px;padding:8px 10px;font-weight:800;color:var(--accent-ink);font-size:13px}.image-card{position:relative;overflow:hidden;min-height:360px;padding:0}.image-card img{width:100%;height:100%;min-height:360px;object-fit:cover;display:block}.image-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.42))}.image-caption{position:absolute;left:18px;right:18px;bottom:18px;color:white;z-index:2;font-weight:900}.media-strip{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;align-items:stretch}.media-strip img{width:100%;height:260px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--line)}@keyframes section-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.section{animation:none}html{scroll-behavior:auto}}@media(max-width:760px){.hero,.contact,.grid,.media-strip{grid-template-columns:1fr}.hero h1{font-size:42px}.site-nav .navbar-collapse{padding-top:10px}.site-nav .navbar-nav{gap:6px}.brand-logo{height:46px;width:min(220px,56vw)}}`;
 }
 
 function parseBrief(text) {

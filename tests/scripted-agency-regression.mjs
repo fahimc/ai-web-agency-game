@@ -201,6 +201,8 @@ function testMultiPageUsesApprovedPagesAndCopy() {
   assert.match(packageOutput.files['services.html'], /Wedding photography services shaped around your day/);
   assert.match(packageOutput.files['about.html'], /A calm studio for weddings that feel personal/);
   assert.match(packageOutput.files['contact.html'], /Check your wedding date/);
+  assert.match(packageOutput.files['index.html'], /class="brand-logo"/, 'final site should render a generated SVG business logo');
+  assert.match(packageOutput.files['index.html'], /Photography 101 logo/, 'generated logo should have accessible title text');
   assert.doesNotMatch(output, /href="#\/|href="#services"|Selected work and capabilities|Lead with|Explain what|Use this space/i);
   const quality = evaluateWebsiteQuality(output, state);
   assert.equal(quality.passed, true, quality.failures.join(' '));

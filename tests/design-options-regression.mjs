@@ -285,6 +285,20 @@ function testTemplateBaseSelectionFromIntake() {
       baseTemplateId: candidates[0].id,
       baseTemplateName: candidates[0].name,
       templateReason: 'Matches the portfolio-first intake and gallery-led page list.',
+      logo: {
+        icon: 'camera',
+        layout: 'horizontal',
+        container: 'circle',
+        font: 'Georgia',
+        primary: '#111111',
+        secondary: '#8a6a4f',
+        textColor: '#111111',
+        tagline: 'Wedding stories with calm direction.',
+        iconSize: 94,
+        radius: 24,
+        weight: 800,
+        tracking: -0.25,
+      },
       name: 'Gallery-led Studio',
       tone: 'Editorial and selective',
       rationale: 'Puts the work first and keeps enquiries simple.',
@@ -323,16 +337,21 @@ function testTemplateBaseSelectionFromIntake() {
   const normalized = normalizeDesignRecommendations(raw, state, 4);
   assert.equal(normalized[0].baseTemplateId, candidates[0].id);
   assert.equal(normalized[0].baseTemplateName, candidates[0].name);
+  assert.equal(normalized[0].logo.icon, 'camera');
+  assert.equal(normalized[0].logo.container, 'circle');
 
   const html = buildExampleSite(siteLayouts.find((layout) => layout.id === 'portfolio-studio'), {
     ...state,
     selectedTemplateId: normalized[0].baseTemplateId,
+    selectedLogoConfig: normalized[0].logo,
     selectedSitePages: normalized[0].pages,
     selectedSiteSections: normalized[0].sections,
     outputs: {},
   }, normalized[0].palette);
   assert.match(html, /microagency-template-base/i, 'generated package should record the template base in each HTML file');
   assert.match(html, new RegExp(normalized[0].baseTemplateId), 'generated package should include the selected template id');
+  assert.match(html, /class=\\?"brand-logo\\?"/, 'generated site should include the SVG brand logo');
+  assert.match(html, /Wedding stories with calm direction/, 'generated logo should use the LLM-selected tagline');
 }
 
 async function testPendingDraftAutoResume(browser) {
