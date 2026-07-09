@@ -1,12 +1,10 @@
 # Placeholder images
 
-These local placeholder images are used by MicroAgency design directions and generated template previews.
+These local placeholder images are used by MicroAgency design directions, generated sites, and template previews.
 
-Source: Unsplash images downloaded from `images.unsplash.com`.
+## Legacy images
 
-License summary: Unsplash images are free to use for most commercial and personal projects. Attribution is not required, but is appreciated by Unsplash and contributors.
-
-Files:
+The top-level JPG files are the original Unsplash placeholder set used before the larger image library was added.
 
 - `business-team.jpg`
 - `office-workspace.jpg`
@@ -18,3 +16,15 @@ Files:
 - `education-laptop.jpg`
 - `creative-studio.jpg`
 - `community-impact.jpg`
+
+## Generated category library
+
+The larger generated library lives in `/placeholders/library/` and is indexed by:
+
+- `/placeholders/library.json`
+- `src/data/placeholderImageLibrary.js`
+- `docs/placeholder-images.md`
+
+The current library contains keyworded LoremFlickr Creative Commons placeholder photos across common website categories such as business, trades, restaurant, wellness, SaaS, legal, finance, property, ecommerce, fashion, events, travel, charity, and community.
+
+Run `node tools/download-placeholder-images.mjs` to refresh the category library.
