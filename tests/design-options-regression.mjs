@@ -10,6 +10,7 @@ import {
   normalizePalette,
   siteLayouts,
 } from '../src/data/siteBlueprints.js';
+import { evaluateWebsiteQuality } from '../src/utils/siteQuality.js';
 
 const cwd = dirname(dirname(fileURLToPath(import.meta.url)));
 const port = 5178;
@@ -207,6 +208,25 @@ async function testGeneratedComponentContrast(browser) {
   }
 }
 
+function testFallbackWebsiteQuality() {
+  const state = baseSession({
+    projectPackage: 'growth',
+    selectedDesignStyle: 'local-service',
+    selectedDesignPalette: ['#064e3b', '#2563eb', '#fff7ed', '#16a34a', '#ffffff'],
+    selectedSitePages: ['Home', 'Services', 'About', 'FAQ', 'Contact'],
+    selectedSiteSections: ['Hero', 'Services', 'Process', 'Testimonials', 'FAQ', 'Contact details'],
+  });
+  const html = buildExampleSite(
+    siteLayouts.find((layout) => layout.id === 'local-service'),
+    state,
+    state.selectedDesignPalette,
+  );
+  const report = evaluateWebsiteQuality(html, state);
+  assert.equal(report.passed, true, `fallback website should pass quality gate: ${report.failures.join(' ')}`);
+  const weakReport = evaluateWebsiteQuality('<!doctype html><html><body><nav>Home</nav><section><h1>Thin</h1><p>Too short.</p></section></body></html>', state);
+  assert.equal(weakReport.passed, false, 'thin HTML should fail the production quality gate');
+}
+
 async function testPendingDraftAutoResume(browser) {
   const session = baseSession({
     phase: 'running',
@@ -258,6 +278,8 @@ try {
   await testPaletteModeSwitching(browser);
   console.log('Running generated contrast regression...');
   await testGeneratedComponentContrast(browser);
+  console.log('Running fallback quality regression...');
+  testFallbackWebsiteQuality();
   console.log('Running pending-draft auto-resume regression...');
   await testPendingDraftAutoResume(browser);
   console.log('Design options regression tests passed.');

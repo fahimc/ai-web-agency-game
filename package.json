@@ -7,6 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "test:design-options": "node tests/design-options-regression.mjs",
+    "templates:audit": "node tools/audit-template-sources.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "netlify:status": "netlify status",
     "netlify:link": "netlify link",

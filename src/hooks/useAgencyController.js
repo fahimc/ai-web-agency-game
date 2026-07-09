@@ -29,6 +29,7 @@ import {
 } from '../services/storage.js';
 import { cleanHTML, downloadText, extractEmail, phaseLabel, safeFileName } from '../utils/text.js';
 import { createSitePackageString, fileNameForPage, parseSitePackage } from '../utils/sitePackage.js';
+import { evaluateWebsiteQuality } from '../utils/siteQuality.js';
 import { reviewAssetsPrompt } from '../utils/reviewAssets.js';
 import { createProjectPdf } from '../utils/pdf.js';
 import { MAX_REVISIONS, estimateAiCost, packageForModel, packageOption } from '../utils/pricing.js';
@@ -654,9 +655,11 @@ export function useAgencyController() {
       output = fallbackDesignDirection(current);
       log(employee.name, 'Design direction fallback used because the returned output was incomplete.');
     }
-    if (step.key === 'WebsiteHTML' && (!isCompleteHtml(output) || !hasRequiredSiteStructure(output, current) || !hasResponsiveMobileNav(output) || hasPreviewLanguage(output))) {
+    const qualityReport = step.key === 'WebsiteHTML' ? evaluateWebsiteQuality(output, current) : null;
+    if (step.key === 'WebsiteHTML' && (!isCompleteHtml(output) || !hasRequiredSiteStructure(output, current) || !hasResponsiveMobileNav(output) || hasPreviewLanguage(output) || !qualityReport.passed)) {
       output = fallbackWebsiteHtml(current);
-      log(employee.name, 'Website preview fallback used because the returned HTML was incomplete, missed required pages, missed mobile navigation, or used preview wording.');
+      const qualityReason = qualityReport?.failures?.length ? ` Quality issues: ${qualityReport.failures.join(' ')}` : '';
+      log(employee.name, `Website preview fallback used because the returned HTML was incomplete, missed required pages, missed mobile navigation, used preview wording, or did not meet the production quality bar.${qualityReason}`);
     }
     addQuest(step.quest, employee.id, 'done');
     update((stateNow) => ({

@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "policy": {
+    "allowedLicenses": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "CC0-1.0"],
+    "manualReviewRequired": true,
+    "rule": "Do not import arbitrary live websites. Only import templates with explicit compatible licences and attribution metadata."
+  },
+  "sources": [
+    {
+      "id": "startbootstrap-index",
+      "name": "Start Bootstrap template library",
+      "type": "catalogue",
+      "url": "https://github.com/StartBootstrap",
+      "license": "MIT for free templates",
+      "framework": "Bootstrap",
+      "priority": "high",
+      "notes": "Best first source because the app already uses Bootstrap. Import repos only after checking each repository licence."
+    },
+    {
+      "id": "startbootstrap-business-frontpage",
+      "name": "Business Frontpage",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-business-frontpage",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["business homepage", "local business", "service business"],
+      "priority": "high"
+    },
+    {
+      "id": "startbootstrap-modern-business",
+      "name": "Modern Business",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-modern-business",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["multi-page business", "portfolio", "services", "blog"],
+      "priority": "high"
+    },
+    {
+      "id": "startbootstrap-agency",
+      "name": "Agency",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-agency",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["agency", "portfolio", "landing page"],
+      "priority": "high"
+    },
+    {
+      "id": "startbootstrap-creative",
+      "name": "Creative",
+      "type": "repository",
+      "url": "https://github.com/StartBootstrap/startbootstrap-creative",
+      "license": "MIT",
+      "framework": "Bootstrap 5",
+      "useCases": ["creative", "portfolio", "service landing"],
+      "priority": "medium"
+    },
+    {
+      "id": "github-bootstrap-topic",
+      "name": "GitHub bootstrap-5-template topic",
+      "type": "discovery",
+      "url": "https://github.com/topics/bootstrap-5-template",
+      "license": "verify-per-repository",
+      "framework": "Bootstrap",
+      "priority": "medium",
+      "notes": "Use for candidate discovery only. Do not import without licence verification."
+    },
+    {
+      "id": "github-tailwind-topic",
+      "name": "GitHub tailwind-template topic",
+      "type": "discovery",
+      "url": "https://github.com/topics/tailwind-template?l=html",
+      "license": "verify-per-repository",
+      "framework": "Tailwind",
+      "priority": "low",
+      "notes": "Useful for design pattern extraction. Convert to MicroAgency section recipes rather than bundling Tailwind output by default."
+    }
+  ],
+  "excludedExamples": [
+    {
+      "name": "Cruip Simple Light",
+      "url": "https://github.com/cruip/tailwind-landing-page-template",
+      "reason": "GPL plus redistribution/resale restrictions; not suitable for direct bundling in this generator."
+    }
+  ]
+}
