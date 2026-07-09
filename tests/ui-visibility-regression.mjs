@@ -223,6 +223,32 @@ async function testVoucherPaymentSkipsUpload(browser) {
   }
 }
 
+async function testPreviewContentEditorUpdatesWebsite(browser) {
+  const { context, page } = await pageWithDraft(browser, storedSession({
+    phase: 'approval',
+    progress: 70,
+    progressTask: 'Preview approval',
+    activeOutput: 'WebsiteHTML',
+    approved: false,
+    outputs: {
+      WebsiteHTML: '<!doctype html><html><body><nav>Site</nav><main><section><h1>Original headline</h1><p>Original paragraph for customers.</p><a class="button" href="#contact">Start an enquiry</a></section></main></body></html>',
+    },
+    speech: { employeeId: 'dev', text: 'Your website preview is ready. Review it, approve it, or request changes.', actions: ['openPreview', 'approve'] },
+  }));
+  try {
+    await page.getByRole('button', { name: /continue/i }).click();
+    await page.locator('[role="dialog"][aria-label="Website Preview"]').waitFor();
+    await page.getByRole('button', { name: /edit content\/images/i }).click();
+    await page.getByLabel('H1 heading').fill('Edited customer headline');
+    await page.getByLabel('Paragraph 2').fill('Edited paragraph that the customer can approve before downloading.');
+    await page.getByRole('button', { name: /save content changes/i }).click();
+    await page.frameLocator('.preview-frame').getByRole('heading', { name: 'Edited customer headline' }).waitFor();
+    await page.frameLocator('.preview-frame').getByText('Edited paragraph that the customer can approve before downloading.').waitFor();
+  } finally {
+    await context.close();
+  }
+}
+
 const server = await startServer();
 let browser;
 try {
@@ -231,6 +257,7 @@ try {
   await testCompleteRestoreRepairsSpeechAndActions(browser);
   await testPaymentRestoreRepairsSpeechAndContinue(browser);
   await testVoucherPaymentSkipsUpload(browser);
+  await testPreviewContentEditorUpdatesWebsite(browser);
   console.log('UI visibility regression tests passed.');
 } finally {
   if (browser) await browser.close();
