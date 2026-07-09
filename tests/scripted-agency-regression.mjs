@@ -208,6 +208,62 @@ function testMultiPageUsesApprovedPagesAndCopy() {
   assert.equal(quality.passed, true, quality.failures.join(' '));
 }
 
+function testMalformedMarkdownAndInternalSectionLabelsAreRemoved() {
+  const state = photographyState({
+    projectName: 'MakyMaky',
+    selectedDesignStyle: 'local-service',
+    selectedDesignPalette: ['#0f3d2e', '#2f7d62', '#faf8f1', '#d6b36a', '#ffffff'],
+    selectedSitePages: ['Home', 'Services', 'Contact'],
+    selectedSiteSections: ['Header with CTA', 'Hero Split with parallax', 'Services Grid', 'Features Bento', 'Portfolio Grid', 'Contact Form'],
+    brief: [
+      'Business: MakyMaky',
+      'Industry: website development',
+      'Audience: Professionals',
+      'Goal: Show services clearly',
+      'Offer: website development',
+    ].join('\n'),
+    outputs: {
+      PageContent: [
+        '## Home',
+        '```markdown',
+        '# Home Page Content for MakyMaky',
+        'Page Objective To introduce MakyMaky as a premier creative website development studio in London.',
+        '',
+        'Hero headline: MakyMaky built to show services clearly',
+        'Hero support copy: Website development from MakyMaky, explained in practical terms.',
+        '',
+        'Content block 1: Clear service strategy',
+        'MakyMaky helps professional clients understand what kind of website they need, what content matters, and how the project should move from brief to launch.',
+        'CTA idea: Discuss a project',
+        '```',
+        '',
+        '---',
+        '',
+        '## Contact',
+        '```markdown',
+        '# Contact Page Content for MakyMaky',
+        'Page Objective Facilitate clear, professional, and approachable communication between MakyMaky and potential clients.',
+        'Hero headline: Contact MakyMaky',
+        'Hero support copy: Send the project essentials and get a clear response.',
+        'Content block 1: What to send',
+        'Share the project type, timeline, goals, existing website, and any examples of sites you like.',
+        'CTA idea: Send project details',
+        '```',
+      ].join('\n'),
+    },
+  });
+  const output = scriptAgencyStep({ key: 'WebsiteHTML' }, state);
+  const packageOutput = parseSitePackage(output);
+  assert.ok(packageOutput, 'growth package should still be a multi-file package');
+  const allHtml = Object.values(packageOutput.files).join('\n');
+  assert.doesNotMatch(allHtml, /```|markdown|Page Objective|Visitor Intent|Content block|Hero support copy/i);
+  assert.doesNotMatch(allHtml, /Header with CTA|Hero Split|Services Grid|Features Bento|Portfolio Grid|Contact Form/i);
+  assert.match(packageOutput.files['index.html'], /MakyMaky built to show services clearly/);
+  assert.match(packageOutput.files['contact.html'], /Send the project essentials and get a clear response/);
+  const quality = evaluateWebsiteQuality(output, state);
+  assert.equal(quality.passed, true, quality.failures.join(' '));
+}
+
 function testLaunchPackageStaysOnePage() {
   const state = photographyState({
     projectPackage: 'launch',
@@ -225,5 +281,6 @@ testScriptedPreviewPath();
 testCheapModelRouting();
 testAutomationReviewBudget();
 testMultiPageUsesApprovedPagesAndCopy();
+testMalformedMarkdownAndInternalSectionLabelsAreRemoved();
 testLaunchPackageStaysOnePage();
 console.log('Scripted agency regression tests passed.');

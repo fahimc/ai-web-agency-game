@@ -638,6 +638,11 @@ label input, label textarea, label select { margin-top: 6px; }
   font-size: 13px;
   position: relative;
   touch-action: manipulation;
+  transform: none !important;
+}
+.palette-option:hover {
+  transform: none !important;
+  box-shadow: none;
 }
 .palette-option::before {
   content: "";

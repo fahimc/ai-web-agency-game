@@ -750,7 +750,7 @@ function pageContentMapFromState(state = {}) {
 }
 
 function parsePageCopy(markdown) {
-  const text = String(markdown || '').trim();
+  const text = sanitizePageCopyText(markdown);
   const fields = {
     objective: fieldValue(text, 'Page objective'),
     intent: fieldValue(text, 'Visitor intent'),
@@ -776,10 +776,10 @@ function parsePageCopy(markdown) {
   if (!fields.blocks.length) {
     const paragraphs = text
       .split(/\n{2,}/)
-      .map((item) => item.replace(/^#+\s*/, '').trim())
-      .filter((item) => item.length > 40 && !/^(page objective|visitor intent|hero headline|hero support copy|trust and proof|primary cta)\s*:/i.test(item));
+      .map((item) => cleanPageCopyLine(item.replace(/^#+\s*/, '').trim()))
+      .filter((item) => item.length > 40 && !isPageCopyMetaLine(item));
     fields.blocks = paragraphs.slice(0, 4).map((paragraph, index) => ({
-      title: index === 0 ? 'Overview' : `Detail ${index + 1}`,
+      title: titleFromParagraph(paragraph, index),
       body: paragraph.replace(/\s+/g, ' '),
       cta: fields.cta,
     }));
@@ -787,10 +787,49 @@ function parsePageCopy(markdown) {
   return fields;
 }
 
+function sanitizePageCopyText(value) {
+  return String(value || '')
+    .replace(/```[a-z0-9-]*\s*/gi, '')
+    .replace(/```/g, '')
+    .split('\n')
+    .map((line) => cleanPageCopyLine(line))
+    .filter((line) => !/^\s*#*\s*(home|about|services?|contact|faq|pricing|gallery|menu|events?)\s+page\s+content\b/i.test(line))
+    .filter((line) => !/^\s*#*\s*page\s+content\s+for\b/i.test(line))
+    .filter((line) => !/^\s*markdown\s*$/i.test(line))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function cleanPageCopyLine(value) {
+  return String(value || '')
+    .replace(/^\s*[-*]\s+/, '')
+    .replace(/^\s*#{1,6}\s*/, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^\s*markdown\s*/i, '')
+    .trim();
+}
+
+function isPageCopyMetaLine(value) {
+  return /^(page objective|visitor intent|hero headline|hero support copy|hero copy|trust and proof|proof ideas|primary cta|cta copy)\s*:?\s*/i.test(value)
+    || /\b(page content for|markdown)\b/i.test(value);
+}
+
+function titleFromParagraph(paragraph, index) {
+  const firstSentence = String(paragraph || '').split(/[.!?]/)[0].trim();
+  const title = firstSentence.split(/\s+/).slice(0, 6).join(' ');
+  return title.length >= 8 ? title : (index === 0 ? 'Key information' : `Useful detail ${index + 1}`);
+}
+
 function fieldValue(text, label) {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = String(text || '').match(new RegExp(`^${escaped}\\s*:\\s*(.+)$`, 'im'));
-  return match?.[1]?.trim() || '';
+  const value = String(text || '');
+  const sameLine = value.match(new RegExp(`^\\s*(?:#+\\s*)?${escaped}\\s*(?::|-)?\\s+(.+)$`, 'im'));
+  if (sameLine?.[1]?.trim()) return cleanPageCopyLine(sameLine[1]);
+  const nextLine = value.match(new RegExp(`^\\s*(?:#+\\s*)?${escaped}\\s*(?::|-)?\\s*$\\n+([^\\n]+)`, 'im'));
+  return nextLine?.[1] ? cleanPageCopyLine(nextLine[1]) : '';
 }
 
 function pageCopyFor(pageCopy = {}, page) {
@@ -831,6 +870,7 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
   const ctaTarget = slugify(navItems.find((item) => /contact|book/i.test(item)) || 'Contact');
   const ctaHref = isMultiPage ? `#/${ctaTarget}` : `#${ctaTarget}`;
   const homeClass = isMultiPage ? 'hero site-page active' : 'hero';
+  const heroTags = customerTagsFor({ business, audience, goal, offer, layout });
   const pageSections = (isOnePagePackage ? onePageSections : pages.filter((page) => page.toLowerCase() !== 'home'))
     .map((page) => {
       const section = pageSectionFor(page, { business, industry, audience, goal, offer, layout, examples, image, ctaTarget, ctaHref, pageCopy });
@@ -858,7 +898,7 @@ ${siteMotionCss()}
 <nav class="navbar navbar-expand-md site-nav" aria-label="Main navigation"><a class="navbar-brand" href="${isMultiPage ? '#/home' : '#home'}">${renderNavLogo(logo, { idPrefix: `${business}-preview-logo`, title: `${business} logo` })}<span class="sr-only">${escapeHtml(business)}</span></a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="siteNavbar"><ul class="navbar-nav ms-auto align-items-md-center gap-md-2">${navLinks}</ul>${navLabel ? `<span class="nav-label ms-md-3">${escapeHtml(navLabel)}</span>` : ''}</div></nav>
 <main>
 <section class="${homeClass}" id="home">
-<div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(homeCopy?.headline || headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(homeCopy?.lead || copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sections.slice(0, 5).map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">${escapeHtml(homeCopy?.cta || 'Start an enquiry')}</a></div>
+<div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(homeCopy?.headline || headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(homeCopy?.lead || copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${heroTags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">${escapeHtml(homeCopy?.cta || 'Start an enquiry')}</a></div>
 <aside class="panel image-card parallax-media depth-panel float-card" data-parallax="0.12"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(heroImageCaptionFor(business, offer))}</div></aside>
 </section>
 ${pageSections}
@@ -961,12 +1001,9 @@ ${templateComment}<div class="shell">
 }
 
 function homePageBody({ layout, business, audience, goal, offer, image, examples, sections, ctaHref, pageCopy = {} }) {
-  const usefulSections = uniqueItems(sections)
-    .filter((section) => !/^(hero|contact details|lead capture form|final cta)$/i.test(section))
-    .slice(0, 5);
-  const sectionTags = usefulSections.length ? usefulSections : ['Services', 'Process', 'Testimonials'];
+  const sectionTags = customerTagsFor({ business, audience, goal, offer, layout });
   const homeCopy = pageCopyFor(pageCopy, 'Home');
-  const homeBlocks = homeCopy?.blocks?.length ? homeCopy.blocks : examples.cards;
+  const homeBlocks = completeContentBlocks(homeCopy?.blocks, examples.cards);
   const overviewTitle = homeBlocks[0]?.title || examples.servicesTitle;
   const overviewLead = homeBlocks[0]?.body || homeBlocks[0]?.text || examples.servicesLead;
   const overviewCards = homeBlocks.slice(0, 6);
@@ -979,6 +1016,54 @@ function homePageBody({ layout, business, audience, goal, offer, image, examples
 <section class="section"><span class="page-kicker">Process</span><h2>A clear path from interest to action</h2><div class="steps"><div class="step">Understand the offer and who it is for.</div><div class="step">Review the details, proof, and practical fit.</div><div class="step">Send an enquiry when the next step is clear.</div></div><a class="button" href="${escapeHtml(ctaHref)}">Contact ${escapeHtml(business)}</a></section>
 <section class="section"><span class="page-kicker">Common questions</span><h2>Answers that reduce hesitation</h2><div class="grid"><div class="card"><b>What should I send?</b><span>Share what you need, timing, location if relevant, and anything that would affect the recommendation.</span></div><div class="card"><b>How quickly will I hear back?</b><span>Set a clear response expectation so visitors know when the next useful answer should arrive.</span></div><div class="card"><b>Can I ask before deciding?</b><span>Yes. The first enquiry can be a fit check, not a commitment to buy immediately.</span></div></div></section>
 <section class="section contact"><div><span class="page-kicker">Contact</span><h2>${escapeHtml(examples.contactTitle)}</h2><p>${escapeHtml(examples.contactText)}</p><div class="tag-row"><span class="tag">Fast reply</span><span class="tag">Clear recommendation</span><span class="tag">No pressure</span></div></div>${contactForm({ business })}</section>`;
+}
+
+function customerTagsFor({ business, audience, goal, offer, layout }) {
+  const text = `${business} ${audience} ${goal} ${offer} ${layout?.id || ''}`.toLowerCase();
+  if (/wedding|bride|bridal|photography|portfolio|gallery|creative/.test(text)) {
+    return ['Selected work', 'Clear packages', 'Easy enquiry'];
+  }
+  if (/\b(restaurant|cafe|bar|venue|menu|food|dining)\b/.test(text)) {
+    return ['Menu highlights', 'Opening details', 'Simple booking'];
+  }
+  if (/\b(software|saas|app|platform|tool|tech)\b/.test(text)) {
+    return ['Product benefits', 'Workflow clarity', 'Book a demo'];
+  }
+  if (/health|wellness|therapy|care|clinic|beauty/.test(text)) {
+    return ['Reassuring care', 'Clear services', 'Book a visit'];
+  }
+  if (/trade|repair|local|service|builder|plumb|electric|clean/.test(text)) {
+    return ['Local service', 'Trusted process', 'Fast quote'];
+  }
+  return ['Clear services', 'Useful proof', 'Easy contact'];
+}
+
+function completeContentBlocks(blocks = [], fallbackBlocks = []) {
+  const cleanBlocks = (blocks || [])
+    .map((block) => ({
+      title: cleanPageCopyLine(block.title || ''),
+      body: cleanPageCopyLine(block.body || block.text || ''),
+      cta: cleanPageCopyLine(block.cta || ''),
+    }))
+    .filter((block) => block.title && block.body);
+  const cleanFallbacks = (fallbackBlocks || [])
+    .map((block) => ({
+      title: cleanPageCopyLine(block.title || ''),
+      body: cleanPageCopyLine(block.body || block.text || ''),
+      cta: cleanPageCopyLine(block.cta || ''),
+    }))
+    .filter((block) => block.title && block.body);
+  return uniqueItemsByTitle([...cleanBlocks, ...cleanFallbacks]).slice(0, 6);
+}
+
+function uniqueItemsByTitle(items = []) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = String(item.title || '').toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function siteCss(theme) {
@@ -1084,13 +1169,14 @@ function pageSectionFor(page, context) {
 
 function contentDrivenPageSection(id, page, copy, context) {
   const { business, offer, ctaHref } = context;
-  const blocks = copy.blocks?.length ? copy.blocks : [
+  const fallbackBlocks = [
     { title: `What ${business} offers`, body: `${business} helps visitors understand ${offer} clearly and choose the right next step.`, cta: copy.cta || 'Start an enquiry' },
     { title: 'What to expect', body: 'The page answers practical questions around fit, timing, support, and the information needed for a useful response.', cta: copy.cta || 'Ask a question' },
     { title: 'Next step', body: 'Visitors can send a short enquiry with enough context for a helpful reply.', cta: copy.cta || 'Contact us' },
   ];
+  const blocks = completeContentBlocks(copy.blocks, fallbackBlocks);
   const isContact = /contact|book/i.test(page);
-  return `<section class="section${isContact ? ' contact' : ''}" id="${escapeHtml(id)}"><div><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(copy.headline || `${page} for ${business}`)}</h2><p>${escapeHtml(copy.lead || copy.objective || `${offer} from ${business}, explained in practical terms.`)}</p><div class="grid">${blocks.slice(0, 6).map((block) => `<div class="card"><b>${escapeHtml(block.title)}</b><span>${escapeHtml(block.body || block.text)}</span>${block.cta ? `<a class="button secondary" href="${escapeHtml(ctaHref)}">${escapeHtml(block.cta)}</a>` : ''}</div>`).join('')}</div>${copy.trust ? `<div class="panel"><b>Trust and proof</b><p>${escapeHtml(copy.trust)}</p></div>` : ''}</div>${isContact ? contactForm(context) : ''}</section>`;
+  return `<section class="section${isContact ? ' contact' : ''}" id="${escapeHtml(id)}"><div><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(copy.headline || `${page} for ${business}`)}</h2><p>${escapeHtml(copy.lead || copy.objective || `${offer} from ${business}, explained in practical terms.`)}</p><div class="grid">${blocks.slice(0, 6).map((block) => `<div class="card"><b>${escapeHtml(block.title)}</b><span>${escapeHtml(block.body || block.text)}</span>${block.cta ? `<a class="button secondary" href="${escapeHtml(ctaHref)}">${escapeHtml(block.cta)}</a>` : ''}</div>`).join('')}</div>${copy.trust ? `<div class="panel"><b>Why people can enquire with confidence</b><p>${escapeHtml(copy.trust)}</p></div>` : ''}</div>${isContact ? contactForm(context) : ''}</section>`;
 }
 
 function pageBodyFor(page, context) {

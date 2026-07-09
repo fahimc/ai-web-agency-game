@@ -108,17 +108,8 @@ export function DesignOptionsModal({ state, actions }) {
 
   function keepPaletteScroll(event, callback) {
     event.preventDefault();
-    const scrollBox = event.currentTarget.closest('.modal-body');
-    const scrollTop = scrollBox?.scrollTop;
     callback();
     event.currentTarget.blur();
-    if (scrollBox && typeof window !== 'undefined') {
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          scrollBox.scrollTop = scrollTop;
-        });
-      });
-    }
   }
 
   function selectCurrent() {
