@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { STATIC_VOUCHER_CODE } from '../src/utils/pricing.js';
 
 const cwd = dirname(dirname(fileURLToPath(import.meta.url)));
 const port = 5179;
@@ -174,6 +175,54 @@ async function testPaymentRestoreRepairsSpeechAndContinue(browser) {
   }
 }
 
+async function testVoucherPaymentSkipsUpload(browser) {
+  const { context, page } = await pageWithDraft(browser, storedSession({
+    phase: 'payment',
+    progress: 5,
+    progressTask: 'Payment',
+    outputs: {},
+    activeOutput: 'Plan',
+    approved: false,
+    selectedDesignStyle: '',
+    selectedDesignPalette: [],
+    speech: { employeeId: 'reception', text: 'Payment is required before the team starts.', actions: ['openPayment'] },
+  }));
+  await page.route('**/.netlify/functions/paypal-config', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ configured: false, clientId: '' }),
+  }));
+  await page.route('**/.netlify/functions/openai-response', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      output_text: JSON.stringify({
+        recommendations: [{
+          layoutId: 'local-service',
+          name: 'Trust-led service',
+          tone: 'Clear and practical',
+          rationale: 'Built around service clarity and fast enquiries.',
+          paletteName: 'Fresh trust',
+          palette: ['#173d35', '#18a058', '#fff7ed', '#eab308', '#ffffff'],
+          pages: ['Home', 'Services', 'About', 'Contact'],
+          sections: ['Hero', 'Services', 'Process', 'Contact details'],
+        }],
+      }),
+    }),
+  }));
+  try {
+    await page.getByRole('button', { name: /continue/i }).click();
+    await page.locator('[role="dialog"][aria-label="Project Payment"]').waitFor();
+    await page.getByLabel('Voucher code').fill(STATIC_VOUCHER_CODE);
+    await page.getByRole('button', { name: /apply voucher/i }).click();
+    await page.locator('[role="dialog"][aria-label="Choose Design Direction"]').waitFor();
+    assert.equal(await page.getByText(/optional files|upload images|skip files|project files/i).count(), 0, 'voucher payment should go directly to design options, not file upload');
+    assert.ok(await page.getByText(/Mira is preparing design directions|Pick a visual route/i).count(), 'design stage should be visible after voucher payment');
+  } finally {
+    await context.close();
+  }
+}
+
 const server = await startServer();
 let browser;
 try {
@@ -181,6 +230,7 @@ try {
   await testInitialChatVisible(browser);
   await testCompleteRestoreRepairsSpeechAndActions(browser);
   await testPaymentRestoreRepairsSpeechAndContinue(browser);
+  await testVoucherPaymentSkipsUpload(browser);
   console.log('UI visibility regression tests passed.');
 } finally {
   if (browser) await browser.close();

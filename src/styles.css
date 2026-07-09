@@ -619,7 +619,7 @@ label input, label textarea, label select { margin-top: 6px; }
 }
 .palette-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 .palette-option {
@@ -637,6 +637,15 @@ label input, label textarea, label select { margin-top: 6px; }
   box-shadow: none;
   font-size: 13px;
   position: relative;
+  touch-action: manipulation;
+}
+.palette-option::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  flex: 0 0 auto;
 }
 .palette-option > span:first-child {
   flex: 1 1 92px;
@@ -648,12 +657,7 @@ label input, label textarea, label select { margin-top: 6px; }
   box-shadow: 0 0 0 3px rgba(17, 103, 241, .14);
 }
 .palette-option.active::before {
-  content: "";
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
   background: #1167f1;
-  flex: 0 0 auto;
 }
 .palette-selected-label {
   flex: 0 0 100%;
@@ -662,6 +666,7 @@ label input, label textarea, label select { margin-top: 6px; }
   font-weight: 950;
   text-transform: uppercase;
 }
+.palette-selected-label[aria-hidden="true"] { visibility: hidden; }
 .custom-toggle { margin-top: 2px; }
 .custom-palette-grid {
   display: grid;

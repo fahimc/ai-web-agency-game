@@ -347,9 +347,9 @@ export function useAgencyController() {
       speak('dev', 'Welcome back. Your website preview is ready for approval.', ['openPreview', 'approve']);
       window.setTimeout(() => setModal('websitePreview'), 120);
     } else if (next.phase === 'assets') {
-      update((current) => ({ ...current, phase: 'assets', activeEmployee: 'pm' }));
-      speak('pm', 'Welcome back. You can upload optional project files now, or skip this step and move to design.', ['openAssetUpload']);
-      window.setTimeout(() => setModal('assetUpload'), 120);
+      update((current) => ({ ...current, phase: 'design_options', activeEmployee: 'design', progressTask: 'Preparing design recommendations' }));
+      speak('design', 'Welcome back. Mira will continue from the brief and prepare design directions.', ['openDesignOptions']);
+      window.setTimeout(() => setModal('designOptions'), 120);
     } else if (next.paid && next.brief && !next.selectedDesignStyle) {
       update((current) => ({ ...current, phase: 'design_options', activeEmployee: 'design' }));
       speak('design', 'Welcome back. Payment is complete. Choose a design direction so the team can start production.', ['openDesignOptions']);
@@ -487,15 +487,15 @@ export function useAgencyController() {
         ...details,
         amountGbp: details.amountGbp ?? packageOption(details.packageId || current.projectPackage).priceGbp,
       },
-      phase: 'assets',
-      activeEmployee: 'pm',
+      phase: 'design_options',
+      activeEmployee: 'design',
       progress: Math.max(current.progress || 0, 6),
-      progressTask: 'Optional project files',
+      progressTask: 'Preparing design recommendations',
       designRecommendationStatus: current.designRecommendations?.length ? 'ready' : 'idle',
     }));
-    setModal('assetUpload');
-    addConvo('Nova', 'Payment received. Rin will ask for optional project files before design starts.');
-    speak('pm', 'Payment received. You can optionally upload images, logos, copy notes, menus, PDFs, or documents for the team. If you do not have any files, skip this and Mira will prepare design options.', ['openAssetUpload']);
+    setModal('designOptions');
+    addConvo('Nova', 'Payment received. Mira will prepare design options from the brief.');
+    speak('design', 'Payment received. I will prepare design directions from the brief now.', ['openDesignOptions']);
   }, [addConvo, speak, update]);
 
   const buildContext = useCallback((keys) => {
@@ -519,7 +519,7 @@ export function useAgencyController() {
       designRecommendationStatus: 'loading',
       progressTask: 'Preparing design recommendations',
     }));
-    speak('design', 'I am reviewing the brief and asking the model to recommend the strongest design routes.');
+    speak('design', 'I am reviewing the brief and preparing the strongest design routes.');
     try {
       const raw = await callModelInBackground({
         employee: employees.design,
@@ -538,8 +538,8 @@ export function useAgencyController() {
         progressTask: 'Choose design direction',
       }));
       log('Mira Sol', recommendations[0]?.source === 'llm'
-        ? 'LLM design recommendations prepared from the client brief.'
-        : 'Fallback design recommendations used because the LLM response could not be used.');
+        ? 'Design recommendations prepared from the client brief.'
+        : 'Fallback design recommendations prepared from the client brief.');
       speak('design', 'I have prepared recommended directions from the brief. Compare them and choose the route you like.');
       return recommendations;
     } catch (error) {
@@ -551,7 +551,7 @@ export function useAgencyController() {
         progressTask: 'Choose design direction',
       }));
       log('Mira Sol', `Fallback design recommendations used after model error: ${error?.message || error}`);
-      speak('design', 'I could not get model recommendations this time, so I prepared safe design routes from the brief.');
+      speak('design', 'I prepared safe design routes from the brief.');
       return recommendations;
     }
   }, [buildContext, log, speak, update]);
@@ -564,8 +564,8 @@ export function useAgencyController() {
       progressTask: current.designRecommendations?.length ? 'Choose design direction' : 'Preparing design recommendations',
     }));
     setModal('designOptions');
-    addConvo('Nova', stateRef.current.reviewAssets?.length ? 'Project files saved. Mira will use them for design recommendations.' : 'File upload skipped. Mira will continue from the brief.');
-    speak('design', 'I have the brief and any uploaded files. I will prepare design directions with colour palettes for you to choose from.', ['openDesignOptions']);
+    addConvo('Nova', 'Mira will continue from the brief.');
+    speak('design', 'I have the brief. I will prepare design directions with colour palettes for you to choose from.', ['openDesignOptions']);
     window.setTimeout(() => generateDesignRecommendations(), 50);
   }, [addConvo, generateDesignRecommendations, speak, update]);
 
@@ -593,10 +593,10 @@ export function useAgencyController() {
     const recommendationNote = structure.recommendation
       ? [
         '',
-        'LLM recommendation:',
+        'Designer recommendation:',
         `Name: ${structure.recommendation.name}`,
         `Rationale: ${structure.recommendation.rationale}`,
-        `Source: ${structure.recommendation.source === 'llm' ? 'Mira model recommendation' : 'Mira fallback recommendation'}`,
+        `Source: ${structure.recommendation.source === 'llm' ? 'Mira recommendation' : 'Mira fallback recommendation'}`,
       ].join('\n')
       : '';
     update((current) => ({
@@ -992,9 +992,9 @@ export function useAgencyController() {
     }
     update((stateNow) => ({ ...stateNow, error: '', running: false }));
     if (current.phase === 'assets') {
-      update((stateNow) => ({ ...stateNow, phase: 'assets', activeEmployee: 'pm', progressTask: 'Optional project files' }));
-      speak('pm', 'You can upload optional project files now, or skip this step and move to design.', ['openAssetUpload']);
-      setModal('assetUpload');
+      update((stateNow) => ({ ...stateNow, phase: 'design_options', activeEmployee: 'design', progressTask: 'Preparing design recommendations' }));
+      speak('design', 'Choose a design direction first, then I will start the production run.', ['openDesignOptions']);
+      setModal('designOptions');
       return;
     }
     if (current.paid && (!current.selectedDesignStyle || !current.outputs.SelectedDesign)) {
@@ -1249,7 +1249,8 @@ export function useAgencyController() {
       return;
     }
     if (current.phase === 'assets') {
-      setModal('assetUpload');
+      update((stateNow) => ({ ...stateNow, phase: 'design_options', activeEmployee: 'design', progressTask: stateNow.designRecommendations?.length ? 'Choose design direction' : 'Preparing design recommendations' }));
+      setModal('designOptions');
       return;
     }
     if (current.phase === 'design_options') {
@@ -1296,7 +1297,7 @@ export function useAgencyController() {
     openPackages: () => setModal('packages'),
     openDesignOptions,
     openPayment: () => setModal('payment'),
-    openAssetUpload: () => setModal('assetUpload'),
+    openAssetUpload: openDesignOptions,
     openAgencyInfo: () => setModal('agencyInfo'),
     openMenu: (tab = 'status') => {
       setMenuTab(tab);
@@ -1414,7 +1415,7 @@ function restoredSpeechForState(state) {
     return { employeeId: 'reception', text: 'Choose the package that fits the site you want us to produce.', actions: ['openPackages'] };
   }
   if (phase === 'assets') {
-    return { employeeId: 'pm', text: 'You can upload optional project files now, or skip this step and move to design.', actions: ['openAssetUpload'] };
+    return { employeeId: 'design', text: 'Mira will continue from the brief and prepare design directions.', actions: ['openDesignOptions'] };
   }
   if (phase === 'design_options') {
     return { employeeId: 'design', text: 'Choose a design direction, palette, pages, and sections so the team can build the site.', actions: ['openDesignOptions'] };

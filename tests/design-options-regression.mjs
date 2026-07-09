@@ -145,6 +145,7 @@ async function testLoadingRecommendations(browser) {
     assert.equal(await page.locator('.design-carousel-card').count(), 0, 'direction cards should not render while recommendations are loading');
     assert.equal(await page.locator('.design-preview-frame').count(), 0, 'preview iframe should not render while recommendations are loading');
     assert.equal(await page.getByText(/Option 1 of/i).count(), 0, 'option count should not appear while recommendations are loading');
+    assert.equal(await page.getByText(/asking the model|model recommendations/i).count(), 0, 'customer-facing loading copy should not mention a model');
   } finally {
     await context.close();
   }
@@ -178,9 +179,12 @@ async function testPaletteModeSwitching(browser) {
     });
     await page.getByRole('button', { name: /Modern mono/i }).click();
     assert.equal(await page.locator('.custom-palette-grid').count(), 0, 'user should be able to return from custom colours to preset palettes');
-    await page.locator('.modal-body').evaluate((element) => { element.scrollTop = 520; });
+    await page.locator('.palette-panel').evaluate((element) => element.scrollIntoView({ block: 'center' }));
+    const scrollBefore = await page.locator('.modal-body').evaluate((element) => element.scrollTop);
     await page.getByRole('button', { name: /Electric SaaS/i }).click();
     assert.equal(await page.getByRole('button', { name: /Electric SaaS/i }).getAttribute('aria-pressed'), 'true', 'lower palette presets should be selectable');
+    const scrollAfter = await page.locator('.modal-body').evaluate((element) => element.scrollTop);
+    assert.ok(Math.abs(scrollAfter - scrollBefore) < 90, `palette selection should not jump to another section (${scrollBefore} -> ${scrollAfter})`);
     const saasTheme = await previewTheme();
     assert.equal(saasTheme.accent, '#4f46e5', 'selected lower palette should update preview colours');
   } finally {

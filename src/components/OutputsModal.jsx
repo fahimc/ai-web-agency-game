@@ -127,7 +127,7 @@ function Website({ state, actions, previewOnly = false }) {
           <div className="review-tools">
             <div>
               <b>Content and assets</b>
-              <p className="small muted">Edit this page directly or use the images uploaded after payment.</p>
+              <p className="small muted">Edit this page directly before sending a revision request.</p>
             </div>
             <div className="stack">
               <button type="button" className="secondary" onClick={() => setShowPageEditor((value) => !value)}>{showPageEditor ? 'Hide HTML editor' : 'Edit current page HTML'}</button>
@@ -151,15 +151,14 @@ function Website({ state, actions, previewOnly = false }) {
                 ))}
               </div>
             )}
-            {!state.reviewAssets?.length && <p className="small muted">No files were uploaded after payment.</p>}
-            {imageAssets.length > 0 && <p className="small muted">Uploaded images can be applied immediately. Uploaded docs are included in revision context.</p>}
+            {imageAssets.length > 0 && <p className="small muted">Saved project images can be applied immediately.</p>}
           </div>
         )}
         {showRevision && (
           <form className="revision-form" onSubmit={submitRevision}>
             <button type="button" className="secondary" onClick={actions.openDetails}>Edit content fields</button>
             <label>Revision request
-              <textarea value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="Tell Mira what should change in the content, images, design, layout, or sections. Uploaded docs/images will be included as context." />
+              <textarea value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="Tell Mira what should change in the content, images, design, layout, or sections." />
             </label>
             <button type="submit">Send to designer</button>
           </form>

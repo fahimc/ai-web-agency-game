@@ -106,6 +106,21 @@ export function DesignOptionsModal({ state, actions }) {
     setCustomColors((current) => current.map((color, colorIndex) => colorIndex === index ? value : color));
   }
 
+  function keepPaletteScroll(event, callback) {
+    event.preventDefault();
+    const scrollBox = event.currentTarget.closest('.modal-body');
+    const scrollTop = scrollBox?.scrollTop;
+    callback();
+    event.currentTarget.blur();
+    if (scrollBox && typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          scrollBox.scrollTop = scrollTop;
+        });
+      });
+    }
+  }
+
   function selectCurrent() {
     if (isLoadingRecommendations || !activeOption) {
       actions.notify('Mira is still preparing recommendations.');
@@ -133,7 +148,7 @@ export function DesignOptionsModal({ state, actions }) {
             <h3>Pick a visual route</h3>
             <p className="muted">
               {isLoadingRecommendations
-                ? 'Mira is asking the model to recommend directions from the brief.'
+                ? 'Mira is preparing design directions from the brief.'
                 : `Mira selected ${designOptions.length} recommended directions from the brief. Compare them, choose a colour palette, then production can start.`}
             </p>
           </div>
@@ -162,6 +177,7 @@ export function DesignOptionsModal({ state, actions }) {
                 paletteOptions={paletteOptions}
                 customColors={customColors}
                 updateCustomColor={updateCustomColor}
+                keepPaletteScroll={keepPaletteScroll}
               />
               <StructureChooser
                 isOnePagePackage={isOnePagePackage}
@@ -316,7 +332,19 @@ function PaletteChooser({
   paletteOptions,
   customColors,
   updateCustomColor,
+  keepPaletteScroll,
 }) {
+  function selectPreset(event, index) {
+    keepPaletteScroll(event, () => {
+      setPaletteMode('preset');
+      setPaletteIndex(index);
+    });
+  }
+
+  function selectCustom(event) {
+    keepPaletteScroll(event, () => setPaletteMode('custom'));
+  }
+
   return (
     <div className="palette-panel">
       <div>
@@ -324,31 +352,28 @@ function PaletteChooser({
         <p className="small muted">Use up to {MAX_PALETTE_COLORS} colours: text, primary, background, accent, and surface.</p>
       </div>
       <div className="palette-mode-toggle" aria-label="Palette mode">
-        <button type="button" className={paletteMode === 'preset' ? 'active' : ''} onClick={() => setPaletteMode('preset')}>Presets</button>
-        <button type="button" className={paletteMode === 'custom' ? 'active' : ''} onClick={() => setPaletteMode('custom')}>User colours</button>
+        <button type="button" className={paletteMode === 'preset' ? 'active' : ''} onClick={(event) => selectPreset(event, paletteIndex)}>Presets</button>
+        <button type="button" className={paletteMode === 'custom' ? 'active' : ''} onClick={selectCustom}>User colours</button>
       </div>
       <div className="palette-options">
         {paletteOptions.map((option, index) => (
           <button
             type="button"
             className={`palette-option ${paletteMode === 'preset' && paletteIndex === index ? 'active' : ''}`}
-            key={option.id}
+            key={`${option.id}-${index}`}
             aria-pressed={paletteMode === 'preset' && paletteIndex === index}
-            onClick={() => {
-              setPaletteMode('preset');
-              setPaletteIndex(index);
-            }}
+            onClick={(event) => selectPreset(event, index)}
           >
             <span>{option.name}</span>
             <span className="swatches">{option.colors.map((color) => <i key={color} title={paletteLabel(color)} style={{ background: color }} />)}</span>
-            {paletteMode === 'preset' && paletteIndex === index && <b className="palette-selected-label">Selected</b>}
+            <b className="palette-selected-label" aria-hidden={paletteMode === 'preset' && paletteIndex === index ? 'false' : 'true'}>Selected</b>
           </button>
         ))}
       </div>
-      <button type="button" className={`palette-option custom-toggle ${paletteMode === 'custom' ? 'active' : ''}`} aria-pressed={paletteMode === 'custom'} onClick={() => setPaletteMode('custom')}>
+      <button type="button" className={`palette-option custom-toggle ${paletteMode === 'custom' ? 'active' : ''}`} aria-pressed={paletteMode === 'custom'} onClick={selectCustom}>
         <span>Use my colours</span>
         <span className="swatches">{normalizePalette(customColors).map((color) => <i key={color} title={paletteLabel(color)} style={{ background: color }} />)}</span>
-        {paletteMode === 'custom' && <b className="palette-selected-label">Selected</b>}
+        <b className="palette-selected-label" aria-hidden={paletteMode === 'custom' ? 'false' : 'true'}>Selected</b>
       </button>
       {paletteMode === 'custom' && (
         <div className="custom-palette-grid">
