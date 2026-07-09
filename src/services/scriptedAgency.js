@@ -61,14 +61,14 @@ export function aiAutomationReview(state = {}) {
     'Commercial strategy: scripted',
     'Production task board: scripted',
     'Visual design direction document: scripted from selected design',
-    'Page content pack: scripted from brief, pages, sections, and uploaded context notes',
+    `Page content pack: cheap model per approved page (${cheapModelForTask('pageContent', state)}) with scripted fallback`,
     'Website HTML: scripted through MicroAgency static builder and quality gate',
     'QA report: scripted from generated package quality report',
   ];
   return {
     beforeModelCalls: before.length,
-    afterStandardModelCalls: 1,
-    savedStandardModelCalls: Math.max(0, before.length - 1),
+    afterStandardModelCalls: 1 + pages.length,
+    savedStandardModelCalls: Math.max(0, before.length - (1 + pages.length)),
     before,
     after,
   };
@@ -93,7 +93,7 @@ function buildScriptedPlan(state) {
     `${audience}. The site should assume visitors are comparing options quickly on mobile and need plain-language reassurance before they enquire.`,
     '',
     `## Offer`,
-    `${offer}. Explain what is included, who it suits, what happens next, and what details the customer should send.`,
+    `${offer}. The site should show what is included, who it suits, what happens next, and what details the customer should send.`,
     '',
     `## Recommended Structure`,
     `Pages: ${structure.pages.join(', ')}.`,
@@ -223,7 +223,7 @@ function fallbackPageContent(page, state) {
       `CTA idea: ${block.cta}`,
     ].join('\n')),
     '',
-    `Trust and proof: Add short testimonials, common customer questions, process reassurance, clear response times, and practical signals that ${business} is credible.`,
+    `Trust and proof: Short testimonials, common customer questions, process reassurance, clear response times, and practical credibility signals support the decision.`,
     `Primary CTA: ${ctaForGoal(goal)}`,
   ].join('\n');
 }
@@ -232,30 +232,30 @@ function pageBlocksFor(page, context) {
   const { business, industry, audience, offer, goal } = context;
   if (page.includes('service')) {
     return [
-      { title: `Core ${offer} support`, body: `${business} should explain the main service clearly: what is included, who it suits, what problem it solves, and what the customer receives.`, cta: 'Ask about this service' },
-      { title: 'Tailored recommendation', body: `Give ${audience} a way to understand which option fits their situation, budget, timeline, and level of support needed.`, cta: 'Get a recommendation' },
-      { title: 'Delivery and communication', body: 'Explain how the work is planned, confirmed, delivered, and checked so customers know what will happen after they enquire.', cta: 'Start the process' },
+      { title: `Core ${offer} support`, body: `${business} sets out what is included, who it suits, what problem it solves, and what customers receive after the first enquiry.`, cta: 'Ask about this service' },
+      { title: 'Tailored recommendation', body: `${audience} can compare the right route for their situation, budget, timeline, and level of support before they commit.`, cta: 'Get a recommendation' },
+      { title: 'Delivery and communication', body: 'The service is planned, confirmed, delivered, and checked through clear stages so customers know what happens next.', cta: 'Start the process' },
     ];
   }
   if (page.includes('about')) {
     return [
-      { title: `Why ${business} exists`, body: `${business} focuses on ${offer} for ${audience}. Explain the practical problem the business solves, the standard it works to, and the kind of customer it is best suited for.`, cta: 'See how we can help' },
-      { title: 'How we work', body: 'Explain the working style in simple stages: first conversation, recommendation, delivery, review, and support.', cta: 'Start with a quick enquiry' },
+      { title: `Why ${business} exists`, body: `${business} focuses on ${offer} for ${audience}, with a clear view of the practical problem it solves, the standard it works to, and the kind of customer it is best suited for.`, cta: 'See how we can help' },
+      { title: 'How we work', body: 'The working style moves through simple stages: first conversation, recommendation, delivery, review, and support.', cta: 'Start with a quick enquiry' },
       { title: 'What customers can expect', body: `Set expectations around communication, quality, timing, and the details ${audience} should prepare before contacting ${business}.`, cta: 'Ask a question' },
     ];
   }
   if (page.includes('pricing')) {
     return [
-      { title: 'Simple starting options', body: `Present a starter, standard, and complete route for ${offer}. Each option should explain who it suits, what is included, and what affects final price.`, cta: 'Request the right option' },
-      { title: 'What changes the quote', body: `Mention scope, timing, location, quantity, support level, and choices that commonly change cost in ${industry}.`, cta: 'Send your details' },
+      { title: 'Simple starting options', body: `${business} can offer starter, standard, and complete routes for ${offer}, each matched to a different level of support.`, cta: 'Request the right option' },
+      { title: 'What changes the quote', body: `Scope, timing, location, quantity, support level, and common choices can all change the cost in ${industry}.`, cta: 'Send your details' },
       { title: 'No-pressure next step', body: 'Reassure visitors that an enquiry is used to understand the request and recommend the right route.', cta: 'Get a clear recommendation' },
     ];
   }
   if (page.includes('faq')) {
     return [
-      { title: 'Before you enquire', body: `Answer what ${business} offers, who it is for, how quickly the team replies, and what information helps the first response.`, cta: 'Send the essentials' },
-      { title: 'Choosing the right option', body: `Explain how ${audience} can compare options, understand fit, and avoid paying for more than they need.`, cta: 'Ask for guidance' },
-      { title: 'Timings and practical details', body: 'Cover lead times, availability, preparation, and what happens after the first message.', cta: 'Check availability' },
+      { title: 'Before you enquire', body: `Visitors can see what ${business} offers, who it is for, how quickly the team replies, and what information helps the first response.`, cta: 'Send the essentials' },
+      { title: 'Choosing the right option', body: `${audience} can compare options, understand fit, and avoid paying for more support than they need.`, cta: 'Ask for guidance' },
+      { title: 'Timings and practical details', body: 'Lead times, availability, preparation, and what happens after the first message are made clear before contact.', cta: 'Check availability' },
     ];
   }
   if (page.includes('contact') || page.includes('book')) {
@@ -266,9 +266,9 @@ function pageBlocksFor(page, context) {
     ];
   }
   return [
-    { title: `What ${business} offers`, body: `${business} helps ${audience} with ${offer}. Explain the offer in plain language, show who it is best for, and connect it to ${goal}.`, cta: 'Find the right next step' },
-    { title: 'Why it matters', body: `Explain the customer problem, the practical benefit, and the outcome visitors can expect from a good ${industry} provider.`, cta: 'Compare the options' },
-    { title: 'How to get started', body: 'Give a short process from first enquiry to recommendation, delivery, and follow-up.', cta: 'Start an enquiry' },
+    { title: `What ${business} offers`, body: `${business} helps ${audience} with ${offer}, showing who it is best for and how it connects to ${goal}.`, cta: 'Find the right next step' },
+    { title: 'Why it matters', body: `The page connects the customer problem, practical benefit, and expected outcome from a good ${industry} provider.`, cta: 'Compare the options' },
+    { title: 'How to get started', body: 'The process moves from first enquiry to recommendation, delivery, and follow-up without adding avoidable complexity.', cta: 'Start an enquiry' },
   ];
 }
 

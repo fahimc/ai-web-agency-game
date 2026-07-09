@@ -14,6 +14,17 @@ const BAD_FINAL_SITE_LANGUAGE = [
   /visual website/i,
   /placeholder packages/i,
   /component\s*\+\s*component/i,
+  /\blead with\b/i,
+  /\bexplain what\b/i,
+  /\bexplain how\b/i,
+  /\buse this (page|space|section)\b/i,
+  /\bpresent a starter\b/i,
+  /\bpresent lighter\b/i,
+  /\bsummarise\b/i,
+  /\bclarify\b/i,
+  /\bshould explain\b/i,
+  /\bthe page should\b/i,
+  /\bgive visitors\b/i,
 ];
 
 export function evaluateWebsiteQuality(output, state = {}) {

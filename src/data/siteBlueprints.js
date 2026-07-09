@@ -576,6 +576,73 @@ export function buildDesignSelectionMarkdown(layout, palette = layout.palette, s
   ].join('\n');
 }
 
+function pageContentMapFromState(state = {}) {
+  const raw = String(state.outputs?.PageContent || '').trim();
+  if (!raw) return {};
+  const chunks = raw.split(/\n\s*---+\s*\n/g);
+  return chunks.reduce((map, chunk) => {
+    const match = chunk.match(/^\s*##\s+(.+?)\s*$/m);
+    if (!match) return map;
+    const page = match[1].trim();
+    const body = chunk.slice(match.index + match[0].length).trim();
+    const parsed = parsePageCopy(body);
+    if (parsed.headline || parsed.lead || parsed.blocks.length) map[pageKey(page)] = parsed;
+    return map;
+  }, {});
+}
+
+function parsePageCopy(markdown) {
+  const text = String(markdown || '').trim();
+  const fields = {
+    objective: fieldValue(text, 'Page objective'),
+    intent: fieldValue(text, 'Visitor intent'),
+    headline: fieldValue(text, 'Hero headline'),
+    lead: fieldValue(text, 'Hero support copy') || fieldValue(text, 'Hero copy'),
+    trust: fieldValue(text, 'Trust and proof') || fieldValue(text, 'Proof ideas'),
+    cta: fieldValue(text, 'Primary CTA') || fieldValue(text, 'CTA copy'),
+    blocks: [],
+  };
+  const blockPattern = /Content block\s+\d+\s*:\s*([^\n]+)\n([\s\S]*?)(?=\n\s*Content block\s+\d+\s*:|\n\s*Trust and proof\s*:|\n\s*Primary CTA\s*:|$)/gi;
+  let match;
+  while ((match = blockPattern.exec(text))) {
+    const title = match[1].trim();
+    const rawBody = match[2].trim();
+    const ctaMatch = rawBody.match(/CTA idea\s*:\s*(.+)$/im);
+    const body = rawBody
+      .replace(/CTA idea\s*:\s*.+$/gim, '')
+      .replace(/^[*-]\s*/gm, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (title && body) fields.blocks.push({ title, body, cta: ctaMatch?.[1]?.trim() || fields.cta });
+  }
+  if (!fields.blocks.length) {
+    const paragraphs = text
+      .split(/\n{2,}/)
+      .map((item) => item.replace(/^#+\s*/, '').trim())
+      .filter((item) => item.length > 40 && !/^(page objective|visitor intent|hero headline|hero support copy|trust and proof|primary cta)\s*:/i.test(item));
+    fields.blocks = paragraphs.slice(0, 4).map((paragraph, index) => ({
+      title: index === 0 ? 'Overview' : `Detail ${index + 1}`,
+      body: paragraph.replace(/\s+/g, ' '),
+      cta: fields.cta,
+    }));
+  }
+  return fields;
+}
+
+function fieldValue(text, label) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = String(text || '').match(new RegExp(`^${escaped}\\s*:\\s*(.+)$`, 'im'));
+  return match?.[1]?.trim() || '';
+}
+
+function pageCopyFor(pageCopy = {}, page) {
+  return pageCopy[pageKey(page)] || null;
+}
+
+function pageKey(page) {
+  return String(page || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'home';
+}
+
 export function buildExampleSite(layout, state, palette = layout.palette, options = {}) {
   const brief = parseBrief(state?.brief || state?.clientDetails || '');
   const business = brief.businessName || state?.projectName || 'Client Website';
@@ -586,25 +653,27 @@ export function buildExampleSite(layout, state, palette = layout.palette, option
   const theme = readableThemeFromPalette(palette);
   const image = placeholderForLayout(layout, state);
   const examples = exampleContentFor(layout, { business, industry, audience, goal, offer });
+  const pageCopy = pageContentMapFromState(state);
   const structure = recommendedStructure(layout, state);
   const isOnePagePackage = state?.projectPackage === 'launch';
   const sections = uniqueItems(state?.selectedSiteSections?.length ? state.selectedSiteSections : structure.sections).slice(0, 10);
   const pages = isOnePagePackage ? ['Home'] : normalizePages(state?.selectedSitePages?.length ? state.selectedSitePages : structure.pages);
   const onePageSections = isOnePagePackage ? normalizeOnePageSections(sections, structure.pages) : [];
   if (!isOnePagePackage && !options.preview) {
-    return buildMultiPageSitePackage({ layout, state, business, industry, audience, goal, offer, image, examples, pages, sections, theme });
+    return buildMultiPageSitePackage({ layout, state, business, industry, audience, goal, offer, image, examples, pages, sections, theme, pageCopy });
   }
   const isMultiPage = !isOnePagePackage;
   const isPreview = Boolean(options.preview);
   const navLabel = isPreview ? 'Design option' : '';
   const eyebrow = isPreview ? `${layout.name} direction` : `${business}`;
+  const homeCopy = pageCopyFor(pageCopy, 'Home');
   const navItems = isOnePagePackage ? ['Home', ...onePageSections] : pages;
   const ctaTarget = slugify(navItems.find((item) => /contact|book/i.test(item)) || 'Contact');
   const ctaHref = isMultiPage ? `#/${ctaTarget}` : `#${ctaTarget}`;
   const homeClass = isMultiPage ? 'hero site-page active' : 'hero';
   const pageSections = (isOnePagePackage ? onePageSections : pages.filter((page) => page.toLowerCase() !== 'home'))
     .map((page) => {
-      const section = pageSectionFor(page, { business, industry, audience, goal, offer, layout, examples, image, ctaTarget, ctaHref });
+      const section = pageSectionFor(page, { business, industry, audience, goal, offer, layout, examples, image, ctaTarget, ctaHref, pageCopy });
       return isMultiPage ? asPagePanel(section) : section;
     })
     .join('\n');
@@ -629,7 +698,7 @@ ${siteMotionCss()}
 <nav class="navbar navbar-expand-md site-nav" aria-label="Main navigation"><a class="navbar-brand" href="${isMultiPage ? '#/home' : '#home'}">${escapeHtml(business)}</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="siteNavbar"><ul class="navbar-nav ms-auto align-items-md-center gap-md-2">${navLinks}</ul>${navLabel ? `<span class="nav-label ms-md-3">${escapeHtml(navLabel)}</span>` : ''}</div></nav>
 <main>
 <section class="${homeClass}" id="home">
-<div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sections.slice(0, 5).map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">Start an enquiry</a></div>
+<div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(homeCopy?.headline || headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(homeCopy?.lead || copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sections.slice(0, 5).map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">${escapeHtml(homeCopy?.cta || 'Start an enquiry')}</a></div>
 <aside class="panel image-card parallax-media depth-panel float-card" data-parallax="0.12"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(heroImageCaptionFor(business, offer))}</div></aside>
 </section>
 ${pageSections}
@@ -676,7 +745,7 @@ document.addEventListener('click', function(event) {
 </html>`;
 }
 
-function buildMultiPageSitePackage({ layout, business, industry, audience, goal, offer, image, examples, pages, sections, theme }) {
+function buildMultiPageSitePackage({ layout, business, industry, audience, goal, offer, image, examples, pages, sections, theme, pageCopy = {} }) {
   const navItems = normalizePages(pages);
   const ctaPage = navItems.find((item) => /contact|book/i.test(item)) || 'Contact';
   const ctaHref = fileNameForPage(ctaPage);
@@ -691,8 +760,8 @@ function buildMultiPageSitePackage({ layout, business, industry, audience, goal,
       return `<li class="nav-item"><a class="nav-link${active ? ' active' : ''}" href="${escapeHtml(href)}"${aria}>${escapeHtml(item)}</a></li>`;
     }).join('');
     const body = page.toLowerCase() === 'home'
-      ? homePageBody({ layout, business, industry, audience, goal, offer, image, examples, sections, ctaHref })
-      : pageBodyFor(page, { business, industry, audience, goal, offer, layout, examples, image, ctaHref });
+      ? homePageBody({ layout, business, industry, audience, goal, offer, image, examples, sections, ctaHref, pageCopy })
+      : pageBodyFor(page, { business, industry, audience, goal, offer, layout, examples, image, ctaHref, pageCopy });
     files[fileName] = siteDocument({
       title: `${business} - ${page}`,
       business,
@@ -725,16 +794,21 @@ function siteDocument({ title, business, navLinks, css, body }) {
 </html>`;
 }
 
-function homePageBody({ layout, business, audience, goal, offer, image, examples, sections, ctaHref }) {
+function homePageBody({ layout, business, audience, goal, offer, image, examples, sections, ctaHref, pageCopy = {} }) {
   const usefulSections = uniqueItems(sections)
     .filter((section) => !/^(hero|contact details|lead capture form|final cta)$/i.test(section))
     .slice(0, 5);
   const sectionTags = usefulSections.length ? usefulSections : ['Services', 'Process', 'Testimonials'];
+  const homeCopy = pageCopyFor(pageCopy, 'Home');
+  const homeBlocks = homeCopy?.blocks?.length ? homeCopy.blocks : examples.cards;
+  const overviewTitle = homeBlocks[0]?.title || examples.servicesTitle;
+  const overviewLead = homeBlocks[0]?.body || homeBlocks[0]?.text || examples.servicesLead;
+  const overviewCards = homeBlocks.slice(0, 6);
   return `<section class="hero" id="home">
-<div><div class="eyebrow">${escapeHtml(business)}</div><h1>${escapeHtml(headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sectionTags.map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">Start an enquiry</a></div>
+<div><div class="eyebrow">${escapeHtml(business)}</div><h1>${escapeHtml(homeCopy?.headline || headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(homeCopy?.lead || copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sectionTags.map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">${escapeHtml(homeCopy?.cta || 'Start an enquiry')}</a></div>
 <aside class="panel image-card parallax-media depth-panel float-card" data-parallax="0.12"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(heroImageCaptionFor(business, offer))}</div></aside>
 </section>
-<section class="section"><span class="page-kicker">Overview</span><h2>${escapeHtml(examples.servicesTitle)}</h2><p>${escapeHtml(examples.servicesLead)} Visitors get enough context to understand the offer, compare fit, and decide whether the next step is worth taking.</p><div class="grid">${examples.cards.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>
+<section class="section"><span class="page-kicker">Overview</span><h2>${escapeHtml(overviewTitle)}</h2><p>${escapeHtml(overviewLead)}</p><div class="grid">${overviewCards.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.body || card.text)}</span></div>`).join('')}</div></section>
 <section class="section"><span class="page-kicker">Why it works</span><h2>Useful information before visitors commit</h2><p>${escapeHtml(business)} answers the practical questions before asking for the enquiry: what is available, who it is for, what happens next, and why the business can be trusted.</p><div class="grid"><div class="card"><b>Plain-language offer</b><span>${escapeHtml(business)} explains what is included, who it suits, and what makes the service worth enquiring about.</span></div><div class="card"><b>Practical proof</b><span>Reviews, response expectations, process notes, and realistic outcomes sit close to the key decisions.</span></div><div class="card"><b>Mobile-first contact</b><span>Every page keeps the next action easy to find, with a short route to send details or ask a question.</span></div></div></section>
 <section class="section"><span class="page-kicker">Process</span><h2>A clear path from interest to action</h2><div class="steps"><div class="step">Understand the offer and who it is for.</div><div class="step">Review the details, proof, and practical fit.</div><div class="step">Send an enquiry when the next step is clear.</div></div><a class="button" href="${escapeHtml(ctaHref)}">Contact ${escapeHtml(business)}</a></section>
 <section class="section"><span class="page-kicker">Common questions</span><h2>Answers that reduce hesitation</h2><div class="grid"><div class="card"><b>What should I send?</b><span>Share what you need, timing, location if relevant, and anything that would affect the recommendation.</span></div><div class="card"><b>How quickly will I hear back?</b><span>Set a clear response expectation so visitors know when the next useful answer should arrive.</span></div><div class="card"><b>Can I ask before deciding?</b><span>Yes. The first enquiry can be a fit check, not a commitment to buy immediately.</span></div></div></section>
@@ -826,6 +900,8 @@ function normalizeOnePageSections(sections, recommendedPages = []) {
 function pageSectionFor(page, context) {
   const id = slugify(page);
   const lower = page.toLowerCase();
+  const copy = pageCopyFor(context.pageCopy, page);
+  if (copy?.blocks?.length || copy?.headline || copy?.lead) return contentDrivenPageSection(id, page, copy, context);
   if (lower.includes('service')) return servicesSection(id, context);
   if (lower.includes('pricing')) return pricingSection(id, context);
   if (lower.includes('case')) return caseStudiesSection(id, context);
@@ -838,6 +914,17 @@ function pageSectionFor(page, context) {
   if (lower.includes('contact')) return contactSection(id, context);
   if (lower.includes('about')) return aboutSection(id, context);
   return genericPageSection(id, page, context);
+}
+
+function contentDrivenPageSection(id, page, copy, context) {
+  const { business, offer, ctaHref } = context;
+  const blocks = copy.blocks?.length ? copy.blocks : [
+    { title: `What ${business} offers`, body: `${business} helps visitors understand ${offer} clearly and choose the right next step.`, cta: copy.cta || 'Start an enquiry' },
+    { title: 'What to expect', body: 'The page answers practical questions around fit, timing, support, and the information needed for a useful response.', cta: copy.cta || 'Ask a question' },
+    { title: 'Next step', body: 'Visitors can send a short enquiry with enough context for a helpful reply.', cta: copy.cta || 'Contact us' },
+  ];
+  const isContact = /contact|book/i.test(page);
+  return `<section class="section${isContact ? ' contact' : ''}" id="${escapeHtml(id)}"><div><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(copy.headline || `${page} for ${business}`)}</h2><p>${escapeHtml(copy.lead || copy.objective || `${offer} from ${business}, explained in practical terms.`)}</p><div class="grid">${blocks.slice(0, 6).map((block) => `<div class="card"><b>${escapeHtml(block.title)}</b><span>${escapeHtml(block.body || block.text)}</span>${block.cta ? `<a class="button secondary" href="${escapeHtml(ctaHref)}">${escapeHtml(block.cta)}</a>` : ''}</div>`).join('')}</div>${copy.trust ? `<div class="panel"><b>Trust and proof</b><p>${escapeHtml(copy.trust)}</p></div>` : ''}</div>${isContact ? contactForm(context) : ''}</section>`;
 }
 
 function pageBodyFor(page, context) {
@@ -876,7 +963,7 @@ function servicesSection(id, context) {
 }
 
 function aboutSection(id, { business, industry, audience, offer, image }) {
-  return `<section class="section media-strip" id="${escapeHtml(id)}"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="panel"><span class="page-kicker">About</span><h2>Built around what ${escapeHtml(audience)} need to know</h2><p>${escapeHtml(business)} works in ${escapeHtml(industry)} with a clear focus on ${escapeHtml(offer)}. The page should make the business feel credible by explaining who it helps, what standards it works to, and how customers are supported before and after they enquire.</p><div class="steps"><div class="step">Straightforward advice before customers commit.</div><div class="step">Clear expectations around timing, fit, and next steps.</div><div class="step">A practical route to ask questions or request support.</div></div></div></section>`;
+  return `<section class="section media-strip" id="${escapeHtml(id)}"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="panel"><span class="page-kicker">About</span><h2>Built around what ${escapeHtml(audience)} need to know</h2><p>${escapeHtml(business)} works in ${escapeHtml(industry)} with a clear focus on ${escapeHtml(offer)}. Visitors can see who the business helps, what standards it works to, and how customers are supported before and after they enquire.</p><div class="steps"><div class="step">Straightforward advice before customers commit.</div><div class="step">Clear expectations around timing, fit, and next steps.</div><div class="step">A practical route to ask questions or request support.</div></div></div></section>`;
 }
 
 function pricingSection(id, { business, offer, ctaHref }) {
@@ -885,7 +972,7 @@ function pricingSection(id, { business, offer, ctaHref }) {
     { name: 'Standard', text: `A fuller option with more guidance, stronger support, and enough detail for customers comparing ${offer}.` },
     { name: 'Complete', text: 'The most supported route for customers who want priority response, extra guidance, and a more complete handover.' },
   ];
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Pricing</span><h2>Simple ways to start with ${escapeHtml(business)}</h2><p>Use this page to explain common routes, what affects the quote, and how customers can choose without pressure.</p><div class="grid">${tiers.map((tier) => `<div class="card"><b>${escapeHtml(tier.name)}</b><span>${escapeHtml(tier.text)}</span><a class="button" href="${escapeHtml(ctaHref)}">Ask about ${escapeHtml(tier.name)}</a></div>`).join('')}</div><div class="panel"><b>What can affect the final price</b><p>Scope, timing, location, quantity, preparation, and the level of support can all change the recommendation. A short enquiry gives ${escapeHtml(business)} enough context to respond properly.</p></div></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Pricing</span><h2>Simple ways to start with ${escapeHtml(business)}</h2><p>Customers can compare common routes, understand what affects the quote, and choose the next step without pressure.</p><div class="grid">${tiers.map((tier) => `<div class="card"><b>${escapeHtml(tier.name)}</b><span>${escapeHtml(tier.text)}</span><a class="button" href="${escapeHtml(ctaHref)}">Ask about ${escapeHtml(tier.name)}</a></div>`).join('')}</div><div class="panel"><b>What can affect the final price</b><p>Scope, timing, location, quantity, preparation, and the level of support can all change the recommendation. A short enquiry gives ${escapeHtml(business)} enough context to respond properly.</p></div></section>`;
 }
 
 function caseStudiesSection(id, { business, goal }) {
@@ -897,7 +984,7 @@ function gallerySection(id, { image }) {
 }
 
 function menuSection(id, { business }) {
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Menu</span><h2>${escapeHtml(business)} menu highlights</h2><div class="grid"><div class="card"><b>Signature option</b><span>A customer favourite with a short description and clear price placeholder.</span></div><div class="card"><b>Seasonal feature</b><span>Use this space for a limited-time item or current promotion.</span></div><div class="card"><b>Group choice</b><span>A useful option for families, teams, groups, or repeat visitors.</span></div></div></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Menu</span><h2>${escapeHtml(business)} menu highlights</h2><div class="grid"><div class="card"><b>Signature option</b><span>A customer favourite with a short description, seasonal details, and a clear price.</span></div><div class="card"><b>Seasonal feature</b><span>A timely menu item or promotion gives regular visitors a fresh reason to book.</span></div><div class="card"><b>Group choice</b><span>A useful option for families, teams, groups, or repeat visitors.</span></div></div></section>`;
 }
 
 function eventsSection(id, { business }) {
@@ -905,7 +992,7 @@ function eventsSection(id, { business }) {
 }
 
 function coursesSection(id, { offer }) {
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Courses</span><h2>Learn ${escapeHtml(offer)} with a clear path</h2><div class="grid"><div class="card"><b>What you will learn</b><span>Summarise the key outcomes and practical skills.</span></div><div class="card"><b>How it works</b><span>Explain format, schedule, support, and what happens after enrolment.</span></div><div class="card"><b>Who it suits</b><span>Clarify the best-fit audience so the right people enquire.</span></div></div></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Courses</span><h2>Learn ${escapeHtml(offer)} with a clear path</h2><div class="grid"><div class="card"><b>What you will learn</b><span>The course focuses on practical outcomes, useful skills, and a clear sense of progress.</span></div><div class="card"><b>How it works</b><span>Visitors can see the format, schedule, support, and what happens after enrolment.</span></div><div class="card"><b>Who it suits</b><span>The page makes the best-fit audience clear so the right people enquire.</span></div></div></section>`;
 }
 
 function faqSection(id, { business, offer }) {
@@ -913,7 +1000,7 @@ function faqSection(id, { business, offer }) {
 }
 
 function bookingSection(id, context) {
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Book a call</span><h2>Book a time to talk</h2><p>Use this section for a calendar link, phone booking route, or simple callback request.</p>${contactForm(context)}</section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Book a call</span><h2>Book a time to talk</h2><p>Customers can request a call, share the essentials, and choose the most practical next step.</p>${contactForm(context)}</section>`;
 }
 
 function contactSection(id, context) {
@@ -922,7 +1009,7 @@ function contactSection(id, context) {
 }
 
 function genericPageSection(id, page, { business, offer, ctaHref }) {
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(page)} for ${escapeHtml(business)}</h2><p>${escapeHtml(offer)} is explained here in practical terms so visitors can understand the value and choose the next step.</p><div class="grid"><div class="card"><b>What visitors need to know</b><span>Explain the offer, who it suits, and the most important details in plain language.</span></div><div class="card"><b>Why it matters</b><span>Connect the page to the customer problem, desired result, and proof that the business can help.</span></div><div class="card"><b>Next step</b><span>Give visitors one clear action so they do not have to work out what to do next.</span></div></div><a class="button secondary" href="${escapeHtml(ctaHref)}">Contact us</a></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">${escapeHtml(page)}</span><h2>${escapeHtml(page)} for ${escapeHtml(business)}</h2><p>${escapeHtml(offer)} is explained here in practical terms so visitors can understand the value and choose the next step.</p><div class="grid"><div class="card"><b>What visitors need to know</b><span>The offer, best-fit customer, and key details are presented in plain language.</span></div><div class="card"><b>Why it matters</b><span>The page connects the customer problem, desired result, and proof that ${escapeHtml(business)} can help.</span></div><div class="card"><b>Next step</b><span>Visitors get one clear action instead of having to work out what to do next.</span></div></div><a class="button secondary" href="${escapeHtml(ctaHref)}">Contact us</a></section>`;
 }
 
 function contactForm({ business }) {
@@ -935,32 +1022,32 @@ function serviceCardsFor({ business, industry, audience, offer }) {
   if (/wedding|bridal|bride|groom/.test(text)) {
     return [
       { title: 'Wedding planning and coordination', text: `${business} can help couples organise the moving parts of the day, from early planning to timeline checks and supplier coordination.`, cta: 'Plan the day' },
-      { title: 'Styling and guest experience', text: 'Show the look, flow, and moments that matter, including setup, atmosphere, arrivals, and the details guests remember.', cta: 'Discuss the style' },
-      { title: 'On-the-day support', text: 'Explain how practical support keeps the day moving, handles small issues, and gives couples a calmer route through the event.', cta: 'Check availability' },
-      { title: 'Packages for different needs', text: 'Present lighter guidance, fuller coordination, and complete support so visitors can compare the right level before enquiring.', cta: 'Compare support' },
+      { title: 'Styling and guest experience', text: 'Couples can see the look, flow, and moments that matter, including setup, atmosphere, arrivals, and the details guests remember.', cta: 'Discuss the style' },
+      { title: 'On-the-day support', text: 'Practical support keeps the day moving, handles small issues, and gives couples a calmer route through the event.', cta: 'Check availability' },
+      { title: 'Packages for different needs', text: 'Lighter guidance, fuller coordination, and complete support help visitors compare the right level before enquiring.', cta: 'Compare support' },
     ];
   }
   if (/\b(restaurant|cafe|bar|food|menu|venue)\b/.test(text)) {
     return [
       { title: 'Signature menu highlights', text: 'Feature the dishes, drinks, or experiences visitors should remember first, with clear descriptions and seasonal notes.', cta: 'View highlights' },
-      { title: 'Bookings and occasions', text: 'Explain table bookings, group visits, private events, and the atmosphere different customers can expect.', cta: 'Make a booking' },
+      { title: 'Bookings and occasions', text: 'Table bookings, group visits, private events, and atmosphere details are easy to understand before visitors book.', cta: 'Make a booking' },
       { title: 'Location and visit details', text: 'Make opening times, location, accessibility, and practical visit information easy to find on mobile.', cta: 'Plan a visit' },
-      { title: 'Special offers', text: 'Use this space for current menus, set options, tasting events, or time-limited reasons to visit.', cta: 'Ask what is on' },
+      { title: 'Special offers', text: 'Current menus, set options, tasting events, and limited reasons to visit sit close to the booking action.', cta: 'Ask what is on' },
     ];
   }
   if (/\b(software|saas|app|apps|platform|tool|tools)\b/.test(text)) {
     return [
-      { title: 'Product workflow', text: `Explain how ${offer} fits into the customer day, what task it improves, and what happens after signup or demo request.`, cta: 'See workflow' },
+      { title: 'Product workflow', text: `${offer} is shown in the context of the customer day, the task it improves, and what happens after signup or demo request.`, cta: 'See workflow' },
       { title: 'Outcome-led features', text: 'Group features by the result they create, so visitors understand value before technical detail.', cta: 'Compare features' },
       { title: 'Implementation path', text: 'Show setup, onboarding, support, and what a new customer needs to get started.', cta: 'Plan rollout' },
       { title: 'Pricing confidence', text: 'Connect plan options to team size, usage, support level, and the best next action.', cta: 'Check plans' },
     ];
   }
   return [
-    { title: `Core ${offer}`, text: `Explain exactly what ${business} provides, who it suits, what is included, and what customers receive after they enquire.`, cta: 'Ask about this' },
+    { title: `Core ${offer}`, text: `${business} sets out what is provided, who it suits, what is included, and what customers receive after they enquire.`, cta: 'Ask about this' },
     { title: 'Tailored recommendation', text: `Help ${audience} choose the right route by asking about timing, priorities, budget, and the level of support needed.`, cta: 'Get guidance' },
     { title: 'Clear delivery process', text: 'Show how the work is planned, confirmed, delivered, reviewed, and supported so there are fewer surprises.', cta: 'See the process' },
-    { title: 'Proof and reassurance', text: 'Add testimonials, response expectations, guarantees, common questions, or practical proof that reduces hesitation.', cta: 'Talk to the team' },
+    { title: 'Proof and reassurance', text: 'Testimonials, response expectations, guarantees, common questions, and practical proof reduce hesitation near the enquiry action.', cta: 'Talk to the team' },
   ];
 }
 
@@ -991,14 +1078,14 @@ function exampleContentFor(layout, context) {
       servicesTitle: 'Product highlights',
       servicesLead: `${business} explains what the product does, why it matters, and how customers get value.`,
       cards: [
-        { title: 'Live product overview', text: `Show the main ${offer} workflow with a concise product explanation and supporting image.` },
+        { title: 'Live product overview', text: `The main ${offer} workflow is paired with a concise product explanation and supporting image.` },
         { title: 'Feature outcomes', text: 'Group features around customer results instead of a long technical list.' },
-        { title: 'Pricing confidence', text: 'Add a simple pricing or plan prompt after visitors understand the value.' },
+        { title: 'Pricing confidence', text: 'A simple pricing or plan prompt appears after visitors understand the value.' },
       ],
       proofQuote: 'Built to make the product feel understandable before the demo request.',
       proofText: 'The page balances benefits, screenshots, workflow, and proof so visitors can decide faster.',
       processTitle: 'How the product story unfolds',
-      steps: ['Show the product promise above the fold.', 'Explain the everyday workflow in practical terms.', 'Close with pricing, proof, and a demo or enquiry action.'],
+      steps: ['Visitors see the product promise above the fold.', 'The everyday workflow is explained in practical terms.', 'Pricing, proof, and a demo or enquiry action close the page.'],
       contactTitle: 'Book a product walkthrough',
       contactText: `A concise form asks for the essentials and routes serious ${audience} to the next step.`,
     },
@@ -1018,12 +1105,12 @@ function exampleContentFor(layout, context) {
       contactText: 'The final section keeps booking details, contact information, and reassurance together.',
     },
     'portfolio-studio': {
-      servicesTitle: 'Selected work and capabilities',
+      servicesTitle: 'Portfolio services and selected work',
       servicesLead: `${business} can show taste, experience, and the kind of projects it wants more of.`,
       cards: [
-        { title: 'Featured projects', text: 'Lead with a small number of strong examples instead of a crowded gallery.' },
-        { title: 'Creative services', text: 'Explain what clients can commission and what the working relationship feels like.' },
-        { title: 'Enquiry fit', text: 'Use the contact section to attract the right budgets, briefs, and timelines.' },
+        { title: 'Featured projects', text: 'A focused set of strong examples shows the studio standard without making the gallery feel crowded.' },
+        { title: 'Creative services', text: 'Clients can understand what they can commission and what the working relationship feels like.' },
+        { title: 'Enquiry fit', text: 'The enquiry path attracts the right budgets, briefs, and timelines with a clear project request.' },
       ],
       proofQuote: 'A portfolio that feels selective and easy to judge.',
       proofText: 'The page gives space to imagery while still making services and enquiry steps clear.',

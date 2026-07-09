@@ -699,10 +699,33 @@ export function useAgencyController() {
       progress: Math.max(stateNow.progress, 57),
       progressTask: 'Page content pack',
     }));
-    speak(employee.id, 'I am preparing a detailed content pack from the brief, approved pages, and selected design route.');
-    log(employee.name, 'Started: scripted page content pack');
+    speak(employee.id, 'I am writing the page copy from the brief, approved pages, selected design route, and any uploaded context.');
+    log(employee.name, 'Started: page content pack');
 
-    const output = buildScriptedPageContent(current);
+    const pages = contentPagesForState(current);
+    const assetContext = reviewAssetsPrompt(current.reviewAssets || []);
+    const outputs = [];
+    for (const page of pages) {
+      let pageOutput = '';
+      try {
+        pageOutput = await callModelInBackground({
+          employee,
+          task: `${pageContentTask(page, pages, current)}${assetContext ? `\n\nClient supplied files and context:\n${assetContext}` : ''}`,
+          context: buildContext(['Plan', 'TaskBoard', 'SelectedDesign', 'DesignDirection']),
+          settings: current.settings,
+          state: modelSafeState(current),
+          signal: aborter.current?.signal,
+          modelOverride: cheapModelForTask('pageContent', current),
+          complex: false,
+        });
+      } catch (error) {
+        if (aborter.current?.signal?.aborted) throw error;
+        log(employee.name, `Fallback copy used for ${page}: ${error?.message || error}`);
+      }
+      const cleanPageOutput = String(pageOutput || '').trim();
+      outputs.push(`## ${page}\n${hasUsefulPageContent(cleanPageOutput) ? cleanPageOutput : fallbackPageContent(page, current)}`);
+    }
+    const output = outputs.join('\n\n---\n\n') || buildScriptedPageContent(current);
     addQuest('Page content pack', employee.id, 'done');
     update((stateNow) => ({
       ...stateNow,
@@ -711,7 +734,7 @@ export function useAgencyController() {
       progress: Math.max(stateNow.progress, 62),
       progressTask: 'Page content pack complete',
     }));
-    log(employee.name, 'Finished: scripted page content pack');
+    log(employee.name, 'Finished: page content pack');
     await sleep(250);
     return output;
   }, [addQuest, log, speak, update]);
@@ -1425,7 +1448,13 @@ function pageContentTask(page, pages, state) {
 
 function hasUsefulPageContent(text) {
   const value = String(text || '').trim();
-  return value.length > 650 && /headline|objective|block|cta|proof|trust|copy|section/i.test(value);
+  return value.length > 650
+    && /headline|objective|block|cta|proof|trust|copy|section/i.test(value)
+    && !hasInstructionCopy(value);
+}
+
+function hasInstructionCopy(text) {
+  return /\b(lead with|explain what|explain how|use this (page|space|section)|present a starter|present lighter|summarise|clarify|the page should|should explain|give visitors)\b/i.test(String(text || ''));
 }
 
 function fallbackPageContent(page, state) {
@@ -1450,7 +1479,7 @@ function fallbackPageContent(page, state) {
       `CTA idea: ${block.cta}`,
     ].join('\n')),
     '',
-    `Trust and proof: Add short testimonials, common customer questions, process reassurance, clear response times, and practical signals that ${business} is credible.`,
+    `Trust and proof: Short testimonials, common customer questions, process reassurance, clear response times, and practical credibility signals support the decision.`,
     `Primary CTA: ${ctaForGoal(goal)}`,
   ].join('\n');
 }
@@ -1462,15 +1491,15 @@ function pageBlocksFor(page, context) {
   }
   if (page.includes('about')) {
     return [
-      { title: `Why ${business} exists`, body: `${business} focuses on ${offer} for ${audience}. This section should explain the practical problem the business solves, the standard it works to, and the kind of customer it is best suited for.`, cta: 'See how we can help' },
-      { title: 'How we work', body: 'Explain the working style in simple stages: first conversation, recommendation, delivery, review, and support. Keep it concrete so visitors know what happens after they enquire.', cta: 'Start with a quick enquiry' },
+      { title: `Why ${business} exists`, body: `${business} focuses on ${offer} for ${audience}, with a clear view of the practical problem it solves, the standards it works to, and the customers it is best suited for.`, cta: 'See how we can help' },
+      { title: 'How we work', body: 'The working style is simple: first conversation, recommendation, delivery, review, and support, so visitors know what happens after they enquire.', cta: 'Start with a quick enquiry' },
       { title: 'What customers can expect', body: `Set expectations around communication, quality, timing, and the details ${audience} should prepare before contacting ${business}.`, cta: 'Ask a question' },
     ];
   }
   if (page.includes('pricing')) {
     return [
-      { title: 'Simple starting options', body: `Present a starter, standard, and complete route for ${offer}. Each option should explain who it suits, what is included, and what affects the final price.`, cta: 'Request the right option' },
-      { title: 'What changes the quote', body: `Mention scope, timing, location, quantity, support level, and any choices that commonly change the cost in ${industry}.`, cta: 'Send your details' },
+      { title: 'Simple starting options', body: `${business} offers starter, standard, and complete routes for ${offer}, with each option tied to fit, included support, and the factors that shape the final price.`, cta: 'Request the right option' },
+      { title: 'What changes the quote', body: `Scope, timing, location, quantity, support level, and common choices can all change the cost in ${industry}.`, cta: 'Send your details' },
       { title: 'No-pressure next step', body: 'Reassure visitors that an enquiry is used to understand the request and recommend the right route, not to force an immediate purchase.', cta: 'Get a clear recommendation' },
     ];
   }
@@ -1483,9 +1512,9 @@ function pageBlocksFor(page, context) {
   }
   if (page.includes('faq')) {
     return [
-      { title: 'Before you enquire', body: `Answer what ${business} offers, who it is for, how quickly the team replies, and what information helps the first response.`, cta: 'Send the essentials' },
-      { title: 'Choosing the right option', body: `Explain how ${audience} can compare options, understand fit, and avoid paying for more than they need.`, cta: 'Ask for guidance' },
-      { title: 'Timings and practical details', body: 'Cover lead times, availability, preparation, and what happens after the first message.', cta: 'Check availability' },
+      { title: 'Before you enquire', body: `Visitors can see what ${business} offers, who it is for, how quickly the team replies, and what information helps the first response.`, cta: 'Send the essentials' },
+      { title: 'Choosing the right option', body: `${audience} can compare options, understand fit, and avoid paying for more support than they need.`, cta: 'Ask for guidance' },
+      { title: 'Timings and practical details', body: 'Lead times, availability, preparation, and what happens after the first message are made clear before contact.', cta: 'Check availability' },
     ];
   }
   if (page.includes('contact') || page.includes('book')) {
@@ -1496,9 +1525,9 @@ function pageBlocksFor(page, context) {
     ];
   }
   return [
-    { title: `What ${business} offers`, body: `${business} helps ${audience} with ${offer}. The page should explain the offer in plain language, show who it is best for, and connect it to ${goal}.`, cta: 'Find the right next step' },
-    { title: 'Why it matters', body: `Explain the customer problem, the practical benefit, and the outcome visitors can expect from a good ${industry} provider.`, cta: 'Compare the options' },
-    { title: 'How to get started', body: 'Give a short process from first enquiry to recommendation, delivery, and follow-up.', cta: 'Start an enquiry' },
+    { title: `What ${business} offers`, body: `${business} helps ${audience} with ${offer}, shows who it is best for, and connects the offer directly to ${goal}.`, cta: 'Find the right next step' },
+    { title: 'Why it matters', body: `Visitors can see the customer problem, the practical benefit, and the outcome they can expect from a good ${industry} provider.`, cta: 'Compare the options' },
+    { title: 'How to get started', body: 'The process moves from first enquiry to recommendation, delivery, and follow-up without adding avoidable complexity.', cta: 'Start an enquiry' },
   ];
 }
 
@@ -1507,16 +1536,16 @@ function serviceBlocks({ business, industry, audience, offer, goal }) {
   if (wedding) {
     return [
       { title: 'Wedding planning and coordination', body: `${business} can explain planning support, supplier coordination, timelines, and how the team keeps the day organised for couples and families.`, cta: 'Plan the day' },
-      { title: 'Styling, setup, and guest experience', body: 'Describe how the service can cover the look, feel, arrival experience, key moments, and details that guests notice throughout the day.', cta: 'Discuss the style' },
+      { title: 'Styling, setup, and guest experience', body: 'The service can cover the look, feel, arrival experience, key moments, and details that guests notice throughout the day.', cta: 'Discuss the style' },
       { title: 'Packages for different levels of support', body: 'Show a light-touch planning option, a fuller coordination option, and a complete support route so brides can choose the level that fits.', cta: 'Compare options' },
       { title: 'Clear next steps', body: `Guide visitors toward ${goal} with a short enquiry form asking for date, venue, guest count, style, and what support they need.`, cta: 'Check availability' },
     ];
   }
   return [
-    { title: `Core ${offer} support`, body: `${business} should explain the main service clearly: what is included, who it suits, what problem it solves, and what the customer receives.`, cta: 'Ask about this service' },
-    { title: 'Tailored recommendation', body: `Give ${audience} a way to understand which option fits their situation, budget, timeline, and level of support needed.`, cta: 'Get a recommendation' },
-    { title: 'Delivery and communication', body: 'Explain how the work is planned, confirmed, delivered, and checked so customers know what will happen after they enquire.', cta: 'Start the process' },
-    { title: 'Aftercare and confidence', body: `Add reassurance around response times, support, guarantees, FAQs, or proof that makes ${business} feel dependable.`, cta: 'Contact the team' },
+    { title: `Core ${offer} support`, body: `${business} sets out what is included, who it suits, what problem it solves, and what customers receive after the first enquiry.`, cta: 'Ask about this service' },
+    { title: 'Tailored recommendation', body: `${audience} can understand which option fits their situation, budget, timeline, and level of support needed.`, cta: 'Get a recommendation' },
+    { title: 'Delivery and communication', body: 'The work is planned, confirmed, delivered, and checked so customers know what will happen after they enquire.', cta: 'Start the process' },
+    { title: 'Aftercare and confidence', body: `${business} supports the decision with response times, support notes, FAQs, and practical proof that makes the next step feel dependable.`, cta: 'Contact the team' },
   ];
 }
 
@@ -1848,7 +1877,7 @@ function hasHtmlId(html, id) {
 }
 
 function hasPreviewLanguage(html) {
-  return /example client site|preview client site|customer website|visual direction|design direction sample|design direction|site concept|this example shows|finished site can explain|placeholder packages|final content/i.test(String(html || ''));
+  return /example client site|preview client site|customer website|visual direction|design direction sample|design direction|site concept|this example shows|finished site can explain|placeholder packages|final content|\blead with\b|\bexplain what\b|\bexplain how\b|\buse this (page|space|section)\b|\bpresent a starter\b|\bpresent lighter\b|\bsummarise\b|\bclarify\b|\bshould explain\b|\bthe page should\b|\bgive visitors\b/i.test(String(html || ''));
 }
 
 function sleep(ms) {
