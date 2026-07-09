@@ -71,7 +71,7 @@ export function fallbackLogoConfig(state = {}, layout = {}, palette = []) {
     : text.match(/event|launch|startup/) ? 'rocket'
     : 'spark';
   const company = parseBusinessName(state) || state.projectName || 'Client Website';
-  const [primary, secondary, textColor] = normalizeLogoPalette(palette);
+  const [primary, secondary] = normalizeLogoPalette(palette);
   return normalizeLogoConfig({
     company,
     tagline: fallbackTagline(text),
@@ -81,7 +81,7 @@ export function fallbackLogoConfig(state = {}, layout = {}, palette = []) {
     container: icon === 'camera' || icon === 'fork' ? 'circle' : 'rounded',
     primary,
     secondary,
-    textColor,
+    textColor: primary,
     iconSize: 92,
     radius: 24,
     weight: 800,
@@ -96,6 +96,18 @@ export function normalizeLogoConfig(input = {}, context = {}) {
   const container = LOGO_CONTAINERS.includes(input.container) ? input.container : fallback.container;
   const font = LOGO_FONTS.includes(input.font) ? input.font : fallback.font;
   const palette = normalizeLogoPalette([input.primary, input.secondary, input.textColor || input.text]);
+  const background = Array.isArray(context.palette) && context.palette.length
+    ? normalizeLogoPalette(context.palette)[2]
+    : '#f8fafc';
+  const primary = palette[0];
+  const secondary = palette[1];
+  const textColor = pickReadableLogoText(input.textColor || input.text || palette[2] || fallback.textColor, background, [
+    primary,
+    fallback.textColor,
+    '#0f172a',
+    '#111111',
+    '#ffffff',
+  ]);
   return {
     company: cleanLogoText(input.company || fallback.company, 46),
     tagline: cleanLogoText(input.tagline || fallback.tagline, 72),
@@ -103,9 +115,9 @@ export function normalizeLogoConfig(input = {}, context = {}) {
     layout,
     font,
     container,
-    primary: palette[0],
-    secondary: palette[1],
-    textColor: palette[2],
+    primary,
+    secondary,
+    textColor,
     iconSize: clampNumber(input.iconSize, 54, 150, fallback.iconSize),
     radius: clampNumber(input.radius, 0, 48, fallback.radius),
     weight: clampNumber(input.weight, 500, 900, fallback.weight),
@@ -130,7 +142,15 @@ export function renderLogoSvg(config, options = {}) {
 }
 
 export function renderNavLogo(config, options = {}) {
-  return renderLogoSvg({ ...config, layout: 'horizontal' }, { ...options, background: 'transparent', className: options.className || 'brand-logo' });
+  const state = normalizeLogoConfig({ ...config, layout: 'horizontal', iconSize: Math.max(Number(config?.iconSize || 0), 84) }, options);
+  const id = safeId(options.idPrefix || state.company || 'brand-logo');
+  const title = options.title || `${state.company} logo`;
+  const className = options.className || 'brand-logo';
+  const iconSize = 76;
+  const defs = `<defs><linearGradient id="${id}-brandGrad" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="${state.primary}"/><stop offset="1" stop-color="${state.secondary}"/></linearGradient><filter id="${id}-shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000" flood-opacity=".14"/></filter></defs>`;
+  const company = fitLogoText(state.company, 22);
+  const tagline = fitLogoText(state.tagline, 48);
+  return `<svg class="${escapeAttr(className)}" viewBox="0 0 520 112" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeAttr(title)}">${defs}<title>${escapeHtml(title)}</title><g filter="url(#${id}-shadow)">${logoIcon(8, 18, iconSize, state, id)}</g><text x="100" y="58" font-family="${escapeAttr(state.font)}, Arial, sans-serif" font-size="38" font-weight="${state.weight}" letter-spacing="${state.tracking}" fill="${state.textColor}">${escapeHtml(company)}</text><text x="102" y="84" font-family="${escapeAttr(state.font)}, Arial, sans-serif" font-size="15" font-weight="650" letter-spacing=".4" fill="${state.textColor}" opacity=".74">${escapeHtml(tagline)}</text></svg>`;
 }
 
 function fallbackLogoConfigBase(context = {}) {
@@ -176,6 +196,38 @@ function textBlock(x, y, align, nameSize, tagSize, state) {
 function normalizeLogoPalette(values = []) {
   const fallback = ['#2563eb', '#7c3aed', '#0f172a'];
   return [...values, ...fallback].filter((color) => /^#[0-9a-f]{6}$/i.test(String(color || '').trim())).map((color) => color.trim()).slice(0, 3);
+}
+
+function pickReadableLogoText(candidate, background, candidates = []) {
+  const options = [candidate, ...candidates].filter((color) => /^#[0-9a-f]{6}$/i.test(String(color || '').trim()));
+  const bg = /^#[0-9a-f]{6}$/i.test(String(background || '')) ? background : '#f8fafc';
+  const readable = options.find((color) => contrastRatio(color, bg) >= 4.5);
+  if (readable) return readable;
+  return contrastRatio('#0f172a', bg) >= contrastRatio('#ffffff', bg) ? '#0f172a' : '#ffffff';
+}
+
+function contrastRatio(foreground, background) {
+  const light = Math.max(relativeLuminance(foreground), relativeLuminance(background));
+  const dark = Math.min(relativeLuminance(foreground), relativeLuminance(background));
+  return (light + 0.05) / (dark + 0.05);
+}
+
+function relativeLuminance(hex) {
+  const [r, g, b] = hexToRgb(hex).map((value) => {
+    const channel = value / 255;
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function hexToRgb(hex) {
+  const value = String(hex || '#000000').replace('#', '');
+  return [0, 2, 4].map((index) => parseInt(value.slice(index, index + 2), 16) || 0);
+}
+
+function fitLogoText(value, max) {
+  const text = cleanLogoText(value, max + 8);
+  return text.length > max ? `${text.slice(0, Math.max(0, max - 1)).trim()}…` : text;
 }
 
 function parseBusinessName(state = {}) {

@@ -202,6 +202,9 @@ function testMultiPageUsesApprovedPagesAndCopy() {
   assert.match(packageOutput.files['about.html'], /A calm studio for weddings that feel personal/);
   assert.match(packageOutput.files['contact.html'], /Check your wedding date/);
   assert.match(packageOutput.files['index.html'], /class="brand-logo"/, 'final site should render a generated SVG business logo');
+  assert.match(packageOutput.files['index.html'], /class="brand-logo" viewBox="0 0 520 112"/, 'navbar logo should use compact visible viewBox');
+  assert.doesNotMatch(packageOutput.files['index.html'], /class="brand-logo" viewBox="0 0 1000 690"/, 'navbar logo must not use the large export artboard');
+  assert.match(packageOutput.files['index.html'], /<text x="100"[^>]+fill="#111111">Photography 101<\/text>/, 'navbar wordmark should be readable on a light navbar');
   assert.match(packageOutput.files['index.html'], /Photography 101 logo/, 'generated logo should have accessible title text');
   assert.doesNotMatch(output, /href="#\/|href="#services"|Selected work and capabilities|Lead with|Explain what|Use this space/i);
   const quality = evaluateWebsiteQuality(output, state);
@@ -258,6 +261,7 @@ function testMalformedMarkdownAndInternalSectionLabelsAreRemoved() {
   const allHtml = Object.values(packageOutput.files).join('\n');
   assert.doesNotMatch(allHtml, /```|markdown|Page Objective|Visitor Intent|Content block|Hero support copy/i);
   assert.doesNotMatch(allHtml, /Header with CTA|Hero Split|Services Grid|Features Bento|Portfolio Grid|Contact Form/i);
+  assert.match(packageOutput.files['index.html'], /class="brand-logo" viewBox="0 0 520 112"/, 'malformed-copy package should still render a visible compact logo');
   assert.match(packageOutput.files['index.html'], /MakyMaky built to show services clearly/);
   assert.match(packageOutput.files['contact.html'], /Send the project essentials and get a clear response/);
   const quality = evaluateWebsiteQuality(output, state);
