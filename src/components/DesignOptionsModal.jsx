@@ -46,7 +46,7 @@ export function DesignOptionsModal({ state, actions }) {
       colors: normalizePalette(activeOption?.palette || activeLayout.palette),
     };
     const presets = paletteOptionsForLayout(activeLayout, state);
-    return [modelPalette, ...presets.filter((option) => normalizePalette(option.colors).join('|') !== modelPalette.colors.join('|'))].slice(0, 5);
+    return [modelPalette, ...presets.filter((option) => normalizePalette(option.colors).join('|') !== modelPalette.colors.join('|'))].slice(0, 8);
   }, [activeLayout, activeOption, state]);
   const structureRecommendation = useMemo(() => ({
     pages: activeOption?.pages?.length ? activeOption.pages : ['Home', 'Services', 'About', 'FAQ', 'Contact'],
@@ -329,6 +329,7 @@ function PaletteChooser({
             type="button"
             className={`palette-option ${paletteMode === 'preset' && paletteIndex === index ? 'active' : ''}`}
             key={option.id}
+            aria-pressed={paletteMode === 'preset' && paletteIndex === index}
             onClick={() => {
               setPaletteMode('preset');
               setPaletteIndex(index);
@@ -336,12 +337,14 @@ function PaletteChooser({
           >
             <span>{option.name}</span>
             <span className="swatches">{option.colors.map((color) => <i key={color} title={paletteLabel(color)} style={{ background: color }} />)}</span>
+            {paletteMode === 'preset' && paletteIndex === index && <b className="palette-selected-label">Selected</b>}
           </button>
         ))}
       </div>
-      <button type="button" className={`palette-option custom-toggle ${paletteMode === 'custom' ? 'active' : ''}`} onClick={() => setPaletteMode('custom')}>
+      <button type="button" className={`palette-option custom-toggle ${paletteMode === 'custom' ? 'active' : ''}`} aria-pressed={paletteMode === 'custom'} onClick={() => setPaletteMode('custom')}>
         <span>Use my colours</span>
         <span className="swatches">{normalizePalette(customColors).map((color) => <i key={color} title={paletteLabel(color)} style={{ background: color }} />)}</span>
+        {paletteMode === 'custom' && <b className="palette-selected-label">Selected</b>}
       </button>
       {paletteMode === 'custom' && (
         <div className="custom-palette-grid">

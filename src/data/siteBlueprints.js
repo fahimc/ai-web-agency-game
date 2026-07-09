@@ -274,12 +274,12 @@ export function paletteOptionsForLayout(layout, state) {
 function modernPaletteSet() {
   return {
     mono: normalizePalette(['#0a0a0a', '#111111', '#ffffff', '#6b7280', '#f7f7f7']),
-    earthy: normalizePalette(['#2f3a23', '#b7791f', '#f4e7d3', '#8b3a2b', '#ffffff']),
-    botanical: normalizePalette(['#123524', '#2f6f5b', '#f7f3ea', '#c7a76c', '#ffffff']),
+    earthy: normalizePalette(['#2f3a23', '#b7791f', '#fbf7ed', '#8b3a2b', '#f4e7d3']),
+    botanical: normalizePalette(['#123524', '#2f6f5b', '#fbfaf4', '#c7a76c', '#eef5ed']),
     saas: normalizePalette(['#08111f', '#4f46e5', '#f8fafc', '#22d3ee', '#ffffff']),
-    softEditorial: normalizePalette(['#111111', '#efe9e1', '#d8c3ad', '#8a6a4f', '#ffffff']),
+    softEditorial: normalizePalette(['#111111', '#8a6a4f', '#fffaf5', '#d8c3ad', '#ffffff']),
     wellness: normalizePalette(['#164e63', '#2bb3a3', '#f3fbf9', '#f4a261', '#ffffff']),
-    luxury: normalizePalette(['#1f130f', '#6b3f2a', '#f7efe5', '#b08d57', '#ffffff']),
+    luxury: normalizePalette(['#1f130f', '#6b3f2a', '#fbf7ef', '#b08d57', '#ffffff']),
     warmVenue: normalizePalette(['#2f1b12', '#c2410c', '#fff7ed', '#f59e0b', '#ffffff']),
   };
 }
@@ -364,7 +364,9 @@ function pickMutedForeground(background, preferred = '#64748b') {
 }
 
 function readableThemeFromPalette(palette) {
-  const [rawInk, accent, bg, secondary, surface] = normalizePalette(palette);
+  const [rawInk, accent, rawBg, secondary, rawSurface] = normalizePalette(palette);
+  const bg = pickPageBackground(rawBg, rawSurface);
+  const surface = pickSurface(rawSurface, rawBg, bg);
   const ink = ensureReadableColor(rawInk, bg);
   const cardInk = ensureReadableColor(rawInk, surface);
   const inputBg = contrastRatio('#ffffff', bg) >= 1.2 ? '#ffffff' : surface;
@@ -384,6 +386,22 @@ function readableThemeFromPalette(palette) {
     inputBg,
     inputInk: ensureReadableColor(rawInk, inputBg),
   };
+}
+
+function pickPageBackground(preferred, surface) {
+  const candidates = [preferred, surface, '#ffffff', '#f8fafc', '#fffaf2']
+    .filter((color, index, values) => color && values.indexOf(color) === index);
+  const usable = candidates.find((color) => luminance(color) >= 0.82 && contrastRatio('#111827', color) >= 8);
+  return usable || candidates
+    .map((color) => ({ color, luminance: luminance(color), contrast: contrastRatio('#111827', color) }))
+    .sort((a, b) => b.contrast - a.contrast || b.luminance - a.luminance)[0]?.color || '#ffffff';
+}
+
+function pickSurface(preferred, fallback, background) {
+  const candidates = [preferred, fallback, '#ffffff', '#f8fafc', '#fffaf2']
+    .filter((color, index, values) => color && values.indexOf(color) === index);
+  const usable = candidates.find((color) => contrastRatio('#111827', color) >= 7 && contrastRatio(color, background) >= 1.08);
+  return usable || (background === '#ffffff' ? '#f8fafc' : '#ffffff');
 }
 
 function parseRecommendationJson(raw) {

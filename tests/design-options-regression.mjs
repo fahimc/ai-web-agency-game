@@ -152,10 +152,22 @@ async function testPaletteModeSwitching(browser) {
   const { context, page } = await openSavedProject(browser, baseSession());
   try {
     await page.locator('.palette-panel').waitFor();
+    const previewTheme = async () => page.frameLocator('.design-preview-frame').locator('html').evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        background: style.getPropertyValue('--bg').trim(),
+        accent: style.getPropertyValue('--accent').trim(),
+      };
+    });
+    const initialTheme = await previewTheme();
     await page.getByRole('button', { name: /^User colours$/ }).click();
     await page.locator('.custom-palette-grid').waitFor();
     await page.getByRole('button', { name: /Modern mono/i }).click();
     assert.equal(await page.locator('.custom-palette-grid').count(), 0, 'preset selection should leave custom colour mode');
+    assert.equal(await page.getByRole('button', { name: /Modern mono/i }).getAttribute('aria-pressed'), 'true', 'clicked palette should become selected');
+    const monoTheme = await previewTheme();
+    assert.notEqual(monoTheme.accent, initialTheme.accent, 'preview accent should change after selecting another palette');
+    assert.equal(monoTheme.background, '#ffffff', 'modern mono should produce a white page background');
     await page.getByRole('button', { name: /^User colours$/ }).click();
     await page.locator('.custom-palette-grid input[type="color"]').first().evaluate((input) => {
       input.value = '#000000';
@@ -164,6 +176,11 @@ async function testPaletteModeSwitching(browser) {
     });
     await page.getByRole('button', { name: /Modern mono/i }).click();
     assert.equal(await page.locator('.custom-palette-grid').count(), 0, 'user should be able to return from custom colours to preset palettes');
+    await page.locator('.modal-body').evaluate((element) => { element.scrollTop = 520; });
+    await page.getByRole('button', { name: /Electric SaaS/i }).click();
+    assert.equal(await page.getByRole('button', { name: /Electric SaaS/i }).getAttribute('aria-pressed'), 'true', 'lower palette presets should be selectable');
+    const saasTheme = await previewTheme();
+    assert.equal(saasTheme.accent, '#4f46e5', 'selected lower palette should update preview colours');
   } finally {
     await context.close();
   }

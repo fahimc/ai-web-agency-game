@@ -617,7 +617,11 @@ label input, label textarea, label select { margin-top: 6px; }
   background: var(--ink);
   color: #ffffff;
 }
-.palette-options { display: grid; gap: 8px; }
+.palette-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
+  gap: 8px;
+}
 .palette-option {
   width: 100%;
   background: #ffffff;
@@ -626,13 +630,38 @@ label input, label textarea, label select { margin-top: 6px; }
   border-radius: 16px;
   padding: 10px 12px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   box-shadow: none;
   font-size: 13px;
+  position: relative;
 }
-.palette-option.active { border-color: rgba(17, 103, 241, .62); background: var(--accent-soft); }
+.palette-option > span:first-child {
+  flex: 1 1 92px;
+  text-align: left;
+}
+.palette-option.active {
+  border-color: rgba(17, 103, 241, .82);
+  background: #eaf3ff;
+  box-shadow: 0 0 0 3px rgba(17, 103, 241, .14);
+}
+.palette-option.active::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1167f1;
+  flex: 0 0 auto;
+}
+.palette-selected-label {
+  flex: 0 0 100%;
+  color: #1167f1;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
 .custom-toggle { margin-top: 2px; }
 .custom-palette-grid {
   display: grid;
