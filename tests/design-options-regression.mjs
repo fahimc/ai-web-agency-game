@@ -7,6 +7,7 @@ import { chromium } from 'playwright';
 import {
   buildExampleSite,
   contrastRatio,
+  fallbackDesignRecommendations,
   normalizePalette,
   siteLayouts,
 } from '../src/data/siteBlueprints.js';
@@ -227,6 +228,21 @@ function testFallbackWebsiteQuality() {
   assert.equal(weakReport.passed, false, 'thin HTML should fail the production quality gate');
 }
 
+function testRestaurantRecommendationsDoNotMatchAppInsideWords() {
+  const brief = [
+    'Business: Oak Table Kitchen',
+    'Industry: restaurant and private dining venue',
+    'Audience: local diners and event organisers',
+    'Goal: increase bookings',
+    'Offer: seasonal British menu and private dining',
+    'Tone: warm, appetising, polished',
+  ].join('\n');
+  const recommendation = fallbackDesignRecommendations({ brief, projectPackage: 'growth' }, 4)[0];
+  assert.equal(recommendation.layoutId, 'restaurant-venue', 'restaurant brief should choose restaurant layout');
+  assert.deepEqual(recommendation.pages, ['Home', 'Menu', 'Gallery', 'Events', 'Contact'], 'restaurant pages should not be replaced by SaaS pricing/case-study pages');
+  assert.equal(recommendation.palette.includes('#2563eb'), false, 'restaurant fallback palette should not be padded with unrelated default blue');
+}
+
 async function testPendingDraftAutoResume(browser) {
   const session = baseSession({
     phase: 'running',
@@ -280,6 +296,8 @@ try {
   await testGeneratedComponentContrast(browser);
   console.log('Running fallback quality regression...');
   testFallbackWebsiteQuality();
+  console.log('Running recommendation fit regression...');
+  testRestaurantRecommendationsDoNotMatchAppInsideWords();
   console.log('Running pending-draft auto-resume regression...');
   await testPendingDraftAutoResume(browser);
   console.log('Design options regression tests passed.');

@@ -111,18 +111,18 @@ export const placeholderImages = [
 ];
 
 export const siteLayouts = [
-  { id: 'conversion-classic', name: 'Conversion Classic', model: 'Hero + proof + services + process + CTA', tone: 'Direct, polished, high-converting', palette: ['#10213f', '#2563eb', '#f8fafc'] },
-  { id: 'local-service', name: 'Local Service', model: 'Local hero + services + reviews + contact', tone: 'Friendly, trustworthy, practical', palette: ['#173d35', '#18a058', '#fff7ed'] },
-  { id: 'premium-editorial', name: 'Premium Editorial', model: 'Large story-led hero + feature sections + proof', tone: 'Elegant, confident, brand-led', palette: ['#171717', '#b7791f', '#faf7f0'] },
-  { id: 'saas-product', name: 'SaaS Product', model: 'Product hero + feature grid + workflow + pricing CTA', tone: 'Crisp, operational, product-focused', palette: ['#08111f', '#0ea5e9', '#eef6ff'] },
-  { id: 'consultant-authority', name: 'Consultant Authority', model: 'Authority hero + outcomes + method + booking', tone: 'Expert, calm, advisory', palette: ['#1f2937', '#7c3aed', '#f5f3ff'] },
-  { id: 'portfolio-studio', name: 'Portfolio Studio', model: 'Visual intro + selected work + capabilities + inquiry', tone: 'Creative, image-led, selective', palette: ['#111827', '#f43f5e', '#fff1f2'] },
-  { id: 'restaurant-venue', name: 'Restaurant / Venue', model: 'Atmospheric hero + menu highlights + location + booking', tone: 'Sensory, warm, visit-focused', palette: ['#2f1b12', '#d97706', '#fff8eb'] },
-  { id: 'health-wellness', name: 'Health & Wellness', model: 'Reassuring hero + services + credentials + enquiry', tone: 'Soft, credible, supportive', palette: ['#164e63', '#14b8a6', '#f0fdfa'] },
-  { id: 'event-launch', name: 'Event / Launch', model: 'Announcement hero + agenda + speakers + signup', tone: 'Energetic, urgent, clear', palette: ['#240046', '#ff5a5f', '#fff7f7'] },
-  { id: 'marketplace-directory', name: 'Marketplace / Directory', model: 'Search-led hero + categories + featured listings + trust', tone: 'Useful, scannable, broad', palette: ['#0f172a', '#22c55e', '#f8fafc'] },
-  { id: 'nonprofit-campaign', name: 'Nonprofit Campaign', model: 'Mission hero + impact proof + ways to help + donate CTA', tone: 'Human, purposeful, action-led', palette: ['#123524', '#f59e0b', '#fefce8'] },
-  { id: 'education-course', name: 'Education / Course', model: 'Course promise + curriculum + outcomes + enrolment', tone: 'Structured, motivating, clear', palette: ['#1e3a8a', '#06b6d4', '#eff6ff'] },
+  { id: 'conversion-classic', name: 'Conversion Classic', model: 'Hero + proof + services + process + CTA', tone: 'Direct, polished, high-converting', palette: ['#10213f', '#2563eb', '#f8fafc', '#0f766e', '#ffffff'] },
+  { id: 'local-service', name: 'Local Service', model: 'Local hero + services + reviews + contact', tone: 'Friendly, trustworthy, practical', palette: ['#173d35', '#18a058', '#fff7ed', '#eab308', '#ffffff'] },
+  { id: 'premium-editorial', name: 'Premium Editorial', model: 'Large story-led hero + feature sections + proof', tone: 'Elegant, confident, brand-led', palette: ['#171717', '#b7791f', '#faf7f0', '#6b3f2a', '#ffffff'] },
+  { id: 'saas-product', name: 'SaaS Product', model: 'Product hero + feature grid + workflow + pricing CTA', tone: 'Crisp, operational, product-focused', palette: ['#08111f', '#4f46e5', '#f8fafc', '#22d3ee', '#ffffff'] },
+  { id: 'consultant-authority', name: 'Consultant Authority', model: 'Authority hero + outcomes + method + booking', tone: 'Expert, calm, advisory', palette: ['#1f2937', '#7c3aed', '#f5f3ff', '#0f766e', '#ffffff'] },
+  { id: 'portfolio-studio', name: 'Portfolio Studio', model: 'Visual intro + selected work + capabilities + inquiry', tone: 'Creative, image-led, selective', palette: ['#111827', '#f43f5e', '#fff1f2', '#8b5cf6', '#ffffff'] },
+  { id: 'restaurant-venue', name: 'Restaurant / Venue', model: 'Atmospheric hero + menu highlights + location + booking', tone: 'Sensory, warm, visit-focused', palette: ['#2f1b12', '#c2410c', '#fff7ed', '#f59e0b', '#ffffff'] },
+  { id: 'health-wellness', name: 'Health & Wellness', model: 'Reassuring hero + services + credentials + enquiry', tone: 'Soft, credible, supportive', palette: ['#164e63', '#2bb3a3', '#f3fbf9', '#f4a261', '#ffffff'] },
+  { id: 'event-launch', name: 'Event / Launch', model: 'Announcement hero + agenda + speakers + signup', tone: 'Energetic, urgent, clear', palette: ['#240046', '#ff5a5f', '#fff7f7', '#f59e0b', '#ffffff'] },
+  { id: 'marketplace-directory', name: 'Marketplace / Directory', model: 'Search-led hero + categories + featured listings + trust', tone: 'Useful, scannable, broad', palette: ['#0f172a', '#22c55e', '#f8fafc', '#0ea5e9', '#ffffff'] },
+  { id: 'nonprofit-campaign', name: 'Nonprofit Campaign', model: 'Mission hero + impact proof + ways to help + donate CTA', tone: 'Human, purposeful, action-led', palette: ['#123524', '#f59e0b', '#fefce8', '#2f6f5b', '#ffffff'] },
+  { id: 'education-course', name: 'Education / Course', model: 'Course promise + curriculum + outcomes + enrolment', tone: 'Structured, motivating, clear', palette: ['#1e3a8a', '#06b6d4', '#eff6ff', '#7c3aed', '#ffffff'] },
 ];
 
 export const MAX_PALETTE_COLORS = 5;
@@ -251,11 +251,11 @@ export function paletteOptionsForLayout(layout, state) {
   const palettes = modernPaletteSet();
   const recommended = brief.match(/health|wellness|therapy|care|calm|yoga|skincare/) ? palettes.wellness
     : brief.match(/event|launch|bold|energy|festival/) ? palettes.electric
-    : brief.match(/restaurant|cafe|bar|venue|food|menu/) ? palettes.warmVenue
+    : brief.match(/\b(restaurant|cafe|bar|venue|food|menu)\b/) ? palettes.warmVenue
     : brief.match(/wedding|bridal|bride|beauty|fashion|editorial/) ? palettes.softEditorial
     : brief.match(/local|service|trade|repair|salon/) ? palettes.botanical
     : brief.match(/premium|luxury|boutique|brand|jewellery/) ? palettes.luxury
-    : brief.match(/software|saas|app|platform|tool|tech/) ? palettes.saas
+    : brief.match(/\b(software|saas|app|apps|platform|tool|tools|tech)\b/) ? palettes.saas
     : brief.match(/nonprofit|community|sustainable|nature/) ? palettes.earthy
     : base;
   return uniquePalettes([
@@ -289,10 +289,10 @@ export function recommendedStructure(layout, state) {
   let pages = ['Home', 'Services', 'About', 'FAQ', 'Contact'];
   let sections = ['Hero', 'Trust / proof bar', 'Services', 'Benefits', 'Process', 'Testimonials', 'FAQ', 'Lead capture form', 'Final CTA'];
 
-  if (layout.id === 'saas-product' || /software|saas|app|platform|tool/.test(text)) {
+  if (layout.id === 'saas-product' || /\b(software|saas|app|apps|platform|tool|tools)\b/.test(text)) {
     pages = ['Home', 'Pricing', 'Case Studies', 'FAQ', 'Contact'];
     sections = ['Hero', 'Trust / proof bar', 'Benefits', 'Featured products', 'Process', 'Pricing', 'Testimonials', 'FAQ', 'Lead capture form'];
-  } else if (layout.id === 'restaurant-venue' || /restaurant|cafe|bar|venue|food|menu/.test(text)) {
+  } else if (layout.id === 'restaurant-venue' || /\b(restaurant|cafe|bar|venue|food|menu)\b/.test(text)) {
     pages = ['Home', 'Menu', 'Gallery', 'Events', 'Contact'];
     sections = ['Hero', 'Featured products', 'Gallery', 'Testimonials', 'Location map', 'FAQ', 'Final CTA'];
   } else if (layout.id === 'portfolio-studio' || /portfolio|studio|creative|photography|designer|artist/.test(text)) {
@@ -716,8 +716,8 @@ function homePageBody({ layout, business, audience, goal, offer, image, examples
 <div><div class="eyebrow">${escapeHtml(business)}</div><h1>${escapeHtml(headlineFor(layout, business, goal, audience))}</h1><p>${escapeHtml(copyFor(layout, audience, offer, goal))}</p><div class="tag-row">${sectionTags.map((section) => `<span class="tag">${escapeHtml(section)}</span>`).join('')}</div><a class="button" href="${escapeHtml(ctaHref)}">Start an enquiry</a></div>
 <aside class="panel image-card parallax-media depth-panel float-card" data-parallax="0.12"><img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.label)}"><div class="image-caption">${escapeHtml(heroImageCaptionFor(business, offer))}</div></aside>
 </section>
-<section class="section"><span class="page-kicker">Overview</span><h2>${escapeHtml(examples.servicesTitle)}</h2><p>${escapeHtml(examples.servicesLead)} The page gives visitors enough context to understand the offer, compare fit, and decide whether the next step is worth taking.</p><div class="grid">${examples.cards.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>
-<section class="section"><span class="page-kicker">Why it works</span><h2>Useful information before visitors commit</h2><p>Strong small-business websites answer the practical questions before asking for the enquiry: what is available, who it is for, what happens next, and why the business can be trusted.</p><div class="grid"><div class="card"><b>Plain-language offer</b><span>${escapeHtml(business)} explains what is included, who it suits, and what makes the service worth enquiring about.</span></div><div class="card"><b>Practical proof</b><span>Reviews, response expectations, process notes, and realistic outcomes sit close to the key decisions.</span></div><div class="card"><b>Mobile-first contact</b><span>Every page keeps the next action easy to find, with a short route to send details or ask a question.</span></div></div></section>
+<section class="section"><span class="page-kicker">Overview</span><h2>${escapeHtml(examples.servicesTitle)}</h2><p>${escapeHtml(examples.servicesLead)} Visitors get enough context to understand the offer, compare fit, and decide whether the next step is worth taking.</p><div class="grid">${examples.cards.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span></div>`).join('')}</div></section>
+<section class="section"><span class="page-kicker">Why it works</span><h2>Useful information before visitors commit</h2><p>${escapeHtml(business)} answers the practical questions before asking for the enquiry: what is available, who it is for, what happens next, and why the business can be trusted.</p><div class="grid"><div class="card"><b>Plain-language offer</b><span>${escapeHtml(business)} explains what is included, who it suits, and what makes the service worth enquiring about.</span></div><div class="card"><b>Practical proof</b><span>Reviews, response expectations, process notes, and realistic outcomes sit close to the key decisions.</span></div><div class="card"><b>Mobile-first contact</b><span>Every page keeps the next action easy to find, with a short route to send details or ask a question.</span></div></div></section>
 <section class="section"><span class="page-kicker">Process</span><h2>A clear path from interest to action</h2><div class="steps"><div class="step">Understand the offer and who it is for.</div><div class="step">Review the details, proof, and practical fit.</div><div class="step">Send an enquiry when the next step is clear.</div></div><a class="button" href="${escapeHtml(ctaHref)}">Contact ${escapeHtml(business)}</a></section>
 <section class="section"><span class="page-kicker">Common questions</span><h2>Answers that reduce hesitation</h2><div class="grid"><div class="card"><b>What should I send?</b><span>Share what you need, timing, location if relevant, and anything that would affect the recommendation.</span></div><div class="card"><b>How quickly will I hear back?</b><span>Set a clear response expectation so visitors know when the next useful answer should arrive.</span></div><div class="card"><b>Can I ask before deciding?</b><span>Yes. The first enquiry can be a fit check, not a commitment to buy immediately.</span></div></div></section>
 <section class="section contact"><div><span class="page-kicker">Contact</span><h2>${escapeHtml(examples.contactTitle)}</h2><p>${escapeHtml(examples.contactText)}</p><div class="tag-row"><span class="tag">Fast reply</span><span class="tag">Clear recommendation</span><span class="tag">No pressure</span></div></div>${contactForm({ business })}</section>`;
@@ -753,7 +753,28 @@ function headlineFor(layout, business, goal, audience) {
 }
 
 function copyFor(layout, audience, offer, goal) {
-  return `Built for ${audience}, with ${offer} presented clearly and a simple path toward ${goal}.`;
+  return `Built for ${audience}, with ${offer} presented clearly and a simple path to ${goalAsNounPhrase(goal)}.`;
+}
+
+function goalAsNounPhrase(goal) {
+  const text = String(goal || 'the next enquiry').trim();
+  const replacements = [
+    [/^get\b/i, 'getting'],
+    [/^increase\b/i, 'increasing'],
+    [/^book\b/i, 'booking'],
+    [/^showcase\b/i, 'showcasing'],
+    [/^generate\b/i, 'generating'],
+    [/^receive\b/i, 'receiving'],
+    [/^turn\b/i, 'turning'],
+    [/^launch\b/i, 'launching'],
+    [/^sell\b/i, 'selling'],
+    [/^grow\b/i, 'growing'],
+    [/^build\b/i, 'building'],
+  ];
+  for (const [pattern, replacement] of replacements) {
+    if (pattern.test(text)) return text.replace(pattern, replacement);
+  }
+  return text;
 }
 
 function heroImageCaptionFor(business, offer) {
@@ -833,7 +854,7 @@ function pageCtaSection(id, { business, ctaHref }) {
 function servicesSection(id, context) {
   const { business, audience, goal, offer } = context;
   const services = serviceCardsFor(context);
-  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Services</span><h2>${escapeHtml(`${offer} shaped around what ${audience} need`)}</h2><p>${escapeHtml(`${business} gives visitors enough detail to understand the service, compare the right level of support, and move toward ${goal} with confidence.`)}</p><div class="grid">${services.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span><a class="button secondary" href="${escapeHtml(context.ctaHref)}">${escapeHtml(card.cta)}</a></div>`).join('')}</div><div class="panel"><span class="page-kicker">How it works</span><h2>A simple route from first enquiry to clear next step</h2><div class="steps"><div class="step">Share the key details so ${escapeHtml(business)} can understand the need, timing, and preferred outcome.</div><div class="step">Get a practical recommendation that explains the best-fit service and any useful options.</div><div class="step">Confirm the route, receive the next actions, and keep communication clear from the start.</div></div></div></section>`;
+  return `<section class="section" id="${escapeHtml(id)}"><span class="page-kicker">Services</span><h2>${escapeHtml(`${offer} shaped around what ${audience} need`)}</h2><p>${escapeHtml(`${business} gives visitors enough detail to understand the service, compare the right level of support, and move toward ${goalAsNounPhrase(goal)} with confidence.`)}</p><div class="grid">${services.map((card) => `<div class="card"><b>${escapeHtml(card.title)}</b><span>${escapeHtml(card.text)}</span><a class="button secondary" href="${escapeHtml(context.ctaHref)}">${escapeHtml(card.cta)}</a></div>`).join('')}</div><div class="panel"><span class="page-kicker">How it works</span><h2>A simple route from first enquiry to clear next step</h2><div class="steps"><div class="step">Share the key details so ${escapeHtml(business)} can understand the need, timing, and preferred outcome.</div><div class="step">Get a practical recommendation that explains the best-fit service and any useful options.</div><div class="step">Confirm the route, receive the next actions, and keep communication clear from the start.</div></div></div></section>`;
 }
 
 function aboutSection(id, { business, industry, audience, offer, image }) {
@@ -901,7 +922,7 @@ function serviceCardsFor({ business, industry, audience, offer }) {
       { title: 'Packages for different needs', text: 'Present lighter guidance, fuller coordination, and complete support so visitors can compare the right level before enquiring.', cta: 'Compare support' },
     ];
   }
-  if (/restaurant|cafe|bar|food|menu|venue/.test(text)) {
+  if (/\b(restaurant|cafe|bar|food|menu|venue)\b/.test(text)) {
     return [
       { title: 'Signature menu highlights', text: 'Feature the dishes, drinks, or experiences visitors should remember first, with clear descriptions and seasonal notes.', cta: 'View highlights' },
       { title: 'Bookings and occasions', text: 'Explain table bookings, group visits, private events, and the atmosphere different customers can expect.', cta: 'Make a booking' },
@@ -909,7 +930,7 @@ function serviceCardsFor({ business, industry, audience, offer }) {
       { title: 'Special offers', text: 'Use this space for current menus, set options, tasting events, or time-limited reasons to visit.', cta: 'Ask what is on' },
     ];
   }
-  if (/software|saas|app|platform|tool/.test(text)) {
+  if (/\b(software|saas|app|apps|platform|tool|tools)\b/.test(text)) {
     return [
       { title: 'Product workflow', text: `Explain how ${offer} fits into the customer day, what task it improves, and what happens after signup or demo request.`, cta: 'See workflow' },
       { title: 'Outcome-led features', text: 'Group features by the result they create, so visitors understand value before technical detail.', cta: 'Compare features' },
@@ -933,7 +954,7 @@ function exampleContentFor(layout, context) {
     cards: [
       { title: 'Clear first impression', text: `Visitors immediately understand what ${business} offers and who it is for.` },
       { title: 'Useful proof', text: 'Testimonials, outcomes, and reassurance sit close to the actions that matter.' },
-      { title: 'Easy enquiry path', text: `The page keeps moving people toward ${goal} without forcing them to search.` },
+      { title: 'Easy enquiry path', text: `The page keeps moving people toward ${goalAsNounPhrase(goal)} without forcing them to search.` },
     ],
     proofQuote: 'Clear information, useful proof, and a direct next step.',
     proofText: `${business} presents ${industry} clearly across mobile and desktop.`,
@@ -965,13 +986,13 @@ function exampleContentFor(layout, context) {
     },
     'restaurant-venue': {
       servicesTitle: 'Menu and visit highlights',
-      servicesLead: 'A venue example that makes food, atmosphere, booking, and location easy to scan.',
+      servicesLead: 'Food, atmosphere, booking, and location are easy to scan before visitors decide.',
       cards: [
         { title: 'Signature menu items', text: 'Feature the dishes, drinks, or experiences people should remember.' },
         { title: 'Atmosphere and occasions', text: 'Show whether the venue suits casual visits, celebrations, dates, or events.' },
         { title: 'Booking details', text: 'Make location, opening times, and table booking visible before the final action.' },
       ],
-      proofQuote: 'A site direction that helps visitors picture the visit.',
+      proofQuote: 'A site that helps visitors picture the visit.',
       proofText: 'The layout uses imagery and short sections to turn interest into bookings.',
       processTitle: 'How a visitor decides to book',
       steps: ['They see the atmosphere and signature offer.', 'They check menu, location, reviews, and times.', 'They reserve a table or make an enquiry.'],
@@ -980,13 +1001,13 @@ function exampleContentFor(layout, context) {
     },
     'portfolio-studio': {
       servicesTitle: 'Selected work and capabilities',
-      servicesLead: `A visual example that helps ${business} show taste, experience, and the kind of projects it wants more of.`,
+      servicesLead: `${business} can show taste, experience, and the kind of projects it wants more of.`,
       cards: [
         { title: 'Featured projects', text: 'Lead with a small number of strong examples instead of a crowded gallery.' },
         { title: 'Creative services', text: 'Explain what clients can commission and what the working relationship feels like.' },
         { title: 'Enquiry fit', text: 'Use the contact section to attract the right budgets, briefs, and timelines.' },
       ],
-      proofQuote: 'A portfolio direction that feels selective and easy to judge.',
+      proofQuote: 'A portfolio that feels selective and easy to judge.',
       proofText: 'The page gives space to imagery while still making services and enquiry steps clear.',
       processTitle: 'How a project enquiry builds',
       steps: ['Visitors see the visual standard quickly.', 'They understand services, process, and fit.', 'They send a brief with enough context to respond well.'],
@@ -1000,9 +1021,9 @@ function exampleContentFor(layout, context) {
 
 function placeholderForLayout(layout, state = {}) {
   const text = `${layout?.id || ''} ${state?.brief || ''} ${state?.clientDetails || ''}`.toLowerCase();
-  const match = text.match(/restaurant|cafe|bar|food|menu/) ? 'restaurant'
+  const match = text.match(/\b(restaurant|cafe|bar|food|menu)\b/) ? 'restaurant'
     : text.match(/health|wellness|therapy|fitness|yoga|care/) ? 'wellness'
-    : text.match(/software|saas|app|platform|tool|tech/) ? 'tech'
+    : text.match(/\b(software|saas|app|apps|platform|tool|tools|tech)\b/) ? 'tech'
     : text.match(/premium|luxury|interior|boutique/) ? 'premium'
     : text.match(/event|conference|launch|festival/) ? 'event'
     : text.match(/education|course|training|school|academy/) ? 'education'

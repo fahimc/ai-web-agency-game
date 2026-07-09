@@ -9,6 +9,9 @@ const BAD_FINAL_SITE_LANGUAGE = [
   /site concept/i,
   /this example shows/i,
   /finished site can explain/i,
+  /strong small-business websites/i,
+  /venue website/i,
+  /visual website/i,
   /placeholder packages/i,
   /component\s*\+\s*component/i,
 ];

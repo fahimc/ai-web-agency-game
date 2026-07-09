@@ -230,6 +230,28 @@ Preview the production build:
 npm run preview
 ```
 
+## CLI Generation
+
+The app can generate and review sites from the command line without opening the browser UI.
+
+Generate one site:
+
+```bash
+npm run agency:cli -- generate --brief "Business: Example Co
+Industry: local services
+Audience: homeowners
+Goal: get enquiries
+Offer: repairs and maintenance" --package growth --out cli-runs/example
+```
+
+Run five representative smoke cases:
+
+```bash
+npm run agency:cli:smoke
+```
+
+The CLI writes generated HTML, selected design notes, and `quality-report.json` under `cli-runs/`. That folder is ignored by git.
+
 ## Deployment
 
 The project is configured for Netlify.

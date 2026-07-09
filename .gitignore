@@ -5,6 +5,7 @@ dist/
 tmp-*.png
 *.log
 .codex-remote-attachments/
+cli-runs/
 
 # Local Netlify folder
 .netlify
