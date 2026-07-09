@@ -13,6 +13,7 @@
     "test:design-options": "node tests/design-options-regression.mjs",
     "test:ui-visibility": "node tests/ui-visibility-regression.mjs",
     "test:template-review": "node tests/template-review-regression.mjs",
+    "test:intake-form": "node tests/intake-form-regression.mjs",
     "templates:audit": "node tools/audit-template-sources.mjs",
     "templates:download": "node tools/download-template-library.mjs",
     "templates:generate": "node tools/generate-template-knowledge.mjs",

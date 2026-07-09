@@ -1,8 +1,78 @@
 import React, { useMemo, useState } from 'react';
 import { Modal } from './Modal.jsx';
 
+const INDUSTRY_OPTIONS = [
+  'Local service',
+  'Trades',
+  'Restaurant / food',
+  'Health / wellness',
+  'Beauty',
+  'Professional services',
+  'Legal',
+  'Finance',
+  'Education',
+  'Charity / community',
+  'Creative / portfolio',
+  'SaaS / technology',
+  'Event / venue',
+  'Ecommerce / products',
+  'Other',
+];
+
+const AUDIENCE_OPTIONS = [
+  'Local customers',
+  'Homeowners',
+  'Families',
+  'Couples',
+  'Small businesses',
+  'Startups',
+  'Professionals',
+  'Students / learners',
+  'Visitors / guests',
+  'Online shoppers',
+  'Other',
+];
+
+const GOAL_OPTIONS = [
+  'Get more enquiries',
+  'Take bookings',
+  'Sell products',
+  'Show services clearly',
+  'Build trust',
+  'Show portfolio / work',
+  'Launch a new business',
+  'Improve an old website',
+  'Publish content / articles',
+  'Other',
+];
+
+const TONE_OPTIONS = [
+  'Clean and professional',
+  'Friendly and local',
+  'Premium and polished',
+  'Bold and energetic',
+  'Calm and trustworthy',
+  'Modern and minimal',
+  'Creative and expressive',
+];
+
+const PAGE_OPTIONS = [
+  'Home',
+  'Services',
+  'About',
+  'Pricing',
+  'Gallery',
+  'Portfolio',
+  'Testimonials',
+  'FAQ',
+  'Blog',
+  'Contact',
+];
+
+const DEFAULT_PAGES = ['Home', 'Services', 'About', 'Contact'];
+
 export function DetailsModal({ state, actions }) {
-  const initial = useMemo(() => parseStoredClientDetails(state.clientDetails), [state.clientDetails]);
+  const initial = useMemo(() => parseStoredClientDetails(state.clientDetails, state.selectedSitePages), [state.clientDetails, state.selectedSitePages]);
   const [form, setForm] = useState(initial);
   const editingForRevision = state.phase === 'approval';
 
@@ -10,71 +80,175 @@ export function DetailsModal({ state, actions }) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function setSelectField(field, value) {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+      [`${field}Other`]: value === 'Other' ? current[`${field}Other`] : '',
+    }));
+  }
+
+  function togglePage(page) {
+    setForm((current) => {
+      if (page === 'Home') return current;
+      const pages = current.pages.includes(page)
+        ? current.pages.filter((item) => item !== page)
+        : [...current.pages, page];
+      return { ...current, pages: ensureHomePage(pages) };
+    });
+  }
+
   function submit(event) {
     event.preventDefault();
-    if (!form.businessName || !form.industry || !form.audience || !form.goal) {
-      actions.notify('Please fill in business name, industry, ideal customers, and project goal.');
+    const industry = resolvedValue(form.industry, form.industryOther);
+    const audience = resolvedValue(form.audience, form.audienceOther);
+    const goal = resolvedValue(form.goal, form.goalOther);
+    const pages = ensureHomePage(form.pages);
+
+    if (!form.businessName || !industry || !audience || !goal) {
+      actions.notify('Please add the business name, industry, audience, and main goal.');
       return;
     }
+
     const details = [
       `Business / client name: ${form.businessName}`,
-      `Industry: ${form.industry}`,
-      form.location ? `Location: ${form.location}` : '',
-      `Ideal customers / audience: ${form.audience}`,
-      `Project goal: ${form.goal}`,
+      `Industry: ${industry}`,
+      form.location ? `Location / service area: ${form.location}` : '',
+      `Ideal customers / audience: ${audience}`,
+      `Project goal: ${goal}`,
       form.offer ? `Main offer / service: ${form.offer}` : '',
       form.tone ? `Tone / style: ${form.tone}` : '',
-      form.pages ? `Pages / sections wanted: ${form.pages}` : '',
-      form.mustHaves ? `Must-haves: ${form.mustHaves}` : '',
-      form.extraNotes ? `Extra notes: ${form.extraNotes}` : '',
+      `Pages: ${pages.join(', ')}`,
+      form.extraNotes ? `Useful notes: ${form.extraNotes}` : '',
     ].filter(Boolean).join('\n');
+
+    const payload = { clientDetails: details, brief: details, selectedSitePages: pages };
     if (editingForRevision) {
-      actions.saveClientEdits({ clientDetails: details, brief: details });
+      actions.saveClientEdits(payload);
       actions.closeModal();
       return;
     }
-    actions.submitDetails(details);
+    actions.submitDetails(details, { selectedSitePages: pages });
+  }
+
+  function resetForm() {
+    setForm(parseStoredClientDetails('', []));
   }
 
   return (
     <Modal title={editingForRevision ? 'Edit Content Fields' : 'Project Details'} onClose={actions.closeModal} className="details-modal">
-      <div className="modal-tabs"><span className="modal-tab active">{editingForRevision ? 'Revision content fields' : 'New customer intake'}</span></div>
+      <div className="modal-tabs"><span className="modal-tab active">{editingForRevision ? 'Revision content fields' : 'Quick customer intake'}</span></div>
       <div className="modal-body">
-        <form className="details-form" autoComplete="on" onSubmit={submit}>
+        <form className="details-form intake-form" autoComplete="on" onSubmit={submit}>
           <div className="card form-intro">
-            <h3>{editingForRevision ? 'Update the content brief' : `Hi ${state.userName || 'there'}, please fill in this form`}</h3>
-            <p className="muted">{editingForRevision ? 'These fields will be used by Mira and Kai when you request the next revision.' : 'This is the brief. Once you send it, the office starts work without asking for a separate message.'}</p>
+            <h3>{editingForRevision ? 'Update the brief' : `Hi ${state.userName || 'there'}, let us get the essentials`}</h3>
+            <p className="muted">{editingForRevision ? 'Update only what has changed. The revision will use these fields.' : 'Pick from the options where possible. The designer will refine pages, sections, colours, and direction after payment.'}</p>
           </div>
-          <div className="row">
-            <Field label="Business / client name *" value={form.businessName} onChange={(value) => setField('businessName', value)} required />
-            <Field label="Industry *" value={form.industry} onChange={(value) => setField('industry', value)} required />
-          </div>
-          <div className="row">
-            <Field label="Location" value={form.location} onChange={(value) => setField('location', value)} />
-            <Field label="Ideal customers *" value={form.audience} onChange={(value) => setField('audience', value)} required />
-          </div>
-          <div className="row">
-            <Field label="Main offer / service" value={form.offer} onChange={(value) => setField('offer', value)} />
-            <label>Tone / style
+
+          <section className="intake-section" aria-labelledby="intake-basics">
+            <div className="intake-section-head">
+              <span>1</span>
+              <div>
+                <h3 id="intake-basics">Business basics</h3>
+                <p>Enough context to shape the first recommendation.</p>
+              </div>
+            </div>
+            <div className="row">
+              <Field label="Business name *" value={form.businessName} onChange={(value) => setField('businessName', value)} required />
+              <SelectWithOther
+                label="Industry *"
+                value={form.industry}
+                otherValue={form.industryOther}
+                options={INDUSTRY_OPTIONS}
+                onSelect={(value) => setSelectField('industry', value)}
+                onOther={(value) => setField('industryOther', value)}
+                required
+              />
+            </div>
+            <div className="row">
+              <Field label="Main offer or service" value={form.offer} onChange={(value) => setField('offer', value)} placeholder="e.g. wedding photography, accounting, roof repairs" />
+              <Field label="Location / service area" value={form.location} onChange={(value) => setField('location', value)} placeholder="Optional" />
+            </div>
+          </section>
+
+          <section className="intake-section" aria-labelledby="intake-goal">
+            <div className="intake-section-head">
+              <span>2</span>
+              <div>
+                <h3 id="intake-goal">Audience and goal</h3>
+                <p>Use the closest option. Choose Other only if nothing fits.</p>
+              </div>
+            </div>
+            <div className="row">
+              <SelectWithOther
+                label="Ideal customers *"
+                value={form.audience}
+                otherValue={form.audienceOther}
+                options={AUDIENCE_OPTIONS}
+                onSelect={(value) => setSelectField('audience', value)}
+                onOther={(value) => setField('audienceOther', value)}
+                required
+              />
+              <SelectWithOther
+                label="Main goal *"
+                value={form.goal}
+                otherValue={form.goalOther}
+                options={GOAL_OPTIONS}
+                onSelect={(value) => setSelectField('goal', value)}
+                onOther={(value) => setField('goalOther', value)}
+                required
+              />
+            </div>
+            <label>Tone
               <select value={form.tone} onChange={(event) => setField('tone', event.target.value)}>
-                <option value="">Choose a tone</option>
-                <option>Premium and polished</option>
-                <option>Friendly and local</option>
-                <option>Bold and energetic</option>
-                <option>Calm and professional</option>
-                <option>Minimal and modern</option>
-                <option>Playful and creative</option>
+                <option value="">Let the designer recommend</option>
+                {TONE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
               </select>
             </label>
-          </div>
-          <TextField label="Main project goal *" value={form.goal} onChange={(value) => setField('goal', value)} />
-          <TextField label="Pages or sections needed" value={form.pages} onChange={(value) => setField('pages', value)} />
-          <MustHaveTags value={form.mustHaves} onChange={(value) => setField('mustHaves', value)} />
-          <TextField label="Must-haves" value={form.mustHaves} onChange={(value) => setField('mustHaves', value)} />
-          <TextField label="Anything else the team should know?" value={form.extraNotes} onChange={(value) => setField('extraNotes', value)} />
+          </section>
+
+          <section className="intake-section" aria-labelledby="intake-pages">
+            <div className="intake-section-head">
+              <span>3</span>
+              <div>
+                <h3 id="intake-pages">Pages</h3>
+                <p>Select multiple pages. Deselect anything not needed. Home is always included.</p>
+              </div>
+            </div>
+            <div className="page-picker" role="group" aria-label="Pages">
+              {PAGE_OPTIONS.map((page) => {
+                const selected = form.pages.includes(page);
+                const fixed = page === 'Home';
+                return (
+                  <button
+                    type="button"
+                    className={`page-choice ${selected ? 'active' : ''} ${fixed ? 'fixed' : ''}`}
+                    key={page}
+                    aria-pressed={selected}
+                    onClick={() => togglePage(page)}
+                  >
+                    <span>{page}</span>
+                    <small>{fixed ? 'Required' : selected ? 'Selected' : 'Add'}</small>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="intake-section optional" aria-labelledby="intake-notes">
+            <div className="intake-section-head">
+              <span>4</span>
+              <div>
+                <h3 id="intake-notes">Optional notes</h3>
+                <p>Add anything important. You can leave this blank.</p>
+              </div>
+            </div>
+            <TextField label="Useful notes" value={form.extraNotes} onChange={(value) => setField('extraNotes', value)} placeholder="Competitors, special offers, opening times, must-avoid wording, or anything the team should know." />
+          </section>
+
           <div className="stack form-actions">
             <button type="submit" className="green">{editingForRevision ? 'Save content fields' : 'Save details and continue'}</button>
-            <button type="button" className="secondary" onClick={() => setForm(parseStoredClientDetails(''))}>Clear form</button>
+            <button type="button" className="secondary" onClick={resetForm}>Clear form</button>
           </div>
         </form>
       </div>
@@ -82,63 +256,51 @@ export function DetailsModal({ state, actions }) {
   );
 }
 
-function MustHaveTags({ value = '', onChange }) {
-  const tags = [
-    'Hero section',
-    'Services section',
-    'About section',
-    'Contact form',
-    'Testimonials',
-    'FAQ',
-    'Gallery',
-    'Pricing section',
-    'SEO basics',
-    'Responsive layout',
-    'Fast loading',
-    'Privacy policy',
-  ];
-  const selected = value.split(',').map((item) => item.trim()).filter(Boolean);
-  function toggle(tag) {
-    const next = selected.includes(tag) ? selected.filter((item) => item !== tag) : [...selected, tag];
-    onChange(next.join(', '));
-  }
+function SelectWithOther({ label, value = '', otherValue = '', options, onSelect, onOther, required }) {
   return (
-    <div>
-      <span className="field-label">Must-have helpers</span>
-      <div className="tag-palette">
-        {tags.map((tag) => <button type="button" className={`tag-chip ${selected.includes(tag) ? 'active' : ''}`} key={tag} onClick={() => toggle(tag)}>{tag}</button>)}
-      </div>
+    <div className="select-with-other">
+      <label>{label}
+        <select value={value} required={required} onChange={(event) => onSelect(event.target.value)}>
+          <option value="">Choose one</option>
+          {options.map((option) => <option key={option}>{option}</option>)}
+        </select>
+      </label>
+      {value === 'Other' && (
+        <Field label={`Custom ${label.replace('*', '').toLowerCase()}`} value={otherValue} onChange={onOther} required={required} />
+      )}
     </div>
   );
 }
 
-function Field({ label, value = '', onChange, required }) {
+function Field({ label, value = '', onChange, required, placeholder = '' }) {
   return (
     <label>{label}
-      <input value={value} required={required} onChange={(event) => onChange(event.target.value)} />
+      <input value={value} required={required} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }
 
-function TextField({ label, value = '', onChange }) {
+function TextField({ label, value = '', onChange, placeholder = '' }) {
   return (
     <label>{label}
-      <textarea value={value} onChange={(event) => onChange(event.target.value)} />
+      <textarea value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }
 
-function parseStoredClientDetails(details) {
+function parseStoredClientDetails(details, selectedSitePages = []) {
   const out = {
     businessName: '',
     industry: '',
+    industryOther: '',
     location: '',
     audience: '',
+    audienceOther: '',
     goal: '',
+    goalOther: '',
     offer: '',
     tone: '',
-    pages: '',
-    mustHaves: '',
+    pages: ensureHomePage(selectedSitePages.length ? selectedSitePages : DEFAULT_PAGES),
     extraNotes: '',
   };
   String(details || '').split('\n').forEach((line) => {
@@ -147,15 +309,32 @@ function parseStoredClientDetails(details) {
     const key = match[1].toLowerCase().trim();
     const value = match[2].trim();
     if (key.includes('business') || key.includes('client name')) out.businessName = value;
-    else if (key.includes('industry')) out.industry = value;
+    else if (key.includes('industry')) assignSelectValue(out, 'industry', value, INDUSTRY_OPTIONS);
     else if (key.includes('location')) out.location = value;
-    else if (key.includes('audience') || key.includes('customer')) out.audience = value;
+    else if (key.includes('audience') || key.includes('customer')) assignSelectValue(out, 'audience', value, AUDIENCE_OPTIONS);
     else if (key.includes('offer') || key.includes('service')) out.offer = value;
-    else if (key.includes('goal')) out.goal = value;
-    else if (key.includes('pages') || key.includes('section')) out.pages = value;
+    else if (key.includes('goal')) assignSelectValue(out, 'goal', value, GOAL_OPTIONS);
+    else if (key === 'pages' || key.includes('pages')) out.pages = ensureHomePage(value.split(',').map((item) => item.trim()));
     else if (key.includes('tone') || key.includes('style')) out.tone = value;
-    else if (key.includes('must')) out.mustHaves = value;
-    else if (key.includes('notes') || key.includes('else')) out.extraNotes = value;
+    else if (key.includes('notes') || key.includes('else') || key.includes('must')) out.extraNotes = value;
   });
   return out;
+}
+
+function assignSelectValue(out, field, value, options) {
+  if (options.includes(value)) {
+    out[field] = value;
+    out[`${field}Other`] = '';
+    return;
+  }
+  out[field] = 'Other';
+  out[`${field}Other`] = value;
+}
+
+function resolvedValue(value, otherValue) {
+  return value === 'Other' ? otherValue.trim() : value.trim();
+}
+
+function ensureHomePage(pages = []) {
+  return ['Home', ...new Set(pages.map((page) => String(page || '').trim()).filter((page) => page && page !== 'Home'))];
 }

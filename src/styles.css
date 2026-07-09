@@ -406,10 +406,105 @@ label input, label textarea, label select { margin-top: 6px; }
   font-size: 12px;
 }
 .empty { padding: 28px; text-align: center; color: var(--muted); border: 2px dashed var(--line); border-radius: 18px; background: #fff9ed; }
-.details-modal { width: min(880px, 100%); }
+.details-modal { width: min(980px, 100%); }
 .details-form { display: grid; gap: 14px; }
+.intake-form {
+  gap: 16px;
+}
 .form-intro { background: linear-gradient(180deg, #fffdf7, #fff1d7); }
 .form-actions { justify-content: flex-end; }
+.intake-section {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255, 253, 247, .92);
+  box-shadow: 0 14px 34px rgba(6, 18, 47, .07);
+}
+
+.intake-section.optional {
+  background: #ffffff;
+}
+
+.intake-section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.intake-section-head > span {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: var(--ink);
+  color: #ffffff;
+  font-weight: 950;
+}
+
+.intake-section-head h3,
+.intake-section-head p {
+  margin: 0;
+}
+
+.intake-section-head p {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.select-with-other {
+  display: grid;
+  gap: 10px;
+}
+
+.page-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px;
+}
+
+.page-choice {
+  min-height: 74px;
+  border-radius: 18px;
+  padding: 12px;
+  background: #ffffff;
+  color: var(--ink);
+  border: 2px solid var(--line);
+  box-shadow: none;
+  display: grid;
+  justify-items: start;
+  align-content: center;
+  gap: 2px;
+  text-align: left;
+}
+
+.page-choice:hover {
+  box-shadow: 0 10px 24px rgba(6, 18, 47, .1);
+}
+
+.page-choice.active {
+  border-color: rgba(17, 103, 241, .62);
+  background: #edf5ff;
+}
+
+.page-choice.fixed {
+  cursor: default;
+}
+
+.page-choice span {
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.page-choice small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
 .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .package-modal { width: min(1160px, 100%); }
 .package-body { display: grid; gap: 14px; }

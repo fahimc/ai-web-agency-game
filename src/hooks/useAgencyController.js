@@ -428,6 +428,7 @@ export function useAgencyController() {
       brief: details,
       paid: false,
       paymentEstimate: null,
+      selectedSitePages: Array.isArray(options.selectedSitePages) ? options.selectedSitePages : current.selectedSitePages,
       designRecommendations: [],
       designRecommendationStatus: 'idle',
       reviewAssets: [],
