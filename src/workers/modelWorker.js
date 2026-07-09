@@ -48,8 +48,8 @@ function parseResponseText(data) {
 self.onmessage = async (event) => {
   const { id, payload } = event.data;
   try {
-    const { employee, task, context, settings, state, complex } = payload;
-    const model = state.projectModel || settings.selectedModel || (complex ? settings.complexModel : settings.fastModel);
+    const { employee, task, context, settings, state, complex, modelOverride } = payload;
+    const model = modelOverride || state.projectModel || settings.selectedModel || (complex ? settings.complexModel : settings.fastModel);
     const system = [
       `You are ${employee.name}, the ${employee.role} inside MicroAgency AI, a playful autonomous web agency.`,
       `Personality and working style: ${employee.voice}.`,

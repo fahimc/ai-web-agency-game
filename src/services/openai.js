@@ -1,8 +1,12 @@
 import { toOutputText } from '../utils/text.js';
 import { reviewAssetsPrompt } from '../utils/reviewAssets.js';
 
-export async function callModel({ employee, task, context, settings, state, signal, complex }) {
-  const model = state.projectModel || settings.selectedModel || (complex ? settings.complexModel : settings.fastModel);
+export function selectModelForRequest({ settings = {}, state = {}, complex = false, modelOverride = '' } = {}) {
+  return modelOverride || state.projectModel || settings.selectedModel || (complex ? settings.complexModel : settings.fastModel);
+}
+
+export async function callModel({ employee, task, context, settings, state, signal, complex, modelOverride }) {
+  const model = selectModelForRequest({ settings, state, complex, modelOverride });
   const system = [
     `You are ${employee.name}, the ${employee.role} inside MicroAgency AI, a playful autonomous web agency.`,
     `Personality and working style: ${employee.voice}.`,

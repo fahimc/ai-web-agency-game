@@ -252,6 +252,22 @@ npm run agency:cli:smoke
 
 The CLI writes generated HTML, selected design notes, and `quality-report.json` under `cli-runs/`. That folder is ignored by git.
 
+## AI And Scripted Work Routing
+
+The standard production flow avoids model calls where the work is deterministic:
+
+- Scripted: commercial strategy, task board, selected design direction document, page content pack, website HTML, and QA handover notes.
+- Cheap model: initial designer recommendations and revision design planning.
+- Package model: reserved for genuinely complex custom revision/build work when scripting is not enough.
+
+The scripted path is validated by:
+
+```bash
+npm run test:scripted-agency
+```
+
+This checks that the standard preview outputs can be generated without model calls, that the multi-page package passes the quality gate, and that cheap-model overrides are honoured.
+
 ## Deployment
 
 The project is configured for Netlify.

@@ -15,6 +15,12 @@ import {
 import { completionSteps, previewSteps } from '../data/steps.js';
 import { callModelInBackground } from '../services/modelClient.js';
 import {
+  buildScriptedPageContent,
+  cheapModelForTask,
+  scriptAgencyStep,
+  shouldScriptAgencyStep,
+} from '../services/scriptedAgency.js';
+import {
   clearDraft,
   createProjectId,
   defaultSettings,
@@ -511,7 +517,8 @@ export function useAgencyController() {
         context: buildContext(['Plan', 'TaskBoard']),
         settings: current.settings,
         state: modelSafeState(current),
-        complex: true,
+        modelOverride: cheapModelForTask('designRecommendations', current),
+        complex: false,
       });
       const recommendations = normalizeDesignRecommendations(raw, current, 4);
       update((stateNow) => ({
@@ -628,15 +635,21 @@ export function useAgencyController() {
     current = stateRef.current;
     let result = '';
     try {
-      result = await callModelInBackground({
-        employee,
-        task: step.task,
-        context: buildContext(step.contextKeys || []),
-        settings: current.settings,
-        state: modelSafeState(current),
-        signal: aborter.current?.signal,
-        complex: Boolean(step.complex),
-      });
+      if (shouldScriptAgencyStep(step, current)) {
+        result = scriptAgencyStep(step, current);
+        log(employee.name, `Scripted output used for ${step.key}; no model call needed.`);
+      } else {
+        result = await callModelInBackground({
+          employee,
+          task: step.task,
+          context: buildContext(step.contextKeys || []),
+          settings: current.settings,
+          state: modelSafeState(current),
+          signal: aborter.current?.signal,
+          modelOverride: step.key === 'DesignDirection' && step.replace ? cheapModelForTask('revisionDesignPlan', current) : undefined,
+          complex: Boolean(step.complex),
+        });
+      }
     } catch (error) {
       if (aborter.current?.signal?.aborted) throw error;
       if (step.key === 'WebsiteHTML') {
@@ -679,7 +692,6 @@ export function useAgencyController() {
     if (current.outputs.PageContent) return current.outputs.PageContent;
 
     const employee = employees.design;
-    const pages = contentPagesForState(current);
     addQuest('Page content pack', employee.id, 'working');
     update((stateNow) => ({
       ...stateNow,
@@ -687,31 +699,10 @@ export function useAgencyController() {
       progress: Math.max(stateNow.progress, 57),
       progressTask: 'Page content pack',
     }));
-    speak(employee.id, 'I am writing a detailed content brief for each approved page before the site is built.');
-    log(employee.name, `Started: Page content pack (${pages.join(', ')})`);
+    speak(employee.id, 'I am preparing a detailed content pack from the brief, approved pages, and selected design route.');
+    log(employee.name, 'Started: scripted page content pack');
 
-    const pageOutputs = [];
-    for (const page of pages) {
-      let pageContent = '';
-      try {
-        pageContent = await callModelInBackground({
-          employee,
-          task: pageContentTask(page, pages, current),
-          context: buildContext(['Plan', 'TaskBoard', 'SelectedDesign', 'DesignDirection']),
-          settings: current.settings,
-          state: modelSafeState(current),
-          signal: aborter.current?.signal,
-          complex: current.projectPackage !== 'launch',
-        });
-      } catch (error) {
-        if (aborter.current?.signal?.aborted) throw error;
-        log(employee.name, `${page} content fallback used after model error: ${error?.message || error}`);
-      }
-      const cleaned = String(pageContent || '').trim();
-      pageOutputs.push(`## ${page}\n${hasUsefulPageContent(cleaned) ? cleaned : fallbackPageContent(page, current)}`);
-    }
-
-    const output = pageOutputs.join('\n\n---\n\n');
+    const output = buildScriptedPageContent(current);
     addQuest('Page content pack', employee.id, 'done');
     update((stateNow) => ({
       ...stateNow,
@@ -720,10 +711,10 @@ export function useAgencyController() {
       progress: Math.max(stateNow.progress, 62),
       progressTask: 'Page content pack complete',
     }));
-    log(employee.name, 'Finished: Page content pack');
+    log(employee.name, 'Finished: scripted page content pack');
     await sleep(250);
     return output;
-  }, [addQuest, buildContext, log, speak, update]);
+  }, [addQuest, log, speak, update]);
 
   const handleRunError = useCallback((error) => {
     const message = error?.message || String(error || 'Unknown error');
