@@ -1449,6 +1449,14 @@ label,
     display: none;
   }
 
+  .quickbar {
+    bottom: calc(80px + var(--safe-bottom));
+  }
+
+  .app.chat-open .quickbar {
+    bottom: calc(128px + var(--safe-bottom));
+  }
+
   .agency-hero,
   .agency-steps,
   .team-grid {

@@ -10,6 +10,7 @@
     "agency:cli:smoke": "node tools/agency-cli.mjs smoke",
     "test:scripted-agency": "node tests/scripted-agency-regression.mjs",
     "test:design-options": "node tests/design-options-regression.mjs",
+    "test:ui-visibility": "node tests/ui-visibility-regression.mjs",
     "templates:audit": "node tools/audit-template-sources.mjs",
     "templates:download": "node tools/download-template-library.mjs",
     "templates:generate": "node tools/generate-template-knowledge.mjs",

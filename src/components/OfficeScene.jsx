@@ -110,6 +110,7 @@ function actionButtons(actionIds, actions) {
     openAssetUpload: { label: 'Project files', onClick: actions.openAssetUpload },
     openDesignOptions: { label: 'See options', onClick: actions.openDesignOptions },
     openPreview: { label: 'Open preview', onClick: actions.openWebsitePreview },
+    openOutputs: { label: 'Open outputs', onClick: () => actions.openOutputs() },
     approve: { label: 'Approve', onClick: actions.approve },
     resume: { label: 'Resume work', onClick: actions.resumeWork },
     reset: { label: 'New project', onClick: actions.startFresh },

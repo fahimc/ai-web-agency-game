@@ -94,6 +94,7 @@ export function saveDraft(state) {
     progress: state.progress,
     progressTask: state.progressTask,
     activeEmployee: state.activeEmployee,
+    speech: state.speech,
     outputs: state.outputs,
     quests: state.quests,
     logs: state.logs,
@@ -230,6 +231,7 @@ function normalizeStoredSession(snapshot) {
     pendingRun: snapshot.pendingRun || '',
     pendingRevisionText: snapshot.pendingRevisionText || '',
     autoResumeAttempts: Number(snapshot.autoResumeAttempts || 0),
+    speech: isPlainObject(snapshot.speech) ? snapshot.speech : null,
     running: false,
   };
 }

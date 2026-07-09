@@ -90,12 +90,12 @@ export function useAgencyController() {
     const settings = restoreSettings();
     const saved = restoreDraft();
     if (saved && isRecoverableDraft(saved)) {
-      return {
+      return normalizeRestoredUiState({
         ...emptyState,
         ...saved,
         settings: { ...settings, ...(saved.settings || {}) },
         running: false,
-      };
+      });
     }
     return { ...emptyState, settings };
   });
@@ -303,7 +303,7 @@ export function useAgencyController() {
       window.setTimeout(() => setModal('details'), 120);
       return;
     }
-    const next = {
+    const next = normalizeRestoredUiState({
       ...emptyState,
       ...loaded,
       email,
@@ -326,15 +326,14 @@ export function useAgencyController() {
       availableProjects: listProjects(email),
       settings: { ...defaultSettings, ...(loaded.settings || {}) },
       running: false,
-    };
+    });
     update(next);
     setModal(null);
     if (next.error) {
       speak(next.activeEmployee || 'reception', 'Welcome back. This project was paused, so press Resume work to continue.', ['resume']);
       window.setTimeout(() => setModal('pause'), 120);
     } else if (next.phase === 'complete') {
-      speak('reception', 'Welcome back. This project is complete. Open Outputs whenever you want to review it.', ['openPreview']);
-      window.setTimeout(() => setModal('websitePreview'), 120);
+      speak('reception', 'Welcome back. This project is complete. Open Outputs whenever you want to review it or start a new project.', ['openOutputs', 'reset']);
     } else if (next.outputs.WebsiteHTML && !next.approved) {
       update((current) => ({ ...current, phase: 'approval' }));
       speak('dev', 'Welcome back. Your website preview is ready for approval.', ['openPreview', 'approve']);
@@ -853,7 +852,7 @@ export function useAgencyController() {
       for (const step of completionSteps) await runStep(step);
       const pdfData = createProjectPdf(stateRef.current);
       update((current) => ({ ...current, outputs: { ...current.outputs, ProjectPDF: pdfData }, activeOutput: 'ProjectPDF', phase: 'complete', running: false, pendingRun: '', pendingRevisionText: '', autoResumeAttempts: 0, error: '', progress: 100, progressTask: 'Complete' }));
-      speak('reception', 'All done. Your preview, QA notes, and project handover PDF are in Outputs. You can start a fresh project whenever you are ready.', ['openPreview', 'reset']);
+      speak('reception', 'All done. Your preview, QA notes, and project handover PDF are in Outputs. You can start a fresh project whenever you are ready.', ['openOutputs', 'reset']);
       addConvo('Nova', 'Project complete. Open Outputs to view or download the work.');
       log('Company', 'All deliverables completed.');
       setModal('websitePreview');
@@ -1335,6 +1334,66 @@ function stepSpeech(id, quest) {
     qa: 'I am checking the pack and preparing the project PDF.',
   };
   return lines[id] || `Working on ${quest}...`;
+}
+
+function normalizeRestoredUiState(state) {
+  const next = { ...state };
+  if (next.phase === 'complete') {
+    next.progress = 100;
+    next.progressTask = 'Complete';
+    next.activeEmployee = 'reception';
+    next.activeOutput = next.outputs?.ProjectPDF ? 'ProjectPDF' : next.outputs?.WebsiteHTML ? 'WebsiteHTML' : next.activeOutput;
+  }
+  if (shouldRepairSpeech(next)) {
+    next.speech = restoredSpeechForState(next);
+    next.activeEmployee = next.speech.employeeId || next.activeEmployee;
+  }
+  return next;
+}
+
+function shouldRepairSpeech(state) {
+  if (!state?.speech?.text) return true;
+  if (state.phase !== 'name' && /before we start|what should i call you/i.test(state.speech.text)) return true;
+  if (state.phase === 'complete' && !/complete|outputs|handover/i.test(state.speech.text)) return true;
+  if (state.phase === 'payment' && !/payment|checkout|voucher/i.test(state.speech.text)) return true;
+  return false;
+}
+
+function restoredSpeechForState(state) {
+  const phase = state?.phase || 'name';
+  if (phase === 'complete') {
+    return {
+      employeeId: 'reception',
+      text: 'Welcome back. This project is complete. Open Outputs whenever you want to review it or start a new project.',
+      actions: ['openOutputs', 'reset'],
+    };
+  }
+  if (phase === 'approval') {
+    return { employeeId: 'dev', text: 'Your website preview is ready. Review it, approve it, or request changes.', actions: ['openPreview', 'approve'] };
+  }
+  if (phase === 'payment') {
+    return { employeeId: 'reception', text: 'Payment is required before the team starts. Complete checkout or enter a voucher to continue.', actions: ['openPayment'] };
+  }
+  if (phase === 'packages') {
+    return { employeeId: 'reception', text: 'Choose the package that fits the site you want us to produce.', actions: ['openPackages'] };
+  }
+  if (phase === 'assets') {
+    return { employeeId: 'pm', text: 'You can upload optional project files now, or skip this step and move to design.', actions: ['openAssetUpload'] };
+  }
+  if (phase === 'design_options') {
+    return { employeeId: 'design', text: 'Choose a design direction, palette, pages, and sections so the team can build the site.', actions: ['openDesignOptions'] };
+  }
+  if (['new_details', 'brief'].includes(phase)) {
+    return { employeeId: 'reception', text: 'Please complete the project form before the team starts work.', actions: ['openDetails'] };
+  }
+  if (phase === 'error') {
+    return { employeeId: state.activeEmployee || 'reception', text: 'Something interrupted the run, but the session is saved. Press Resume work to try again.', actions: ['resume'] };
+  }
+  if (phase === 'returning_email') return { employeeId: 'reception', text: 'Welcome back. Type the email address you used before and I will load the saved job.', actions: [] };
+  if (phase === 'project_choice') return { employeeId: 'reception', text: 'Choose a previous project from the dropdown, or choose Start a new project.', actions: [] };
+  if (phase === 'new_email' || phase === 'email') return { employeeId: 'reception', text: 'Type the email address where this project should be saved.', actions: [] };
+  if (phase === 'running') return { employeeId: state.activeEmployee || 'director', text: 'The agency is working through the project steps.', actions: [] };
+  return emptyState.speech;
 }
 
 function contentPagesForState(state) {
