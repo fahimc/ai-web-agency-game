@@ -99,7 +99,7 @@ export function buildEngineCapabilityContext() {
   'Base design directions and palettes available:',
   siteLayouts.map((layout) => `${layout.id}: ${layout.name} (${layout.model}; ${layout.tone}; palette ${layout.palette.join(', ')})`).join('\n'),
   '',
-  'Theme generator palette presets available: Mira recommended, modern mono (#0a0a0a #111111 #ffffff #6b7280 #f7f7f7), earthy vibrancy (#2f3a23 #b7791f #f4e7d3 #8b3a2b #ffffff), moody botanical (#123524 #2f6f5b #f7f3ea #c7a76c #ffffff), electric SaaS (#08111f #4f46e5 #f8fafc #22d3ee #ffffff), soft editorial (#111111 #efe9e1 #d8c3ad #8a6a4f #ffffff), wellness mist (#164e63 #2bb3a3 #f3fbf9 #f4a261 #ffffff), luxury neutral (#1f130f #6b3f2a #f7efe5 #b08d57 #ffffff), warm venue (#2f1b12 #c2410c #fff7ed #f59e0b #ffffff). The static engine also has 30 preset seed palettes across AI agency, SaaS, local business, trades, legal, finance, healthcare, beauty, restaurant, education, charity, portfolio, luxury, playful, and dark premium.',
+  'Theme generator palette presets available: Mira recommended plus modern industry palettes for AI agency dark, Clean SaaS, Local trust, Trade signal, Legal clarity, Finance mint, Healthcare clean, Beauty blush, Property calm, Travel sky, Modern mono, Earthy vibrancy, Moody botanical, Electric SaaS, Soft editorial, Wellness mist, Luxury neutral, Warm venue, Ecommerce fresh, Fashion editorial, Event night, Education blue, Charity action, Portfolio rose, and Photography mono. Choose the palette that fits the industry and mood; do not default every website to the same warm cream background.',
   'You may create a custom palette when the brief needs it, but use 3-5 real hex colours and map them to semantic roles: background, foreground, surface, card, primary, secondary, accent, muted, border, success, warning, danger and matching foreground tokens. Validate WCAG AA contrast.',
   '',
   'Typography presets available: Modern SaaS, Friendly Local, Professional, Editorial, Premium, Playful, Technical. You may choose a custom font pairing if it better fits the brand; keep body text at 16px or larger and line-height 1.5-1.75.',
@@ -393,39 +393,83 @@ export function paletteOptionsForLayout(layout, state) {
   const base = normalizePalette(layout.palette);
   const brief = `${state?.brief || ''}\n${state?.clientDetails || ''}`.toLowerCase();
   const palettes = modernPaletteSet();
-  const recommended = brief.match(/health|wellness|therapy|care|calm|yoga|skincare/) ? palettes.wellness
-    : brief.match(/event|launch|bold|energy|festival/) ? palettes.electric
-    : brief.match(/\b(restaurant|cafe|bar|venue|food|menu)\b/) ? palettes.warmVenue
-    : brief.match(/wedding|bridal|bride|beauty|fashion|editorial/) ? palettes.softEditorial
-    : brief.match(/local|service|trade|repair|salon/) ? palettes.botanical
-    : brief.match(/premium|luxury|boutique|brand|jewellery/) ? palettes.luxury
-    : brief.match(/\b(software|saas|app|apps|platform|tool|tools|tech)\b/) ? palettes.saas
-    : brief.match(/nonprofit|community|sustainable|nature/) ? palettes.earthy
-    : base;
+  const recommended = industryPaletteForBrief(brief, layout, palettes, base);
   return uniquePalettes([
     { id: 'recommended', name: 'Mira recommended', colors: recommended },
     { id: 'modern-mono', name: 'Modern mono', colors: palettes.mono },
+    { id: 'electric-saas', name: 'Electric SaaS', colors: palettes.saas },
+    { id: 'local-trust', name: 'Local trust', colors: palettes.localTrust },
+    { id: 'trade-signal', name: 'Trade signal', colors: palettes.trades },
+    { id: 'legal-clarity', name: 'Legal clarity', colors: palettes.legal },
+    { id: 'finance-mint', name: 'Finance mint', colors: palettes.finance },
+    { id: 'ai-agency', name: 'AI agency dark', colors: palettes.aiAgency },
+    { id: 'clean-saas', name: 'Clean SaaS', colors: palettes.saas },
+    { id: 'healthcare-clean', name: 'Healthcare clean', colors: palettes.healthcare },
+    { id: 'beauty-blush', name: 'Beauty blush', colors: palettes.beauty },
+    { id: 'property-calm', name: 'Property calm', colors: palettes.property },
+    { id: 'travel-sky', name: 'Travel sky', colors: palettes.travel },
     { id: 'earthy-vibrancy', name: 'Earthy vibrancy', colors: palettes.earthy },
     { id: 'moody-botanical', name: 'Moody botanical', colors: palettes.botanical },
-    { id: 'electric-saas', name: 'Electric SaaS', colors: palettes.saas },
     { id: 'soft-editorial', name: 'Soft editorial', colors: palettes.softEditorial },
     { id: 'wellness-mist', name: 'Wellness mist', colors: palettes.wellness },
     { id: 'luxury-neutral', name: 'Luxury neutral', colors: palettes.luxury },
     { id: 'warm-venue', name: 'Warm venue', colors: palettes.warmVenue },
-  ]).slice(0, 6);
+  ]);
 }
 
 function modernPaletteSet() {
   return {
+    aiAgency: normalizePalette(['#f8fafc', '#7c3aed', '#0b1020', '#22d3ee', '#111827']),
     mono: normalizePalette(['#0a0a0a', '#111111', '#ffffff', '#6b7280', '#f7f7f7']),
-    earthy: normalizePalette(['#2f3a23', '#b7791f', '#fbf7ed', '#8b3a2b', '#f4e7d3']),
-    botanical: normalizePalette(['#123524', '#2f6f5b', '#fbfaf4', '#c7a76c', '#eef5ed']),
-    saas: normalizePalette(['#08111f', '#4f46e5', '#f8fafc', '#22d3ee', '#ffffff']),
+    earthy: normalizePalette(['#24351f', '#b7791f', '#f7f2e8', '#8b3a2b', '#fffaf0']),
+    botanical: normalizePalette(['#123524', '#2f6f5b', '#f3f7ed', '#c7a76c', '#ffffff']),
+    saas: normalizePalette(['#0f172a', '#4f46e5', '#eef2ff', '#06b6d4', '#ffffff']),
     softEditorial: normalizePalette(['#111111', '#8a6a4f', '#fffaf5', '#d8c3ad', '#ffffff']),
-    wellness: normalizePalette(['#164e63', '#2bb3a3', '#f3fbf9', '#f4a261', '#ffffff']),
-    luxury: normalizePalette(['#1f130f', '#6b3f2a', '#fbf7ef', '#b08d57', '#ffffff']),
-    warmVenue: normalizePalette(['#2f1b12', '#c2410c', '#fff7ed', '#f59e0b', '#ffffff']),
+    wellness: normalizePalette(['#164e63', '#2bb3a3', '#edf9f7', '#f4a261', '#ffffff']),
+    luxury: normalizePalette(['#f7f3e8', '#c8a45d', '#15110d', '#8b5e34', '#241d18']),
+    warmVenue: normalizePalette(['#2a1209', '#dc2626', '#fff4e6', '#d97706', '#fffaf5']),
+    localTrust: normalizePalette(['#102a27', '#16a34a', '#f2f7f2', '#f59e0b', '#ffffff']),
+    trades: normalizePalette(['#111827', '#f97316', '#f8fafc', '#0ea5e9', '#ffffff']),
+    legal: normalizePalette(['#111827', '#1d4ed8', '#f7f8fb', '#b45309', '#ffffff']),
+    finance: normalizePalette(['#082f49', '#059669', '#ecfdf5', '#0369a1', '#ffffff']),
+    healthcare: normalizePalette(['#12343b', '#0f766e', '#eefaf8', '#38bdf8', '#ffffff']),
+    beauty: normalizePalette(['#3b1f2b', '#db2777', '#fff1f7', '#a78bfa', '#ffffff']),
+    property: normalizePalette(['#172033', '#2563eb', '#f5f7fb', '#a16207', '#ffffff']),
+    ecommerce: normalizePalette(['#111827', '#14b8a6', '#f0fdfa', '#f97316', '#ffffff']),
+    fashion: normalizePalette(['#111111', '#f43f5e', '#fff7f7', '#8b5cf6', '#ffffff']),
+    event: normalizePalette(['#ffffff', '#ff5a5f', '#240046', '#f59e0b', '#3c096c']),
+    travel: normalizePalette(['#0f172a', '#0ea5e9', '#eefaff', '#f97316', '#ffffff']),
+    education: normalizePalette(['#172554', '#2563eb', '#eff6ff', '#f59e0b', '#ffffff']),
+    charity: normalizePalette(['#173d35', '#16a34a', '#f7fee7', '#d97706', '#ffffff']),
+    portfolio: normalizePalette(['#111111', '#e11d48', '#fff1f2', '#7c3aed', '#ffffff']),
+    photography: normalizePalette(['#111111', '#ef4444', '#fafafa', '#52525b', '#ffffff']),
   };
+}
+
+function industryPaletteForBrief(brief, layout, palettes, fallback) {
+  const text = `${brief || ''} ${layout?.id || ''}`;
+  if (/\b(ai|automation|machine learning|agency)\b/i.test(text)) return palettes.aiAgency;
+  if (/\b(software|saas|app|apps|platform|dashboard|product|tech)\b/i.test(text)) return palettes.saas;
+  if (/\b(restaurant|cafe|bar|venue|food|menu|dining|chef)\b/i.test(text)) return palettes.warmVenue;
+  if (/\b(plumb|electric|builder|repair|trade|construction|roof|cleaning|maintenance)\b/i.test(text)) return palettes.trades;
+  if (/\b(legal|law|solicitor|attorney|court)\b/i.test(text)) return palettes.legal;
+  if (/\b(finance|accounting|bookkeeping|tax|bank|wealth)\b/i.test(text)) return palettes.finance;
+  if (/\b(beauty|salon|hair|skincare|nails|lashes)\b/i.test(text)) return palettes.beauty;
+  if (/\b(healthcare|clinic|doctor|dentist|medical|care)\b/i.test(text)) return palettes.healthcare;
+  if (/\b(wellness|therapy|spa|yoga|mindfulness)\b/i.test(text)) return palettes.wellness;
+  if (/\b(luxury|premium|hotel|high-end|jewellery)\b/i.test(text)) return palettes.luxury;
+  if (/\b(property|real estate|estate agent|home|housing|interior)\b/i.test(text)) return palettes.property;
+  if (/\b(ecommerce|shop|retail|product|catalogue|store)\b/i.test(text)) return palettes.ecommerce;
+  if (/\b(fashion|clothing|boutique|apparel)\b/i.test(text)) return palettes.fashion;
+  if (/\b(event|conference|launch|festival|ticket)\b/i.test(text)) return palettes.event;
+  if (/\b(travel|tourism|destination|tour)\b/i.test(text)) return palettes.travel;
+  if (/\b(education|course|training|school|academy|tutor)\b/i.test(text)) return palettes.education;
+  if (/\b(charity|nonprofit|donate|campaign)\b/i.test(text)) return palettes.charity;
+  if (/\b(photography|photo|wedding photographer|camera)\b/i.test(text)) return palettes.photography;
+  if (/\b(portfolio|studio|creative|designer|artist)\b/i.test(text)) return palettes.portfolio;
+  if (/\b(local|service|small business|shopfront)\b/i.test(text)) return palettes.localTrust;
+  if (/\b(community|volunteer|sustainable|nature)\b/i.test(text)) return palettes.earthy;
+  return fallback;
 }
 
 export function recommendedStructure(layout, state) {
@@ -509,11 +553,11 @@ function pickMutedForeground(background, preferred = '#64748b') {
 
 function readableThemeFromPalette(palette) {
   const [rawInk, accent, rawBg, secondary, rawSurface] = normalizePalette(palette);
-  const bg = pickPageBackground(rawBg, rawSurface);
-  const surface = pickSurface(rawSurface, rawBg, bg);
+  const bg = pickPageBackground(rawBg, rawSurface, rawInk);
+  const surface = pickSurface(rawSurface, rawBg, bg, rawInk);
   const ink = ensureReadableColor(rawInk, bg);
   const cardInk = ensureReadableColor(rawInk, surface);
-  const inputBg = contrastRatio('#ffffff', bg) >= 1.2 ? '#ffffff' : surface;
+  const inputBg = luminance(bg) >= 0.72 ? '#ffffff' : surface;
   return {
     ink,
     accent,
@@ -532,20 +576,28 @@ function readableThemeFromPalette(palette) {
   };
 }
 
-function pickPageBackground(preferred, surface) {
+function pickPageBackground(preferred, surface, foreground = '#111827') {
   const candidates = [preferred, surface, '#ffffff', '#f8fafc', '#fffaf2']
     .filter((color, index, values) => color && values.indexOf(color) === index);
-  const usable = candidates.find((color) => luminance(color) >= 0.82 && contrastRatio('#111827', color) >= 8);
+  const usable = candidates.find((color) => {
+    const luma = luminance(color);
+    const foregroundContrast = contrastRatio(foreground, color);
+    const neutralContrast = Math.max(contrastRatio('#111827', color), contrastRatio('#f8fafc', color));
+    const isStableBackground = luma >= 0.78 || luma <= 0.26;
+    return isStableBackground && foregroundContrast >= 4.5 && neutralContrast >= 6;
+  });
   return usable || candidates
-    .map((color) => ({ color, luminance: luminance(color), contrast: contrastRatio('#111827', color) }))
-    .sort((a, b) => b.contrast - a.contrast || b.luminance - a.luminance)[0]?.color || '#ffffff';
+    .map((color) => ({ color, contrast: contrastRatio(foreground, color), neutral: Math.max(contrastRatio('#111827', color), contrastRatio('#f8fafc', color)) }))
+    .sort((a, b) => b.contrast - a.contrast || b.neutral - a.neutral)[0]?.color || '#ffffff';
 }
 
-function pickSurface(preferred, fallback, background) {
-  const candidates = [preferred, fallback, '#ffffff', '#f8fafc', '#fffaf2']
+function pickSurface(preferred, fallback, background, foreground = '#111827') {
+  const lightFallback = background === '#ffffff' ? '#f8fafc' : '#ffffff';
+  const darkFallback = luminance(background) <= 0.3 ? '#111827' : lightFallback;
+  const candidates = [preferred, fallback, darkFallback, lightFallback, '#f8fafc', '#fffaf2']
     .filter((color, index, values) => color && values.indexOf(color) === index);
-  const usable = candidates.find((color) => contrastRatio('#111827', color) >= 7 && contrastRatio(color, background) >= 1.08);
-  return usable || (background === '#ffffff' ? '#f8fafc' : '#ffffff');
+  const usable = candidates.find((color) => contrastRatio(foreground, color) >= 4.5 && contrastRatio(color, background) >= 1.08);
+  return usable || lightFallback;
 }
 
 function parseRecommendationJson(raw) {

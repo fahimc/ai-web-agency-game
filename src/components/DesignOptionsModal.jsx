@@ -46,7 +46,7 @@ export function DesignOptionsModal({ state, actions }) {
       colors: normalizePalette(activeOption?.palette || activeLayout.palette),
     };
     const presets = paletteOptionsForLayout(activeLayout, state);
-    return [modelPalette, ...presets.filter((option) => normalizePalette(option.colors).join('|') !== modelPalette.colors.join('|'))].slice(0, 8);
+    return [modelPalette, ...presets.filter((option) => normalizePalette(option.colors).join('|') !== modelPalette.colors.join('|'))].slice(0, 12);
   }, [activeLayout, activeOption, state]);
   const structureRecommendation = useMemo(() => ({
     pages: activeOption?.pages?.length ? activeOption.pages : ['Home', 'Services', 'About', 'FAQ', 'Contact'],

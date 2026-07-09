@@ -10,6 +10,7 @@ import {
   fallbackDesignRecommendations,
   normalizeDesignRecommendations,
   normalizePalette,
+  paletteOptionsForLayout,
   recommendedTemplateReferences,
   siteLayouts,
 } from '../src/data/siteBlueprints.js';
@@ -358,6 +359,60 @@ function testTemplateBaseSelectionFromIntake() {
   assert.match(html, /Wedding stories with calm direction/, 'generated logo should use the LLM-selected tagline');
 }
 
+function cssVariable(html, name) {
+  const match = String(html).match(new RegExp(`${name}:(#[0-9a-f]{6})`, 'i'));
+  return match?.[1]?.toLowerCase() || '';
+}
+
+function testIndustryPaletteBackgroundDiversity() {
+  const cases = [
+    {
+      name: 'restaurant',
+      layoutId: 'restaurant-venue',
+      brief: 'Business: Oak Table Kitchen\nIndustry: restaurant and private dining venue\nAudience: local diners\nGoal: increase bookings',
+      expectedBg: '#fff4e6',
+    },
+    {
+      name: 'saas',
+      layoutId: 'saas-product',
+      brief: 'Business: FlowOps\nIndustry: SaaS software dashboard platform\nAudience: operations teams\nGoal: book demos',
+      expectedBg: '#eef2ff',
+    },
+    {
+      name: 'legal',
+      layoutId: 'consultant-authority',
+      brief: 'Business: Northline Legal\nIndustry: legal solicitor practice\nAudience: business owners\nGoal: increase consultation requests',
+      expectedBg: '#f7f8fb',
+    },
+    {
+      name: 'beauty',
+      layoutId: 'health-wellness',
+      brief: 'Business: Rose Room\nIndustry: beauty salon skincare and lashes\nAudience: local clients\nGoal: increase bookings',
+      expectedBg: '#fff1f7',
+    },
+    {
+      name: 'luxury',
+      layoutId: 'premium-editorial',
+      brief: 'Business: Aurelia\nIndustry: luxury boutique hotel\nAudience: premium travellers\nGoal: increase direct bookings',
+      expectedBg: '#15110d',
+    },
+  ];
+
+  const backgrounds = cases.map((item) => {
+    const layout = siteLayouts.find((entry) => entry.id === item.layoutId);
+    const state = baseSession({ brief: item.brief, selectedDesignStyle: item.layoutId });
+    const palette = paletteOptionsForLayout(layout, state)[0].colors;
+    const html = buildExampleSite(layout, state, palette, { preview: true });
+    const bg = cssVariable(html, '--bg');
+    const ink = cssVariable(html, '--ink');
+    assert.equal(bg, item.expectedBg, `${item.name} should keep its industry-specific background`);
+    assert.ok(contrastRatio(ink, bg) >= 4.5, `${item.name} foreground/background should pass AA`);
+    return bg;
+  });
+
+  assert.ok(new Set(backgrounds).size >= 5, `industry backgrounds should be varied, got ${backgrounds.join(', ')}`);
+}
+
 async function testPendingDraftAutoResume(browser) {
   const session = baseSession({
     phase: 'running',
@@ -415,6 +470,8 @@ try {
   testRestaurantRecommendationsDoNotMatchAppInsideWords();
   console.log('Running template base selection regression...');
   testTemplateBaseSelectionFromIntake();
+  console.log('Running industry palette diversity regression...');
+  testIndustryPaletteBackgroundDiversity();
   console.log('Running pending-draft auto-resume regression...');
   await testPendingDraftAutoResume(browser);
   console.log('Design options regression tests passed.');
